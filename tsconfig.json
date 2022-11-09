@@ -18,9 +18,15 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    // Required by Material UI. See https://mui.com/material-ui/guides/typescript/
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true
   },
   "include": [
-    "src"
+    "src",
+    ".eslintrc.js",
+    "jest.config.js"
   ]
 }
