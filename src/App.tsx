@@ -1,12 +1,24 @@
 import React from 'react'
 import './App.css'
-import { Button, CssBaseline } from '@mui/material'
+import { Button, CssBaseline, TablePagination } from '@mui/material'
+import DrawerAppBar from './Components/DrawerAppBar'
+import LocaleProvider from './store/LocaleProvider'
 
 function App() {
   return (
     <>
-      <CssBaseline />
-      <Button variant="contained">Hello World</Button>
+      <LocaleProvider>
+        <CssBaseline />
+        <DrawerAppBar />
+        <Button variant="contained">Hello World</Button>
+        <TablePagination
+          count={2000}
+          rowsPerPage={10}
+          page={1}
+          component="div"
+          onPageChange={() => {}}
+        />
+      </LocaleProvider>
     </>
   )
 }
