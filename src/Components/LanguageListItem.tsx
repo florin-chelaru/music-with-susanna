@@ -33,7 +33,7 @@ export interface LanguageListItemProps {
 export default function LanguageListItem({ languages, onChange }: LanguageListItemProps) {
   const [open, setOpen] = React.useState(true)
 
-  const languageHandler = useContext<LocaleManager>(LocaleContext)
+  const localeManager = useContext<LocaleManager>(LocaleContext)
 
   const handleClick = (e: React.SyntheticEvent) => {
     e.stopPropagation()
@@ -45,7 +45,7 @@ export default function LanguageListItem({ languages, onChange }: LanguageListIt
         <ListItemIcon>
           <LanguageIcon />
         </ListItemIcon>
-        <ListItemText primary={languageHandler.stringList.language} />
+        <ListItemText primary={localeManager.stringList.language} />
         {open ? <ExpandLess /> : <ExpandMore />}
       </ListItemButton>
       <Collapse in={open} timeout="auto" unmountOnExit>
@@ -54,7 +54,7 @@ export default function LanguageListItem({ languages, onChange }: LanguageListIt
             <ListItemButton
               sx={{ pl: 4 }}
               key={lang.locale}
-              selected={lang.locale === languageHandler.locale}
+              selected={lang.locale === localeManager.locale}
               onClick={() => {
                 onChange?.(lang)
               }}>
