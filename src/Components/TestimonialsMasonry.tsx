@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import {
   Card,
   CardActions,
@@ -7,64 +7,16 @@ import {
   CardMedia,
   Collapse,
   IconButtonProps,
+  Link,
+  Rating,
   styled
 } from '@mui/material'
 import Typography from '@mui/material/Typography'
-import { shortenText } from '../util/string'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import IconButton from '@mui/material/IconButton'
 import { Masonry } from '@mui/lab'
-
-interface Testimonial {
-  title: string
-  subtitle?: string
-  content?: string
-  image?: string
-}
-
-const TESTIMONIALS: Testimonial[] = [
-  {
-    title: 'Ariel Roth',
-    subtitle: 'Father of Savi, age nine',
-    content:
-      'Ms. Susanna, as she was known in our house, was our son\'s first violin teacher - and she was outstanding. Savi, who has some learning issues, needed a patient teacher, one who could tailor her teaching to his attentional needs and to what he would find interesting. Susanna was firm when she needed to be, but engaged with him on the subjects that he was interested in, like Star Wars and Harry Potter, even making up a "Darth Vader" song for him to play on the violin as a way of motivating him.\n' +
-      '\n' +
-      'As a parent, we loved Susanna because she kept us informed of what was happening in the lessons and took time at the end of each lesson to show us what she taught him and what he needed to practice and how so that we could help him develop his skills.\n' +
-      '\n' +
-      'The payoff to working with Susanna was huge. In his school recital at the end of the year, Savi was the best string player in the bunch and his joy in playing the violin is clear. He just got back from a month at sleep away camp and the first thing he did when he got home was reach for his violin and play Song with the Wind.\n' +
-      '\n' +
-      "I would recommend Susanna without hesitation! If Savi's future teacher's are half as good, I'll consider myself truly fortunate."
-  },
-  {
-    title: 'Evelyn',
-    subtitle: 'Student, age five',
-    image: '/static/img/evelyn-letter-square-bw-large.jpeg'
-  },
-  {
-    title: 'Ariel Roth',
-    subtitle: 'Father of Savi, age nine',
-    content:
-      'Ms. Susanna, as she was known in our house, was our son\'s first violin teacher - and she was outstanding. Savi, who has some learning issues, needed a patient teacher, one who could tailor her teaching to his attentional needs and to what he would find interesting. Susanna was firm when she needed to be, but engaged with him on the subjects that he was interested in, like Star Wars and Harry Potter, even making up a "Darth Vader" song for him to play on the violin as a way of motivating him.\n' +
-      '\n' +
-      'As a parent, we loved Susanna because she kept us informed of what was happening in the lessons and took time at the end of each lesson to show us what she taught him and what he needed to practice and how so that we could help him develop his skills.\n' +
-      '\n' +
-      'The payoff to working with Susanna was huge. In his school recital at the end of the year, Savi was the best string player in the bunch and his joy in playing the violin is clear. He just got back from a month at sleep away camp and the first thing he did when he got home was reach for his violin and play Song with the Wind.\n' +
-      '\n' +
-      "I would recommend Susanna without hesitation! If Savi's future teacher's are half as good, I'll consider myself truly fortunate."
-  },
-  {
-    title: 'Ariel Roth',
-    subtitle: 'Father of Savi, age nine',
-    content:
-      'Ms. Susanna, as she was known in our house, was our son\'s first violin teacher - and she was outstanding. Savi, who has some learning issues, needed a patient teacher, one who could tailor her teaching to his attentional needs and to what he would find interesting. Susanna was firm when she needed to be, but engaged with him on the subjects that he was interested in, like Star Wars and Harry Potter, even making up a "Darth Vader" song for him to play on the violin as a way of motivating him.\n' +
-      '\n' +
-      'As a parent, we loved Susanna because she kept us informed of what was happening in the lessons and took time at the end of each lesson to show us what she taught him and what he needed to practice and how so that we could help him develop his skills.\n' +
-      '\n' +
-      'The payoff to working with Susanna was huge. In his school recital at the end of the year, Savi was the best string player in the bunch and his joy in playing the violin is clear. He just got back from a month at sleep away camp and the first thing he did when he got home was reach for his violin and play Song with the Wind.\n' +
-      '\n' +
-      "I would recommend Susanna without hesitation! If Savi's future teacher's are half as good, I'll consider myself truly fortunate."
-  }
-]
+import Grid2 from '@mui/material/Unstable_Grid2'
+import { LocaleContext, LocaleManager, Testimonial } from '../store/LocaleProvider'
 
 interface ExpandMoreProps extends IconButtonProps {
   expand: boolean
@@ -94,17 +46,37 @@ const TestimonialCard = React.memo(({ testimonial }: TestimonialCardProps) => {
   const needsExpansion = (testimonial?.content ?? '').length > maxTextLength
   return (
     <Card>
-      <CardHeader title={testimonial.title} subheader={testimonial.subtitle ?? ''} />
+      <CardHeader title={testimonial.title} subheader={testimonial.subtitle ?? ''} sx={{ pb: 0 }} />
+      {testimonial.image && <CardMedia component="img" image={testimonial.image} />}
       {testimonial.content && (
         <Collapse in={expanded} timeout="auto" collapsedSize={100}>
-          <CardContent sx={{ pb: 0 }}>
+          <CardContent>
+            {testimonial.rating && testimonial.ratingUrl && (
+              <Link href={testimonial.ratingUrl}>
+                <Rating name="read-only" value={testimonial.rating} readOnly size="small" />
+              </Link>
+            )}
+            {testimonial.rating && !testimonial.ratingUrl && (
+              <Rating name="read-only" value={testimonial.rating} readOnly size="small" />
+            )}
             <Typography variant="body2" color="text.secondary">
               {testimonial.content}
             </Typography>
           </CardContent>
         </Collapse>
       )}
-      {testimonial.image && <CardMedia component="img" image={testimonial.image} />}
+      {!testimonial.content && testimonial.rating && testimonial.ratingUrl && (
+        <CardContent>
+          <Link href={testimonial.ratingUrl}>
+            <Rating name="read-only" value={testimonial.rating} readOnly size="small" />
+          </Link>
+        </CardContent>
+      )}
+      {!testimonial.content && testimonial.rating && !testimonial.ratingUrl && (
+        <CardContent>
+          <Rating name="read-only" value={testimonial.rating} readOnly size="small" />
+        </CardContent>
+      )}
       {needsExpansion && (
         <CardActions disableSpacing>
           <ExpandMore
@@ -121,11 +93,23 @@ const TestimonialCard = React.memo(({ testimonial }: TestimonialCardProps) => {
 })
 
 export default function TestimonialsMasonry() {
+  const strings = useContext<LocaleManager>(LocaleContext).stringList
   return (
-    <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={2} sx={{ m: 0, p: 0 }}>
-      {TESTIMONIALS.map((t, i) => (
-        <TestimonialCard key={i} testimonial={t} />
-      ))}
-    </Masonry>
+    <>
+      <Grid2 container>
+        <Grid2 xs={12} display="flex" justifyContent="center" textAlign="center" sx={{ pb: 0 }}>
+          <Typography variant="button" gutterBottom>
+            {strings.testimonials}
+          </Typography>
+        </Grid2>
+        <Grid2 xs={12}>
+          <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={2} sx={{ m: 0, p: 0 }}>
+            {strings.testimonialList.map((t, i) => (
+              <TestimonialCard key={i} testimonial={t} />
+            ))}
+          </Masonry>
+        </Grid2>
+      </Grid2>
+    </>
   )
 }
