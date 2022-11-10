@@ -1,8 +1,10 @@
 import React from 'react'
 import './App.css'
-import { Button, CssBaseline, TablePagination } from '@mui/material'
+import { CssBaseline } from '@mui/material'
 import DrawerAppBar from './Components/DrawerAppBar'
 import LocaleProvider from './store/LocaleProvider'
+import HomePage from './pages/HomePage'
+import Grid2 from '@mui/material/Unstable_Grid2'
 
 function App() {
   return (
@@ -10,14 +12,11 @@ function App() {
       <LocaleProvider>
         <CssBaseline />
         <DrawerAppBar />
-        <Button variant="contained">Hello World</Button>
-        <TablePagination
-          count={2000}
-          rowsPerPage={10}
-          page={1}
-          component="div"
-          onPageChange={() => {}}
-        />
+        <Grid2 container display="flex" alignItems="center" height="100%">
+          <Grid2 xs={12}>
+            <HomePage />
+          </Grid2>
+        </Grid2>
       </LocaleProvider>
     </>
   )
