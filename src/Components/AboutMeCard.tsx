@@ -33,27 +33,15 @@ export default function AboutMeCard() {
               <Button size="small" color="primary">
                 {strings.readMore}
               </Button>
+              <Button size="small" variant="contained">
+                {strings.signUp}
+              </Button>
             </CardActions>
           </Box>
         </Grid2>
-        <Grid2
-          xs={12}
-          sm={6}
-          md={8}
-          // sx={{ position: 'relative' }}
-        >
+        <Grid2 xs={12} sm={6} md={8}>
           {/* TODO: Use breakpoint images (smaller images for smaller screens) */}
           <CardMedia component="img" image="/static/img/img-01_4000x4000.jpeg" alt="green iguana" />
-          {/*<Typography*/}
-          {/*  sx={{*/}
-          {/*    position: 'absolute',*/}
-          {/*    top: '20px',*/}
-          {/*    left: '20px',*/}
-          {/*    color: 'black',*/}
-          {/*    backgroundColor: 'white'*/}
-          {/*  }}>*/}
-          {/*  this text should overlay the image*/}
-          {/*</Typography>*/}
         </Grid2>
       </Grid2>
     </Card>

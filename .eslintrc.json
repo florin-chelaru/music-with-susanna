@@ -34,6 +34,7 @@
     "@typescript-eslint/triple-slash-reference": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",
     "@typescript-eslint/prefer-ts-expect-error": "off",
-    "@typescript-eslint/method-signature-style": "off"
+    "@typescript-eslint/method-signature-style": "off",
+    "@typescript-eslint/restrict-template-expressions": "off"
   }
 }
