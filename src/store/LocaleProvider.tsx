@@ -41,6 +41,7 @@ export interface LocalizedStringList {
   musicTeacher: string
   musicWithMsJohnson: string
   readMore: string
+  signUp: string
   testimonialList: Testimonial[]
   testimonials: string
 }
@@ -127,6 +128,7 @@ const EN_US: LocalizedStringList = {
   musicTeacher: 'violin & viola teacher',
   musicWithMsJohnson: 'Music with Ms. Johnson',
   readMore: 'Read more',
+  signUp: 'Sign up',
   testimonialList: TESTIMONIALS_EN_US,
   testimonials: 'Testimonials'
 }
@@ -142,6 +144,7 @@ const RO_RO: LocalizedStringList = {
   musicTeacher: 'profesoară de vioară și violă',
   musicWithMsJohnson: 'Cântăm cu Ms. Johnson',
   readMore: 'Citește mai mult',
+  signUp: 'Înscrie-te',
   // TODO: Translate to RO
   testimonialList: TESTIMONIALS_EN_US,
   testimonials: 'Testimoniale'

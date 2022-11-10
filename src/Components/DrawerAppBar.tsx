@@ -15,9 +15,6 @@ import LanguagePopover from './LanguagePopover'
 import { ListItemIcon } from '@mui/material'
 import LocaleInfo from '../util/LocaleInfo'
 import LanguageListItem from './LanguageListItem'
-import HomeIcon from '@mui/icons-material/Home'
-import InfoIcon from '@mui/icons-material/Info'
-import ContactMailIcon from '@mui/icons-material/ContactMail'
 import {
   LocaleContext,
   LocaleManager,
@@ -27,31 +24,18 @@ import {
 
 const drawerWidth = 240
 
-interface NavItemInfo {
+export interface NavItemInfo {
   key: string
   label: (strings: LocalizedStringList) => string
   icon: React.ReactNode
+  onClick?: () => void
 }
 
-const navItems: NavItemInfo[] = [
-  {
-    key: 'home',
-    label: (strings) => strings.home,
-    icon: <HomeIcon />
-  },
-  {
-    key: 'about',
-    label: (strings) => strings.aboutMe,
-    icon: <InfoIcon />
-  },
-  {
-    key: 'contact',
-    label: (strings) => strings.contact,
-    icon: <ContactMailIcon />
-  }
-]
+export interface DrawerAppBarProps {
+  navItems: NavItemInfo[]
+}
 
-export default function DrawerAppBar() {
+export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
   const [mobileOpen, setMobileOpen] = React.useState(false)
 
   const handleDrawerToggle = () => {
@@ -67,7 +51,7 @@ export default function DrawerAppBar() {
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <List>
         {navItems.map((item) => (
-          <ListItemButton key={`listitem-${item.key}`}>
+          <ListItemButton key={`listitem-${item.key}`} onClick={() => item.onClick?.()}>
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.label(strings)} />
           </ListItemButton>
@@ -97,7 +81,10 @@ export default function DrawerAppBar() {
           </Typography>
           <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
             {navItems.map((item) => (
-              <Button key={`button-${item.key}`} sx={{ color: '#fff' }}>
+              <Button
+                key={`button-${item.key}`}
+                sx={{ color: '#fff' }}
+                onClick={() => item.onClick?.()}>
                 {item.label(strings)}
               </Button>
             ))}
