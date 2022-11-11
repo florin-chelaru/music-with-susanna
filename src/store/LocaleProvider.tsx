@@ -44,6 +44,7 @@ export interface LocalizedStringList {
   signUp: string
   testimonialList: Testimonial[]
   testimonials: string
+  youtubeChildrensChannel: string
 }
 
 const TESTIMONIALS_EN_US: Testimonial[] = [
@@ -130,7 +131,8 @@ const EN_US: LocalizedStringList = {
   readMore: 'Read more',
   signUp: 'Sign up',
   testimonialList: TESTIMONIALS_EN_US,
-  testimonials: 'Testimonials'
+  testimonials: 'Testimonials',
+  youtubeChildrensChannel: "Children's YouTube Channel"
 }
 
 const RO_RO: LocalizedStringList = {
@@ -147,7 +149,8 @@ const RO_RO: LocalizedStringList = {
   signUp: 'Înscrie-te',
   // TODO: Translate to RO
   testimonialList: TESTIMONIALS_EN_US,
-  testimonials: 'Testimoniale'
+  testimonials: 'Testimoniale',
+  youtubeChildrensChannel: 'Canal YouTube pentru Copii'
 }
 
 export interface LocaleCollection extends LocalizedStringList, LocalizedStringsMethods {}

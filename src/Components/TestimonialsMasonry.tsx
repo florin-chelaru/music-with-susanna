@@ -6,32 +6,15 @@ import {
   CardHeader,
   CardMedia,
   Collapse,
-  IconButtonProps,
   Link,
-  Rating,
-  styled
+  Rating
 } from '@mui/material'
 import Typography from '@mui/material/Typography'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import IconButton from '@mui/material/IconButton'
 import { Masonry } from '@mui/lab'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import { LocaleContext, LocaleManager, Testimonial } from '../store/LocaleProvider'
-
-interface ExpandMoreProps extends IconButtonProps {
-  expand: boolean
-}
-
-const ExpandMore = styled((props: ExpandMoreProps) => {
-  const { expand, ...other } = props
-  return <IconButton {...other} />
-})(({ theme, expand }) => ({
-  transform: !expand ? 'rotate(0deg)' : 'rotate(180deg)',
-  marginLeft: 'auto',
-  transition: theme.transitions.create('transform', {
-    duration: theme.transitions.duration.shortest
-  })
-}))
+import ExpandMoreButton from './ExpandMoreButton'
 
 interface TestimonialCardProps {
   testimonial: Testimonial
@@ -79,13 +62,13 @@ const TestimonialCard = React.memo(({ testimonial }: TestimonialCardProps) => {
       )}
       {needsExpansion && (
         <CardActions disableSpacing>
-          <ExpandMore
+          <ExpandMoreButton
             expand={expanded}
             onClick={handleExpandClick}
             aria-expanded={expanded}
             aria-label="show more">
             <ExpandMoreIcon />
-          </ExpandMore>
+          </ExpandMoreButton>
         </CardActions>
       )}
     </Card>
@@ -97,11 +80,6 @@ export default function TestimonialsMasonry() {
   return (
     <>
       <Grid2 container>
-        <Grid2 xs={12} display="flex" justifyContent="center" textAlign="center" sx={{ pb: 0 }}>
-          <Typography variant="button" gutterBottom>
-            {strings.testimonials}
-          </Typography>
-        </Grid2>
         <Grid2 xs={12}>
           <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={2} sx={{ m: 0, p: 0 }}>
             {strings.testimonialList.map((t, i) => (
