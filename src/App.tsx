@@ -25,7 +25,7 @@ function App() {
     },
     {
       key: 'about',
-      label: (strings) => strings.aboutMe,
+      label: (strings) => strings.musicLessons,
       icon: <InfoIcon />
     },
     {

@@ -8,7 +8,7 @@ import List from '@mui/material/List'
 import * as React from 'react'
 import IconButton from '@mui/material/IconButton'
 import { useContext } from 'react'
-import { LocaleManager, LocaleContext } from '../store/LocaleProvider'
+import { LocaleHandler, LocaleContext } from '../store/LocaleProvider'
 
 interface CountryFlagIconProps {
   language: LocaleInfo
@@ -33,7 +33,7 @@ export interface LanguageListItemProps {
 export default function LanguageListItem({ languages, onChange }: LanguageListItemProps) {
   const [open, setOpen] = React.useState(true)
 
-  const localeManager = useContext<LocaleManager>(LocaleContext)
+  const localeManager = useContext<LocaleHandler>(LocaleContext)
 
   const handleClick = (e: React.SyntheticEvent) => {
     e.stopPropagation()
@@ -45,7 +45,7 @@ export default function LanguageListItem({ languages, onChange }: LanguageListIt
         <ListItemIcon>
           <LanguageIcon />
         </ListItemIcon>
-        <ListItemText primary={localeManager.stringList.language} />
+        <ListItemText primary={localeManager.globalStringList.language} />
         {open ? <ExpandLess /> : <ExpandMore />}
       </ListItemButton>
       <Collapse in={open} timeout="auto" unmountOnExit>

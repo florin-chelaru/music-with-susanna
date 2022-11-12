@@ -1,225 +1,56 @@
-import React, { createContext, useEffect, useState } from 'react'
-import LocalizedStrings, { LocalizedStringsMethods } from 'react-localization'
+import React, { createContext, useMemo, useState } from 'react'
 import { createTheme, ThemeProvider, useTheme } from '@mui/material'
 import * as muiLocales from '@mui/material/locale'
-import LocaleInfo from '../util/LocaleInfo'
+import { SupportedLocale } from '../util/SupportedLocale'
+import { EN_US, RO_RO } from './LocaleSettings'
 
-// When using TypeScript 4.x and above. See: https://mui.com/material-ui/about-the-lab/
-
-export const SUPPORTED_LOCALES: LocaleInfo[] = [
-  {
-    locale: 'enUS',
-    label: 'English',
-    icon: '/static/icons/ic_flag_en.svg'
-  },
-  {
-    locale: 'roRO',
-    label: 'Română',
-    icon: '/static/icons/ic_flag_ro.svg'
-  }
-]
-
-export type SupportedLocale = 'enUS' | 'roRO'
-
-export interface Testimonial {
-  title: string
-  subtitle?: string
-  content?: string
-  image?: string
-  rating?: number
-  ratingUrl?: string
+export interface LocalizedData {
+  [key: string]: string | React.ReactNode
 }
 
-/** An interface containing all terms used on the website. */
-export interface LocalizedStringList {
+/** An interface containing the terms used globally on the website. */
+export interface GlobalLocalizedData extends LocalizedData {
   // Keep these ordered alphabetically:
-  aboutMe: string
-  aboutMeTextShort: string
   contact: string
   home: string
   language: string
-  musicTeacher: string
+  musicLessons: string
   musicWithMsJohnson: string
   readMore: string
   signUp: string
-  testimonialList: Testimonial[]
   testimonials: string
   youtubeChildrensChannel: string
 }
 
-const TESTIMONIALS_EN_US: Testimonial[] = [
-  {
-    title: 'Ariel Roth',
-    subtitle: 'Parent of Savi, age nine',
-    content:
-      'Ms. Susanna, as she was known in our house, was our son\'s first violin teacher - and she was outstanding. Savi, who has some learning issues, needed a patient teacher, one who could tailor her teaching to his attentional needs and to what he would find interesting. Susanna was firm when she needed to be, but engaged with him on the subjects that he was interested in, like Star Wars and Harry Potter, even making up a "Darth Vader" song for him to play on the violin as a way of motivating him.\n' +
-      '\n' +
-      'As a parent, we loved Susanna because she kept us informed of what was happening in the lessons and took time at the end of each lesson to show us what she taught him and what he needed to practice and how so that we could help him develop his skills.\n' +
-      '\n' +
-      'The payoff to working with Susanna was huge. In his school recital at the end of the year, Savi was the best string player in the bunch and his joy in playing the violin is clear. He just got back from a month at sleep away camp and the first thing he did when he got home was reach for his violin and play Song with the Wind.\n' +
-      '\n' +
-      "I would recommend Susanna without hesitation! If Savi's future teacher's are half as good, I'll consider myself truly fortunate.",
-    rating: 5
-  },
-  {
-    title: 'Evelyn',
-    subtitle: 'Student, age five',
-    image: '/static/img/evelyn-letter-square-bw-large.jpeg'
-  },
-  {
-    title: 'Hari',
-    subtitle: 'Parent',
-    content:
-      'Susanna has been teaching my daughter viola for 2 years. She is a fantastic teacher and my daughter is thriving under her tutelage. She knows exactly the pace at which to teach and what pieces to use, and her teaching of technique is very good. The most important endorsement I can make is that my daughter is so eager to go to her weekly lessons!',
-    rating: 5,
-    ratingUrl: 'https://takelessons.com/profile/susanna-j#reviews'
-  },
-  {
-    title: 'Rawi S.',
-    subtitle: 'Student',
-    content:
-      'Susanna is a very thoughtful and innovative instructor. I have learned a lot from her and am now able to play the viola piece within months after so many years of struggling with other instructors. The sadness that struck me as the months I have spent learning from her drew to a close derives from the fact that she has been one of my best instructors ever! It is sad to see her move to Boston but my loss is your gain. Highly recommended.',
-    rating: 5,
-    ratingUrl: 'https://takelessons.com/profile/susanna-j#reviews'
-  },
-  {
-    title: 'Gracie',
-    subtitle: 'Student',
-    image: '/static/img/gracie-letter-bw-small.webp'
-  },
-  {
-    title: 'Mariana',
-    subtitle: 'Parent of middle school/high school student',
-    content:
-      'Susanna was a private teacher for my middle school/high school student and gave her private viola lessons. My daughter has played at an amateur level since the forth grade and Susanna taught her for two years. She did a great job. She was punctual and was dedicated, often staying more than the allotted time. She was also very patient and pro-active looking for new music. She helped my daughter through many concerts and festivals. It was a great experience and we were sorry to see her leave but hope she can help other students in the Bosotn area.',
-    rating: 4,
-    ratingUrl: 'https://takelessons.com/profile/susanna-j#reviews'
-  },
-  {
-    title: 'Andreea Teleche',
-    subtitle: 'Parent of Tudor, age seven',
-    // TODO
-    content:
-      'Susanna was a private teacher for my middle school/high school student and gave her private viola lessons. My daughter has played at an amateur level since the forth grade and Susanna taught her for two years. She did a great job. She was punctual and was dedicated, often staying more than the allotted time. She was also very patient and pro-active looking for new music. She helped my daughter through many concerts and festivals. It was a great experience and we were sorry to see her leave but hope she can help other students in the Bosotn area.',
-    rating: 5,
-    image: '/static/img/tudor-large.jpeg'
-  },
-  {
-    title: 'Joanna',
-    subtitle: 'Parent of five year old student',
-    content:
-      'Susanna is an amazinging patient instructor with my wiggly five year old. Children have short attention spans, but Susanna is able to refocus my daughters attention to keep her engaged in the lesson. So happy to have been able to give my daughter a positive introduction to music.',
-    rating: 5,
-    ratingUrl: 'https://takelessons.com/profile/susanna-j#reviews'
-  },
-  {
-    title: 'Evelyn',
-    subtitle: 'Student, age five',
-    image: '/static/img/evelyn-small.webp'
-  }
-]
-
-const EN_US: LocalizedStringList = {
-  aboutMe: 'About Me',
-  aboutMeTextShort:
-    'Susanna has a Master’s degree in viola performance at the University of Maryland and a Bachelor of Music in viola performance at the Indiana University Jacobs School of Music. Susanna studied for a year at Boston Conservatory, as part of the Graduate Performer’s Diploma program.',
-  contact: 'Contact',
-  home: 'Home',
-  language: 'Language',
-  musicTeacher: 'violin & viola teacher',
-  musicWithMsJohnson: 'Music with Ms. Johnson',
-  readMore: 'Read more',
-  signUp: 'Sign up',
-  testimonialList: TESTIMONIALS_EN_US,
-  testimonials: 'Testimonials',
-  youtubeChildrensChannel: "Children's YouTube Channel"
-}
-
-const RO_RO: LocalizedStringList = {
-  aboutMe: 'Despre Mine',
-  // TODO: Translate to RO
-  aboutMeTextShort:
-    'Susanna has a Master’s degree in viola performance at the University of Maryland and a Bachelor of Music in viola performance at the Indiana University Jacobs School of Music. Susanna studied for a year at Boston Conservatory, as part of the Graduate Performer’s Diploma program.',
-  contact: 'Contact',
-  home: 'Acasă',
-  language: 'Limba',
-  musicTeacher: 'profesoară de vioară și violă',
-  musicWithMsJohnson: 'Cântăm cu Ms. Johnson',
-  readMore: 'Citește mai mult',
-  signUp: 'Înscrie-te',
-  // TODO: Translate to RO
-  testimonialList: TESTIMONIALS_EN_US,
-  testimonials: 'Testimoniale',
-  youtubeChildrensChannel: 'Canal YouTube pentru Copii'
-}
-
-export interface LocaleCollection extends LocalizedStringList, LocalizedStringsMethods {}
-
-export interface LocaleManager {
-  changeLocale(locale: SupportedLocale): void
-
+export interface LocaleHandler {
   readonly locale: string
 
-  readonly stringList: LocalizedStringList
+  readonly globalStringList: GlobalLocalizedData
+
+  changeLocale(locale: SupportedLocale): void
+
+  registerComponentStrings(
+    componentId: string,
+    componentStrings: Map<SupportedLocale, LocalizedData>
+  ): void
+
+  componentStrings(componentId: string): LocalizedData
 }
 
-const LOCALES: LocaleCollection = new LocalizedStrings({
-  enUS: EN_US,
-  roRO: RO_RO
-})
+class LocaleManager implements LocaleHandler {
+  private locale_: SupportedLocale
+  private readonly globalLocales: Map<SupportedLocale, GlobalLocalizedData>
+  protected readonly componentLocales = new Map<SupportedLocale, Map<string, LocalizedData>>()
 
-export const LocaleContext = createContext<LocaleManager>({
-  changeLocale(locale: SupportedLocale) {
-    LOCALES.setLanguage(locale)
-  },
-  get locale(): string {
-    return LOCALES.getLanguage()
-  },
-  get stringList(): LocalizedStringList {
-    return LOCALES
-  }
-})
-
-export interface LocaleProviderProps {
-  defaultLocale?: SupportedLocale
-  children: JSX.Element | JSX.Element[]
-}
-
-const LocaleProvider = ({ defaultLocale, children }: LocaleProviderProps) => {
-  const [locale, setLocale] = useState<SupportedLocale>(defaultLocale ?? 'enUS')
-
-  const theme = useTheme()
-
-  const themeWithLocale = React.useMemo(
-    () => createTheme(theme, muiLocales[locale]),
-    [locale, theme]
-  )
-
-  const localeManager: LocaleManager = {
-    changeLocale(locale: SupportedLocale) {
-      if (LOCALES.getAvailableLanguages().includes(locale)) {
-        LOCALES.setLanguage(locale)
-        try {
-          localStorage.setItem('locale', locale)
-        } catch (e) {
-          console.error(
-            `Could not save the locale preferences for the user: ${(e as Error).message}`
-          )
-        }
-        setLocale(locale)
-      }
-    },
-
-    get locale(): SupportedLocale {
-      return LOCALES.getLanguage() as SupportedLocale
-    },
-
-    get stringList(): LocalizedStringList {
-      return LOCALES
+  constructor(
+    globalLocales: Map<SupportedLocale, GlobalLocalizedData>,
+    defaultLocale?: SupportedLocale
+  ) {
+    this.globalLocales = globalLocales
+    // Initialize component locales
+    for (const l of Object.values(SupportedLocale)) {
+      this.componentLocales.set(l, new Map<string, LocalizedData>())
     }
-  }
-
-  useEffect(() => {
     if (!defaultLocale) {
       try {
         defaultLocale = (localStorage.getItem('locale') as SupportedLocale) ?? undefined
@@ -231,13 +62,114 @@ const LocaleProvider = ({ defaultLocale, children }: LocaleProviderProps) => {
         )
       }
     }
-    if (defaultLocale && defaultLocale !== locale) {
-      localeManager.changeLocale(defaultLocale)
+    this.locale_ = defaultLocale ?? SupportedLocale.EN_US
+  }
+
+  changeLocale(locale: SupportedLocale): void {
+    this.locale_ = locale
+    try {
+      localStorage.setItem('locale', locale)
+    } catch (e) {
+      console.error(`Could not save the locale preferences for the user: ${(e as Error).message}`)
     }
-  }, [])
+  }
+
+  get locale(): SupportedLocale {
+    return this.locale_
+  }
+
+  get globalStringList(): GlobalLocalizedData {
+    return this.globalLocales.get(this.locale_) as GlobalLocalizedData
+  }
+
+  registerComponentStrings(
+    componentId: string,
+    componentStrings: Map<SupportedLocale, LocalizedData>
+  ) {
+    componentStrings.forEach((localizedData, locale) => {
+      this.componentLocales.get(locale)?.set(componentId, localizedData)
+    })
+  }
+
+  componentStrings(componentId: string): LocalizedData {
+    return this.componentLocales.get(this.locale_)?.get(componentId) ?? {}
+  }
+}
+
+class LocaleManagerWrapper implements LocaleHandler {
+  private readonly localeManager: LocaleManager
+  private readonly setLocaleState: (locale: SupportedLocale) => void
+
+  constructor(localeManager: LocaleManager, setLocaleState: (locale: SupportedLocale) => void) {
+    this.localeManager = localeManager
+    this.setLocaleState = setLocaleState
+  }
+
+  get locale(): string {
+    return this.localeManager.locale
+  }
+
+  get globalStringList(): GlobalLocalizedData {
+    return this.localeManager.globalStringList
+  }
+
+  changeLocale(locale: SupportedLocale) {
+    this.localeManager.changeLocale(locale)
+    this.setLocaleState(locale)
+  }
+
+  registerComponentStrings(
+    componentId: string,
+    componentStrings: Map<SupportedLocale, LocalizedData>
+  ) {
+    this.localeManager.registerComponentStrings(componentId, componentStrings)
+  }
+
+  componentStrings(componentId: string): LocalizedData {
+    return this.localeManager.componentStrings(componentId)
+  }
+}
+
+export const LocaleContext = createContext<LocaleHandler>(
+  new LocaleManager(
+    new Map<SupportedLocale, GlobalLocalizedData>([
+      [SupportedLocale.EN_US, EN_US],
+      [SupportedLocale.RO_RO, RO_RO]
+    ])
+  )
+)
+
+export interface LocaleProviderProps {
+  defaultLocale?: SupportedLocale
+  children: JSX.Element | JSX.Element[]
+}
+
+const LocaleProvider = ({ defaultLocale, children }: LocaleProviderProps) => {
+  const [locale, setLocale] = useState<SupportedLocale | undefined>(defaultLocale)
+
+  const theme = useTheme()
+
+  const themeWithLocale = useMemo(
+    () => createTheme(theme, muiLocales[locale ?? 'enUS']),
+    [locale, theme]
+  )
+
+  const localeManager = useMemo<LocaleManager>(
+    () =>
+      new LocaleManager(
+        new Map<SupportedLocale, GlobalLocalizedData>([
+          [SupportedLocale.EN_US, EN_US],
+          [SupportedLocale.RO_RO, RO_RO]
+        ]),
+        locale
+      ),
+    []
+  )
+
+  const localeWrapper = useMemo(() => new LocaleManagerWrapper(localeManager, setLocale), [locale])
 
   return (
-    <LocaleContext.Provider value={localeManager}>
+    <LocaleContext.Provider value={localeWrapper}>
       <ThemeProvider theme={themeWithLocale}>{children}</ThemeProvider>
     </LocaleContext.Provider>
   )

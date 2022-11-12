@@ -3,11 +3,11 @@ import { Avatar, Stack } from '@mui/material'
 import Typography from '@mui/material/Typography'
 import { Masonry } from '@mui/lab'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import { LocaleContext, LocaleManager } from '../store/LocaleProvider'
+import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import VideoThumbnailCard, { VideoThumbnailCardProps } from './VideoThumbnailCard'
 
 export default function VideosMasonry() {
-  const strings = useContext<LocaleManager>(LocaleContext).stringList
+  const strings = useContext<LocaleHandler>(LocaleContext).globalStringList
   const videoCardProps: VideoThumbnailCardProps[] = [
     {
       title: 'Funny Face: all verses!',

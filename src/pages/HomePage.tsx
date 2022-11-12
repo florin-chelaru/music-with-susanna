@@ -5,7 +5,7 @@ import Grid2 from '@mui/material/Unstable_Grid2'
 import AboutMeCard from '../Components/AboutMeCard'
 import TestimonialsMasonry from '../Components/TestimonialsMasonry'
 import VideosMasonry from '../Components/VideosMasonry'
-import { LocaleContext, LocaleManager } from '../store/LocaleProvider'
+import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 
 export interface HomePageProps {
   homeRef: RefObject<HTMLDivElement>
@@ -14,7 +14,7 @@ export interface HomePageProps {
 }
 
 export default function HomePage({ homeRef, testimonialsRef, youtubeChannelRef }: HomePageProps) {
-  const strings = useContext<LocaleManager>(LocaleContext).stringList
+  const strings = useContext<LocaleHandler>(LocaleContext).globalStringList
   return (
     <>
       <Container maxWidth="md" sx={{ pt: 3 }}>
