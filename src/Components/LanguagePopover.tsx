@@ -6,7 +6,7 @@ import { Box, IconButton, MenuItem, Stack } from '@mui/material'
 import MenuPopover from './MenuPopover'
 import LocaleInfo from '../util/LocaleInfo'
 import LanguageIcon from '@mui/icons-material/Language'
-import { LocaleManager, LocaleContext } from '../store/LocaleProvider'
+import { LocaleHandler, LocaleContext } from '../store/LocaleProvider'
 
 // ----------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ export default function LanguagePopover({ languages, onChange }: LanguagePopover
   const anchorRef = useRef(null)
   const [open, setOpen] = useState(false)
 
-  const languageHandler = useContext<LocaleManager>(LocaleContext)
+  const languageHandler = useContext<LocaleHandler>(LocaleContext)
 
   const handleOpen = () => {
     setOpen(true)

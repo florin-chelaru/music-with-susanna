@@ -1,4 +1,4 @@
-import { SupportedLocale } from '../store/LocaleProvider'
+import { SupportedLocale } from './SupportedLocale'
 
 export default interface LocaleInfo {
   locale: SupportedLocale

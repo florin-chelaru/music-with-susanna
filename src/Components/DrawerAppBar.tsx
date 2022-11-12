@@ -15,18 +15,14 @@ import LanguagePopover from './LanguagePopover'
 import { ListItemIcon } from '@mui/material'
 import LocaleInfo from '../util/LocaleInfo'
 import LanguageListItem from './LanguageListItem'
-import {
-  LocaleContext,
-  LocaleManager,
-  LocalizedStringList,
-  SUPPORTED_LOCALES
-} from '../store/LocaleProvider'
+import { GlobalLocalizedData, LocaleContext, LocaleHandler } from '../store/LocaleProvider'
+import { SUPPORTED_LOCALES } from '../store/LocaleSettings'
 
 const drawerWidth = 240
 
 export interface NavItemInfo {
   key: string
-  label: (strings: LocalizedStringList) => string
+  label: (strings: GlobalLocalizedData) => string
   icon: React.ReactNode
   onClick?: () => void
 }
@@ -42,8 +38,8 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
     setMobileOpen(!mobileOpen)
   }
 
-  const localeManager = useContext<LocaleManager>(LocaleContext)
-  const strings = localeManager.stringList
+  const localeManager = useContext<LocaleHandler>(LocaleContext)
+  const strings = localeManager.globalStringList
 
   const onLocaleChange = (l: LocaleInfo) => localeManager.changeLocale(l.locale)
 
