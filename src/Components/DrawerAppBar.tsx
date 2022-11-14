@@ -17,6 +17,7 @@ import LocaleInfo from '../util/LocaleInfo'
 import LanguageListItem from './LanguageListItem'
 import { GlobalLocalizedData, LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import { SUPPORTED_LOCALES } from '../store/LocaleSettings'
+import { Link as DomLink, useLocation } from 'react-router-dom'
 
 const drawerWidth = 240
 
@@ -24,7 +25,7 @@ export interface NavItemInfo {
   key: string
   label: (strings: GlobalLocalizedData) => string
   icon: React.ReactNode
-  onClick?: () => void
+  path: string
 }
 
 export interface DrawerAppBarProps {
@@ -41,13 +42,22 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   const strings = localeManager.globalStringList
 
+  const location = useLocation()
+  const pageTitle =
+    navItems.find((item) => item.path === location.pathname && item.path !== '/')?.label(strings) ??
+    strings.musicWithMsJohnson
+
   const onLocaleChange = (l: LocaleInfo) => localeManager.changeLocale(l.locale)
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <List>
         {navItems.map((item) => (
-          <ListItemButton key={`listitem-${item.key}`} onClick={() => item.onClick?.()}>
+          <ListItemButton
+            key={`listitem-${item.key}`}
+            // onClick={() => item.onClick?.()}
+            component={DomLink}
+            to={item.path}>
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.label(strings)} />
           </ListItemButton>
@@ -66,21 +76,26 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}>
+            sx={{ mr: 2, display: { md: 'none' } }}>
             <MenuIcon />
           </IconButton>
           <Typography
             variant="h6"
             component="div"
             sx={{ flexGrow: 1, display: { xs: 'block', sm: 'block' } }}>
-            {strings.musicWithMsJohnson}
+            {pageTitle}
           </Typography>
-          <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+          <Box sx={{ display: { xs: 'none', md: 'block' } }}>
             {navItems.map((item) => (
               <Button
                 key={`button-${item.key}`}
                 sx={{ color: '#fff' }}
-                onClick={() => item.onClick?.()}>
+                component={DomLink}
+                to={item.path}
+                // href={item.path}
+                // onClick={() => item.onClick?.()}
+                // onClick={(e) => e.preventDefault()}
+              >
                 {item.label(strings)}
               </Button>
             ))}
@@ -97,7 +112,7 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
             keepMounted: true // Better open performance on mobile.
           }}
           sx={{
-            display: { xs: 'block', sm: 'none' },
+            display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth }
           }}>
           {drawer}

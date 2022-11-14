@@ -94,7 +94,7 @@ export default function AboutMeCard() {
             }}>
             <CardContent>
               <Typography gutterBottom variant="h5" component="div">
-                {strings.musicLessons.toUpperCase()}
+                {strings.lessons.toUpperCase()}
               </Typography>
               <Typography gutterBottom variant="subtitle2" component="div">
                 {componentStrings.subtitle}

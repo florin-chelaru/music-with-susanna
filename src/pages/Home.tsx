@@ -7,13 +7,13 @@ import TestimonialsMasonry from '../Components/TestimonialsMasonry'
 import VideosMasonry from '../Components/VideosMasonry'
 import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 
-export interface HomePageProps {
+export interface HomeProps {
   homeRef: RefObject<HTMLDivElement>
   testimonialsRef: RefObject<HTMLDivElement>
   youtubeChannelRef: RefObject<HTMLDivElement>
 }
 
-export default function HomePage({ homeRef, testimonialsRef, youtubeChannelRef }: HomePageProps) {
+export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: HomeProps) {
   const strings = useContext<LocaleHandler>(LocaleContext).globalStringList
   return (
     <>

@@ -11,10 +11,12 @@ export interface LocalizedData {
 /** An interface containing the terms used globally on the website. */
 export interface GlobalLocalizedData extends LocalizedData {
   // Keep these ordered alphabetically:
+  about: string
+  channel: string
   contact: string
   home: string
   language: string
-  musicLessons: string
+  lessons: string
   musicWithMsJohnson: string
   readMore: string
   signUp: string
@@ -62,7 +64,7 @@ class LocaleManager implements LocaleHandler {
         )
       }
     }
-    this.locale_ = defaultLocale ?? SupportedLocale.EN_US
+    this.locale_ = defaultLocale ?? SupportedLocale.RO_RO
   }
 
   changeLocale(locale: SupportedLocale): void {
@@ -150,7 +152,7 @@ const LocaleProvider = ({ defaultLocale, children }: LocaleProviderProps) => {
   const theme = useTheme()
 
   const themeWithLocale = useMemo(
-    () => createTheme(theme, muiLocales[locale ?? 'enUS']),
+    () => createTheme(theme, muiLocales[locale ?? SupportedLocale.RO_RO]),
     [locale, theme]
   )
 

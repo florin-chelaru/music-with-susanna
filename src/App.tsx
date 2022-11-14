@@ -2,7 +2,7 @@ import React, { useRef } from 'react'
 import './App.css'
 import DrawerAppBar, { NavItemInfo } from './Components/DrawerAppBar'
 import LocaleProvider from './store/LocaleProvider'
-import HomePage from './pages/HomePage'
+import Home from './pages/Home'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import CustomThemeProvider from './theme/CustomThemeProvider'
 import HomeIcon from '@mui/icons-material/Home'
@@ -10,7 +10,13 @@ import InfoIcon from '@mui/icons-material/Info'
 import ContactMailIcon from '@mui/icons-material/ContactMail'
 import ReviewsIcon from '@mui/icons-material/Reviews'
 import YouTubeIcon from '@mui/icons-material/YouTube'
-import { scrollToElement } from './util/window'
+import SchoolIcon from '@mui/icons-material/School'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import Lessons from './pages/Lessons'
+import About from './pages/About'
+import Contact from './pages/Contact'
+import Testimonials from './pages/Testimonials'
+import VideoChannel from './pages/VideoChannel'
 
 function App() {
   const homeRef = useRef<HTMLDivElement>(null)
@@ -21,46 +27,68 @@ function App() {
       key: 'home',
       label: (strings) => strings.home,
       icon: <HomeIcon />,
-      onClick: () => homeRef.current && scrollToElement(homeRef.current)
+      path: '/'
+    },
+    {
+      key: 'lessons',
+      label: (strings) => strings.lessons,
+      icon: <SchoolIcon />,
+      path: '/lessons'
     },
     {
       key: 'about',
-      label: (strings) => strings.musicLessons,
-      icon: <InfoIcon />
+      label: (strings) => strings.about,
+      icon: <InfoIcon />,
+      path: '/about'
     },
     {
       key: 'testimonials',
       label: (strings) => strings.testimonials,
       icon: <ReviewsIcon />,
-      onClick: () => testimonialsRef.current && scrollToElement(testimonialsRef.current)
+      path: '/testimonials'
     },
     {
-      key: 'youtube',
-      label: () => 'YouTube',
+      key: 'videos',
+      label: (strings) => strings.channel,
       icon: <YouTubeIcon />,
-      onClick: () => youtubeChannelRef.current && scrollToElement(youtubeChannelRef.current)
+      path: '/videos'
     },
 
     {
       key: 'contact',
       label: (strings) => strings.contact,
-      icon: <ContactMailIcon />
+      icon: <ContactMailIcon />,
+      path: '/contact'
     }
   ]
 
   return (
     <CustomThemeProvider>
       <LocaleProvider>
-        <DrawerAppBar navItems={navItems} />
-        <Grid2 container display="flex" alignItems="center" height="100%">
-          <Grid2 xs={12}>
-            <HomePage
-              homeRef={homeRef}
-              testimonialsRef={testimonialsRef}
-              youtubeChannelRef={youtubeChannelRef}
-            />
+        <BrowserRouter>
+          <DrawerAppBar navItems={navItems} />
+          <Grid2 container display="flex" alignItems="center" height="100%">
+            <Grid2 xs={12}>
+              <Routes>
+                <Route
+                  path="/"
+                  element={
+                    <Home
+                      homeRef={homeRef}
+                      testimonialsRef={testimonialsRef}
+                      youtubeChannelRef={youtubeChannelRef}
+                    />
+                  }
+                />
+                <Route path="/lessons" element={<Lessons />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/testimonials" element={<Testimonials />} />
+                <Route path="/videos" element={<VideoChannel />} />
+                <Route path="/contact" element={<Contact />} />
+              </Routes>
+            </Grid2>
           </Grid2>
-        </Grid2>
+        </BrowserRouter>
       </LocaleProvider>
     </CustomThemeProvider>
   )
