@@ -67,7 +67,7 @@ function App() {
       <LocaleProvider>
         <BrowserRouter>
           <DrawerAppBar navItems={navItems} />
-          <Grid2 container display="flex" alignItems="center" height="100%">
+          <Grid2 container>
             <Grid2 xs={12}>
               <Routes>
                 <Route
