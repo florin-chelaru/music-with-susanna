@@ -16,10 +16,12 @@ export const SUPPORTED_LOCALES: LocaleInfo[] = [
 ]
 
 export const EN_US: GlobalLocalizedData = {
+  about: 'About Susanna',
+  channel: 'Video Channel',
   contact: 'Contact',
   home: 'Home',
   language: 'Language',
-  musicLessons: 'Music Lessons',
+  lessons: 'Music Lessons',
   musicWithMsJohnson: 'Music with Ms. Johnson',
   readMore: 'Read more',
   signUp: 'Sign up',
@@ -28,10 +30,12 @@ export const EN_US: GlobalLocalizedData = {
 }
 
 export const RO_RO: GlobalLocalizedData = {
+  about: 'Despre Susanna',
+  channel: 'Canal Video',
   contact: 'Contact',
   home: 'Acasă',
   language: 'Limba',
-  musicLessons: 'Lecții de Muzică',
+  lessons: 'Lecții de Muzică',
   musicWithMsJohnson: 'Cântăm cu Ms. Johnson',
   readMore: 'Citește mai mult',
   signUp: 'Înscrie-te',
