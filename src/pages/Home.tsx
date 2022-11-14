@@ -2,7 +2,7 @@ import React, { RefObject, useContext } from 'react'
 import Toolbar from '@mui/material/Toolbar'
 import { Chip, Container, Divider } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import AboutMeCard from '../Components/AboutMeCard'
+import IntroCard from '../Components/IntroCard'
 import TestimonialsMasonry from '../Components/TestimonialsMasonry'
 import VideosMasonry from '../Components/VideosMasonry'
 import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
@@ -21,7 +21,7 @@ export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: Ho
         <Toolbar />
         <Grid2 container spacing={2}>
           <Grid2 xs={12} ref={homeRef}>
-            <AboutMeCard />
+            <IntroCard />
           </Grid2>
           <Grid2 xs={12}>
             <Divider variant="middle" sx={{ m: 1 }}>

@@ -6,12 +6,12 @@ import Typography from '@mui/material/Typography'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
 
-interface AboutMeTexts extends LocalizedData {
+interface IntroTexts extends LocalizedData {
   subtitle: string
   shortDescription: React.ReactNode
 }
 
-const EN_US: AboutMeTexts = {
+const EN_US: IntroTexts = {
   subtitle:
     'Teach your child to play violin and viola, using established Japanese-American pedagogical methods!',
   shortDescription: (
@@ -40,7 +40,7 @@ const EN_US: AboutMeTexts = {
   )
 }
 
-const RO_RO: AboutMeTexts = {
+const RO_RO: IntroTexts = {
   subtitle:
     'Învață copilul tău să cânte la vioară sau violă, folosind metode pedagogice consacrate din Statele Unite ale Americii și Japonia!',
   shortDescription: (
@@ -75,11 +75,11 @@ const TEXTS = new Map<SupportedLocale, LocalizedData>([
   [SupportedLocale.RO_RO, RO_RO]
 ])
 
-export default function AboutMeCard() {
+export default function IntroCard() {
   const strings = useContext<LocaleHandler>(LocaleContext).globalStringList
   const localeManager = useContext<LocaleHandler>(LocaleContext)
-  useMemo(() => localeManager.registerComponentStrings(AboutMeCard.name, TEXTS), [])
-  const componentStrings = localeManager.componentStrings(AboutMeCard.name) as AboutMeTexts
+  useMemo(() => localeManager.registerComponentStrings(IntroCard.name, TEXTS), [])
+  const componentStrings = localeManager.componentStrings(IntroCard.name) as IntroTexts
 
   return (
     <Card>
@@ -128,7 +128,7 @@ export default function AboutMeCard() {
             component="img"
             // TODO: Use breakpoint images (smaller images for smaller screens)
             image="/static/img/img-01_4000x4000.jpeg"
-            alt="green iguana"
+            alt="Susanna Johnson"
             // For getting the image to stretch to the available space.
             // See https://stackoverflow.com/questions/14142378/how-can-i-fill-a-div-with-an-image-while-keeping-it-proportional
             sx={{
