@@ -19,6 +19,7 @@ import YouTubeIcon from '@mui/icons-material/YouTube'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import { GREY } from '../theme/palette'
 import { Masonry } from '@mui/lab'
+import PhotoCard from '../Components/PhotoCard'
 
 export interface AboutProps {}
 
@@ -28,16 +29,7 @@ export default function About({}: AboutProps) {
   const content = (
     <Grid2 container>
       <Grid2 xs={12} sm={4}>
-        <Card
-          elevation={1}
-          sx={{
-            borderRadius: 0,
-            p: 1,
-            border: '1px solid rgba(0, 0, 0, 0.2);',
-            backgroundColor: GREY[500_24]
-          }}>
-          <CardMedia component="img" image="/static/img/bio-photo.jpeg" alt="Susanna Johnson" />
-        </Card>
+        <PhotoCard image="/static/img/bio-photo.jpeg" alt="Susanna Johnson" />
       </Grid2>
       <Grid2 xs={12} sm={8}>
         <Typography variant="h5">SUSANNA JOHNSON</Typography>
