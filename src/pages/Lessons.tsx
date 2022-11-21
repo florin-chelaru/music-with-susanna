@@ -112,10 +112,29 @@ export default function Lessons({}: LessonsProps) {
       <Card>
         <Grid2 container>
           <Grid2 xs={12}>
+            {xs && !sm && (
+              <CardMedia
+                component="img"
+                image="/static/img/lessons/dylan-trophy.jpeg"
+                alt="Dylan age six, just earned his 30-day practice trophy"
+              />
+            )}
             <CardContent>
               <Typography variant="h6" paragraph>
                 THE SUZUKI METHOD
               </Typography>
+              {sm && (
+                <PhotoCard
+                  image="/static/img/lessons/dylan-trophy.jpeg"
+                  // TODO: Localize
+                  alt="Dylan age six, just earned his 30-day practice trophy"
+                  caption="Dylan age six, just earned his 30-day practice trophy"
+                  sx={{
+                    float: { xs: 'none', sm: 'right' },
+                    maxWidth: { xs: 'none', sm: 400 }
+                  }}
+                />
+              )}
               <Typography variant="body1" paragraph>
                 The Suzuki Method has a long established history of success of more than fifty years
                 originating from Japan, and spreading to the United States, to Europe and worldwide.
@@ -144,7 +163,7 @@ export default function Lessons({}: LessonsProps) {
       <Card sx={{ mt: 2 }}>
         <Grid2 container>
           <Grid2 xs={12}>
-            {xs && !sm && (
+            {xs && !md && (
               <CardMedia
                 component="img"
                 image="/static/img/lessons/teaching-group-violin-01.jpeg"
@@ -155,7 +174,7 @@ export default function Lessons({}: LessonsProps) {
               <Typography variant="h6" paragraph>
                 EL SISTEMA
               </Typography>
-              {sm && (
+              {md && (
                 <PhotoCard
                   image="/static/img/lessons/teaching-group-violin-01.jpeg"
                   // TODO: Localize
@@ -163,7 +182,7 @@ export default function Lessons({}: LessonsProps) {
                   caption="Susanna teaching a group class at the El Sistema program in Sibiu, Romania"
                   sx={{
                     float: { xs: 'none', sm: 'right' },
-                    maxWidth: { xs: 'none', sm: 400 }
+                    maxWidth: { xs: 'none', sm: 500 }
                   }}
                 />
               )}
@@ -201,7 +220,7 @@ export default function Lessons({}: LessonsProps) {
       <Card sx={{ mt: 2 }}>
         <Grid2 container>
           <Grid2 xs={12}>
-            {xs && !sm && (
+            {xs && !md && (
               <CardMedia
                 component="img"
                 image="/static/img/lessons/teaching-group-violin-02.jpeg"
@@ -213,7 +232,7 @@ export default function Lessons({}: LessonsProps) {
               <Typography variant="h6" paragraph>
                 FIRST STEPS IN MUSIC
               </Typography>
-              {sm && (
+              {md && (
                 <PhotoCard
                   image="/static/img/lessons/teaching-group-violin-02.jpeg"
                   // TODO: Localize

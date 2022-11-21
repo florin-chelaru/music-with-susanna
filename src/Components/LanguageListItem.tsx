@@ -6,24 +6,9 @@ import ListItemText from '@mui/material/ListItemText'
 import { ExpandLess, ExpandMore } from '@mui/icons-material'
 import List from '@mui/material/List'
 import * as React from 'react'
-import IconButton from '@mui/material/IconButton'
 import { useContext } from 'react'
-import { LocaleHandler, LocaleContext } from '../store/LocaleProvider'
-
-interface CountryFlagIconProps {
-  language: LocaleInfo
-}
-
-const CountryFlagIcon = ({ language }: CountryFlagIconProps) => (
-  <IconButton
-    sx={{
-      padding: 0,
-      width: 44,
-      height: 44
-    }}>
-    <img src={language.icon} alt={language.label} />
-  </IconButton>
-)
+import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
+import CountryFlagButton from './CountryFlagButton'
 
 export interface LanguageListItemProps {
   languages: LocaleInfo[]
@@ -58,7 +43,7 @@ export default function LanguageListItem({ languages, onChange }: LanguageListIt
               onClick={() => {
                 onChange?.(lang)
               }}>
-              <CountryFlagIcon language={lang} />
+              <CountryFlagButton language={lang} />
               <ListItemText primary={lang.label} />
             </ListItemButton>
           ))}
