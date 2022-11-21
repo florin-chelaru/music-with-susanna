@@ -5,8 +5,8 @@ import { Box, IconButton, MenuItem, Stack } from '@mui/material'
 // components
 import MenuPopover from './MenuPopover'
 import LocaleInfo from '../util/LocaleInfo'
-import LanguageIcon from '@mui/icons-material/Language'
-import { LocaleHandler, LocaleContext } from '../store/LocaleProvider'
+import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
+import CountryFlagIcon from './CountryFlagIcon'
 
 // ----------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ export default function LanguagePopover({ languages, onChange }: LanguagePopover
   const anchorRef = useRef(null)
   const [open, setOpen] = useState(false)
 
-  const languageHandler = useContext<LocaleHandler>(LocaleContext)
+  const localeManager = useContext<LocaleHandler>(LocaleContext)
 
   const handleOpen = () => {
     setOpen(true)
@@ -42,7 +42,9 @@ export default function LanguagePopover({ languages, onChange }: LanguagePopover
             bgcolor: (theme) => alpha(theme.palette.primary.main, theme.palette.action.focusOpacity)
           })
         }}>
-        <LanguageIcon sx={{ color: '#fff' }} />
+        <CountryFlagIcon
+          language={languages.find((lang) => lang.locale === localeManager.locale) ?? languages[0]}
+        />
       </IconButton>
 
       <MenuPopover
@@ -59,7 +61,7 @@ export default function LanguagePopover({ languages, onChange }: LanguagePopover
           {languages.map((lang) => (
             <MenuItem
               key={lang.locale}
-              selected={lang.locale === languageHandler.locale}
+              selected={lang.locale === localeManager.locale}
               onClick={() => {
                 onChange?.(lang)
                 handleClose()
