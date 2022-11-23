@@ -68,6 +68,7 @@ export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: Ho
           </Grid2>
           <Grid2 xs={12}>
             <VideosMasonry
+              maxVideos={10}
               onVideoSelected={(videoId) => {
                 console.log('navigating to /videos')
                 selectedVideoManager.setSelectedVideo(videoId)

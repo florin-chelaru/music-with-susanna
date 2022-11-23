@@ -6,7 +6,6 @@ import VideosMasonry from '../Components/VideosMasonry'
 import { SelectedVideoContext, SelectedVideoManager } from '../store/SelectedVideoProvider'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandMoreButton from '../Components/ExpandMoreButton'
-import FacebookPostsMasonry from '../Components/FacebookPostsMasonry'
 
 export default function VideoChannel() {
   const selectedVideoManager = useContext<SelectedVideoManager>(SelectedVideoContext)
@@ -43,7 +42,7 @@ export default function VideoChannel() {
             </Typography>
           </Grid2>
           <Grid2 xs={12}>
-            <Collapse in={expanded} timeout="auto" collapsedSize={200}>
+            <Collapse in={expanded} timeout="auto" collapsedSize={480}>
               <VideosMasonry
                 onVideoSelected={(videoId) => {
                   selectedVideoManager.setSelectedVideo(videoId)
@@ -67,13 +66,6 @@ export default function VideoChannel() {
                 <ExpandMoreIcon />
               </ExpandMoreButton>
             </Divider>
-          </Grid2>
-          <Grid2 xs={12} sx={{ textAlign: 'center' }}>
-            {/* TODO: Localize */}
-            <Typography variant="h5">Latest News</Typography>
-          </Grid2>
-          <Grid2 xs={12}>
-            <FacebookPostsMasonry />
           </Grid2>
         </Grid2>
       </Container>

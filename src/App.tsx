@@ -10,6 +10,7 @@ import InfoIcon from '@mui/icons-material/Info'
 import ContactMailIcon from '@mui/icons-material/ContactMail'
 import ReviewsIcon from '@mui/icons-material/Reviews'
 import YouTubeIcon from '@mui/icons-material/YouTube'
+import FacebookIcon from '@mui/icons-material/Facebook'
 import SchoolIcon from '@mui/icons-material/School'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Lessons from './pages/Lessons'
@@ -18,6 +19,7 @@ import Contact from './pages/Contact'
 import Testimonials from './pages/Testimonials'
 import VideoChannel from './pages/VideoChannel'
 import SelectedVideoProvider from './store/SelectedVideoProvider'
+import LatestNews from './pages/LatestNews'
 
 function App() {
   const homeRef = useRef<HTMLDivElement>(null)
@@ -54,6 +56,12 @@ function App() {
       icon: <YouTubeIcon />,
       path: '/videos'
     },
+    {
+      key: 'news',
+      label: (strings) => strings.news,
+      icon: <FacebookIcon />,
+      path: '/news'
+    },
 
     {
       key: 'contact',
@@ -86,6 +94,7 @@ function App() {
                   <Route path="/about" element={<About />} />
                   <Route path="/testimonials" element={<Testimonials />} />
                   <Route path="/videos" element={<VideoChannel />} />
+                  <Route path="/news" element={<LatestNews />} />
                   <Route path="/contact" element={<Contact />} />
                 </Routes>
               </Grid2>
