@@ -37,6 +37,8 @@ export interface LocaleHandler {
   ): void
 
   componentStrings(componentId: string): LocalizedData
+
+  formatLongDate(date: Date | string): string
 }
 
 class LocaleManager implements LocaleHandler {
@@ -96,6 +98,20 @@ class LocaleManager implements LocaleHandler {
   componentStrings(componentId: string): LocalizedData {
     return this.componentLocales.get(this.locale_)?.get(componentId) ?? {}
   }
+
+  formatLongDate(date: Date | string): string {
+    if (typeof date === 'string') {
+      date = new Date(Date.parse(date))
+    }
+    const intlLocale = `${this.locale_.slice(0, 2)}-${this.locale_.slice(2)}`
+
+    return date.toLocaleDateString(intlLocale, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
 }
 
 class LocaleManagerWrapper implements LocaleHandler {
@@ -129,6 +145,10 @@ class LocaleManagerWrapper implements LocaleHandler {
 
   componentStrings(componentId: string): LocalizedData {
     return this.localeManager.componentStrings(componentId)
+  }
+
+  formatLongDate(date: Date | string): string {
+    return this.localeManager.formatLongDate(date)
   }
 }
 

@@ -17,6 +17,7 @@ import About from './pages/About'
 import Contact from './pages/Contact'
 import Testimonials from './pages/Testimonials'
 import VideoChannel from './pages/VideoChannel'
+import SelectedVideoProvider from './store/SelectedVideoProvider'
 
 function App() {
   const homeRef = useRef<HTMLDivElement>(null)
@@ -65,30 +66,32 @@ function App() {
   return (
     <CustomThemeProvider>
       <LocaleProvider>
-        <BrowserRouter>
-          <DrawerAppBar navItems={navItems} />
-          <Grid2 container>
-            <Grid2 xs={12}>
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <Home
-                      homeRef={homeRef}
-                      testimonialsRef={testimonialsRef}
-                      youtubeChannelRef={youtubeChannelRef}
-                    />
-                  }
-                />
-                <Route path="/lessons" element={<Lessons />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/testimonials" element={<Testimonials />} />
-                <Route path="/videos" element={<VideoChannel />} />
-                <Route path="/contact" element={<Contact />} />
-              </Routes>
+        <SelectedVideoProvider>
+          <BrowserRouter>
+            <DrawerAppBar navItems={navItems} />
+            <Grid2 container>
+              <Grid2 xs={12}>
+                <Routes>
+                  <Route
+                    path="/"
+                    element={
+                      <Home
+                        homeRef={homeRef}
+                        testimonialsRef={testimonialsRef}
+                        youtubeChannelRef={youtubeChannelRef}
+                      />
+                    }
+                  />
+                  <Route path="/lessons" element={<Lessons />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/testimonials" element={<Testimonials />} />
+                  <Route path="/videos" element={<VideoChannel />} />
+                  <Route path="/contact" element={<Contact />} />
+                </Routes>
+              </Grid2>
             </Grid2>
-          </Grid2>
-        </BrowserRouter>
+          </BrowserRouter>
+        </SelectedVideoProvider>
       </LocaleProvider>
     </CustomThemeProvider>
   )

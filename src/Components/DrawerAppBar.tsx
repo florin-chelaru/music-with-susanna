@@ -91,11 +91,7 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
                 key={`button-${item.key}`}
                 sx={{ color: '#fff' }}
                 component={DomLink}
-                to={item.path}
-                // href={item.path}
-                // onClick={() => item.onClick?.()}
-                // onClick={(e) => e.preventDefault()}
-              >
+                to={item.path}>
                 {item.label(strings)}
               </Button>
             ))}
