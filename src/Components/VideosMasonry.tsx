@@ -2,44 +2,20 @@ import React from 'react'
 import { Masonry } from '@mui/lab'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import VideoThumbnailCard, { VideoThumbnailCardProps } from './VideoThumbnailCard'
+import YOUTUBE_VIDEOS from '../data/YouTubeVideos'
 
 export interface VideoMasonryProps {
   onVideoSelected?: (video: string) => void
+  maxVideos?: number
 }
 
-export default function VideosMasonry({ onVideoSelected }: VideoMasonryProps) {
-  const videoCardProps: VideoThumbnailCardProps[] = [
-    {
-      title: 'Funny Face: all verses!',
-      image: '/static/img/youtube-thumbs/funny-face.webp',
-      videoId: 'JcpDpruZkr0'
-    },
-    {
-      title: "A fost odat' un om ciudat (+cat bloopers!)",
-      image: '/static/img/youtube-thumbs/a-fost-odat-un-om-ciudat_anim.webp',
-      videoId: '2d2D0xiuBSM'
-    },
-    {
-      title: 'Move-It: Waltz in A Flat',
-      image: '/static/img/youtube-thumbs/move-it-waltz-in-a-flat.webp',
-      videoId: 'o-uqmZ5puw0'
-    },
-    {
-      title: 'Oac Oac (English)',
-      image: '/static/img/youtube-thumbs/oac-oac_anim.webp',
-      videoId: 'hNqLF8niKto'
-    },
-    {
-      title: 'Packing for a Picnic with Bach',
-      image: '/static/img/youtube-thumbs/picnic-with-bach.webp',
-      videoId: 'XQ-yVsm80Ec'
-    },
-    {
-      title: 'Vocal warm up: Basketball and Charlie over the Ocean',
-      image: '/static/img/youtube-thumbs/vocal-warm-up.webp',
-      videoId: 'VQ59EtVr6UM'
-    }
-  ]
+export default function VideosMasonry({ onVideoSelected, maxVideos }: VideoMasonryProps) {
+  const videoCardProps: VideoThumbnailCardProps[] = YOUTUBE_VIDEOS.map((v) => ({
+    image: v.snippet.thumbnails.high.url,
+    title: v.snippet.title,
+    videoId: v.videoId
+  })).slice(0, maxVideos ?? YOUTUBE_VIDEOS.length)
+
   return (
     <>
       <Grid2 container>
