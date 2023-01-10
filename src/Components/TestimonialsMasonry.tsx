@@ -26,9 +26,49 @@ export interface Testimonial {
   ratingUrl?: string
   /** Only used if content is a node */
   expandable?: boolean
+  featured?: boolean
 }
 
+// type MultilingualTestimonial = {
+//   [locale in SupportedLocale]: Testimonial
+// }
+//
+// const TESTIMONIALS: MultilingualTestimonial[] = [
+//   {
+//     [SupportedLocale.EN_US]: {
+//       title: 'Andreea Teleche',
+//       subtitle: 'Parent of Tudor, age seven',
+//       // TODO
+//       content:
+//         'Susanna was a private teacher for my middle school/high school student and gave her private viola lessons. My daughter has played at an amateur level since the forth grade and Susanna taught her for two years. She did a great job. She was punctual and was dedicated, often staying more than the allotted time. She was also very patient and pro-active looking for new music. She helped my daughter through many concerts and festivals. It was a great experience and we were sorry to see her leave but hope she can help other students in the Bosotn area.',
+//       rating: 5,
+//       image: '/static/img/tudor-large.jpeg',
+//       featured: true
+//     },
+//     [SupportedLocale.RO_RO]: {
+//       title: 'Andreea Teleche',
+//       subtitle: 'Parent of Tudor, age seven',
+//       // TODO
+//       content:
+//         'Susanna was a private teacher for my middle school/high school student and gave her private viola lessons. My daughter has played at an amateur level since the forth grade and Susanna taught her for two years. She did a great job. She was punctual and was dedicated, often staying more than the allotted time. She was also very patient and pro-active looking for new music. She helped my daughter through many concerts and festivals. It was a great experience and we were sorry to see her leave but hope she can help other students in the Bosotn area.',
+//       rating: 5,
+//       image: '/static/img/tudor-large.jpeg',
+//       featured: true
+//     }
+//   }
+// ]
+
 const TESTIMONIALS_EN_US: Testimonial[] = [
+  {
+    title: 'Andreea Teleche',
+    subtitle: 'Parent of Tudor, age seven',
+    // TODO
+    content:
+      'Susanna was a private teacher for my middle school/high school student and gave her private viola lessons. My daughter has played at an amateur level since the forth grade and Susanna taught her for two years. She did a great job. She was punctual and was dedicated, often staying more than the allotted time. She was also very patient and pro-active looking for new music. She helped my daughter through many concerts and festivals. It was a great experience and we were sorry to see her leave but hope she can help other students in the Bosotn area.',
+    rating: 5,
+    image: '/static/img/tudor-large.jpeg',
+    featured: true
+  },
   {
     title: 'Ariel Roth',
     subtitle: 'Parent of Savi, age nine',
@@ -95,15 +135,6 @@ const TESTIMONIALS_EN_US: Testimonial[] = [
       'Susanna was a private teacher for my middle school/high school student and gave her private viola lessons. My daughter has played at an amateur level since the forth grade and Susanna taught her for two years. She did a great job. She was punctual and was dedicated, often staying more than the allotted time. She was also very patient and pro-active looking for new music. She helped my daughter through many concerts and festivals. It was a great experience and we were sorry to see her leave but hope she can help other students in the Bosotn area.',
     rating: 5,
     ratingUrl: 'https://takelessons.com/profile/susanna-j#reviews'
-  },
-  {
-    title: 'Andreea Teleche',
-    subtitle: 'Parent of Tudor, age seven',
-    // TODO
-    content:
-      'Susanna was a private teacher for my middle school/high school student and gave her private viola lessons. My daughter has played at an amateur level since the forth grade and Susanna taught her for two years. She did a great job. She was punctual and was dedicated, often staying more than the allotted time. She was also very patient and pro-active looking for new music. She helped my daughter through many concerts and festivals. It was a great experience and we were sorry to see her leave but hope she can help other students in the Bosotn area.',
-    rating: 5,
-    image: '/static/img/tudor-large.jpeg'
   },
   {
     title: 'Joanna',
@@ -277,13 +308,22 @@ const TestimonialCard = React.memo(({ testimonial }: TestimonialCardProps) => {
   )
 })
 
-export default function TestimonialsMasonry() {
+export interface TestimonialsMasonryProps {
+  showFeaturedTestimonial?: boolean
+}
+
+export default function TestimonialsMasonry({ showFeaturedTestimonial }: TestimonialsMasonryProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(() => {
     const enUS = TESTIMONIALS_EN_US.reduce(
       (map, t, i) =>
         Object.defineProperty(map, `${i}`, {
-          get: () => <TestimonialCard key={i} testimonial={t} />
+          get: () => {
+            return {
+              card: <TestimonialCard key={i} testimonial={t} />,
+              testimonial: t
+            }
+          }
         }),
       {}
     )
@@ -291,7 +331,12 @@ export default function TestimonialsMasonry() {
     const roRO = TESTIMONIALS_RO_RO.reduce(
       (map, t, i) =>
         Object.defineProperty(map, `${i}`, {
-          get: () => <TestimonialCard key={i} testimonial={t} />
+          get: () => {
+            return {
+              card: <TestimonialCard key={i} testimonial={t} />,
+              testimonial: t
+            }
+          }
         }),
       {}
     )
@@ -306,12 +351,15 @@ export default function TestimonialsMasonry() {
   }, [])
 
   const componentStrings = localeManager.componentStrings(TestimonialsMasonry.name)
+
+  // const featured
   return (
     <>
       <Grid2 container>
         <Grid2 xs={12}>
           <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={2} sx={{ m: 0, p: 0 }}>
-            {TESTIMONIALS_EN_US.map((_, i) => componentStrings[`${i}`])}
+            {/* @ts-ignore */}
+            {TESTIMONIALS_EN_US.map((_, i) => componentStrings[`${i}`]?.card)}
           </Masonry>
         </Grid2>
       </Grid2>

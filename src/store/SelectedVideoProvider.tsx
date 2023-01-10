@@ -1,6 +1,6 @@
 import React, { createContext } from 'react'
 
-const DEFAULT_VIDEO_ID = '2d2D0xiuBSM' // A fost odat' un om ciudat
+const DEFAULT_VIDEO_ID = 'LwyeMCVhxEQ' // Oac Oac (Romanian)
 
 export class SelectedVideoManager {
   private selectedVideoId_: string
