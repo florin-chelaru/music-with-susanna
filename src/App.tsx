@@ -44,12 +44,12 @@ function App() {
       icon: <InfoIcon />,
       path: '/about'
     },
-    {
-      key: 'testimonials',
-      label: (strings) => strings.testimonials,
-      icon: <ReviewsIcon />,
-      path: '/testimonials'
-    },
+    // {
+    //   key: 'testimonials',
+    //   label: (strings) => strings.testimonials,
+    //   icon: <ReviewsIcon />,
+    //   path: '/testimonials'
+    // },
     {
       key: 'videos',
       label: (strings) => strings.channel,
@@ -92,7 +92,7 @@ function App() {
                   />
                   <Route path="/lessons" element={<Lessons />} />
                   <Route path="/about" element={<About />} />
-                  <Route path="/testimonials" element={<Testimonials />} />
+                  {/*<Route path="/testimonials" element={<Testimonials />} />*/}
                   <Route path="/videos" element={<VideoChannel />} />
                   <Route path="/news" element={<LatestNews />} />
                   <Route path="/contact" element={<Contact />} />
