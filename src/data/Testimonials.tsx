@@ -201,7 +201,7 @@ export const TESTIMONIALS: LocalizedTestimonial[] = [
       title: 'Mariana',
       subtitle: 'Mother of Ema, high school student',
       content:
-        'Susanna was a private teacher for my middle school/high school student and gave her private viola lessons. My daughter has played at an amateur level since the forth grade and Susanna taught her for two years. She did a great job. She was punctual and was dedicated, often staying more than the allotted time. She was also very patient and pro-active looking for new music. She helped my daughter through many concerts and festivals. It was a great experience and we were sorry to see her leave but hope she can help other students in the Bosotn area.',
+        'Susanna was a private teacher for my middle school/high school student and gave her private viola lessons. My daughter has played at an amateur level since the fourth grade and Susanna taught her for two years. She did a great job. She was punctual and was dedicated, often staying more than the allotted time. She was also very patient and pro-active looking for new music. She helped my daughter through many concerts and festivals. It was a great experience and we were sorry to see her leave but hope she can help other students in the Boston area.',
       rating: 5,
       ratingUrl: 'https://takelessons.com/profile/susanna-j#reviews'
     },

@@ -1,14 +1,10 @@
-import { Box, Card, CardContent, CardMedia, Container, Link, Typography } from '@mui/material'
-import Toolbar from '@mui/material/Toolbar'
+import { Card, CardContent, CardMedia, Link, Typography } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import React from 'react'
-import PhotoCard from './PhotoCard'
-import FormatQuoteIcon from '@mui/icons-material/FormatQuote'
 import EmailIcon from '@mui/icons-material/Email'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import FacebookIcon from '@mui/icons-material/Facebook'
 import YouTubeIcon from '@mui/icons-material/YouTube'
-import { Masonry } from '@mui/lab'
 
 export default function ContactCard() {
   return (
@@ -51,19 +47,13 @@ export default function ContactCard() {
                 sx={{ textDecoration: 'none' }}>
                 WhatsApp
               </Link>
-              {', '}
-              or{' '}
+              {', or '}
               <Link
                 rel="noreferrer"
                 target="_blank"
                 // TODO: Localize text
                 href="mailto:susanna.alice.j@gmail.com?subject=Lec%C8%9Bii%20de%20vioar%C4%83%2Fviol%C4%83&body=Bun%C4%83%20ziua%2C%20a%C8%99%20vrea%20s%C4%83%20aflu%20detalii%20despre%20lec%C8%9Biile%20de%20vioar%C4%83%2Fviol%C4%83.%20Numele%20meu%20este%20"
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  textDecoration: 'none'
-                }}>
+                sx={{ textDecoration: 'none' }}>
                 send me an email{' '}
               </Link>
               to schedule a trial lesson or ask me a question.

@@ -1,6 +1,6 @@
 import React, { RefObject, useContext } from 'react'
 import Toolbar from '@mui/material/Toolbar'
-import { Avatar, Chip, Container, Divider, Stack } from '@mui/material'
+import { Avatar, Button, Chip, Container, Divider, Link, Stack } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import IntroCard from '../Components/IntroCard'
 import TestimonialsMasonry from '../Components/TestimonialsMasonry'
@@ -36,6 +36,17 @@ export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: Ho
           <Grid2 xs={12} ref={testimonialsRef}>
             <TestimonialsMasonry />
           </Grid2>
+          <Grid2
+            xs={12}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+            <Button size="medium" variant="contained" onClick={() => navigate('/contact')}>
+              {strings.signUp}
+            </Button>
+          </Grid2>
           <Grid2 xs={12} ref={youtubeChannelRef}>
             <Divider variant="middle" sx={{ m: 1 }}>
               <Chip label={strings.youtubeChildrensChannel} />
@@ -61,7 +72,17 @@ export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: Ho
                   height: 66
                 }}
               />
-              <Typography variant="h5" gutterBottom component="div">
+              <Typography
+                variant="h5"
+                gutterBottom
+                component={Link}
+                underline="hover"
+                color="inherit"
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  navigate('/videos')
+                }}>
                 {strings.musicWithMsJohnson}
               </Typography>
             </Stack>
@@ -79,6 +100,24 @@ export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: Ho
                 }, 0)
               }}
             />
+          </Grid2>
+          <Grid2
+            xs={12}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+            <Button
+              size="medium"
+              variant="outlined"
+              onClick={() => navigate('/videos')}
+              sx={{ mr: 2 }}>
+              {strings.readMore}
+            </Button>
+            <Button size="medium" variant="contained" onClick={() => navigate('/contact')}>
+              {strings.signUp}
+            </Button>
           </Grid2>
         </Grid2>
       </Container>
