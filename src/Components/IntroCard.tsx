@@ -5,6 +5,7 @@ import { Button, Card, CardActions, CardContent, CardMedia, Link } from '@mui/ma
 import Typography from '@mui/material/Typography'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
+import { useNavigate } from 'react-router-dom'
 
 interface IntroTexts extends LocalizedData {
   subtitle: string
@@ -80,6 +81,7 @@ export default function IntroCard() {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(() => localeManager.registerComponentStrings(IntroCard.name, TEXTS), [])
   const componentStrings = localeManager.componentStrings(IntroCard.name) as IntroTexts
+  const navigate = useNavigate()
 
   return (
     <Card>
@@ -104,10 +106,10 @@ export default function IntroCard() {
               </Typography>
             </CardContent>
             <CardActions>
-              <Button size="small" color="primary">
+              <Button size="small" color="primary" onClick={() => navigate('/lessons')}>
                 {strings.readMore}
               </Button>
-              <Button size="small" variant="contained">
+              <Button size="small" variant="contained" onClick={() => navigate('/contact')}>
                 {strings.signUp}
               </Button>
             </CardActions>
