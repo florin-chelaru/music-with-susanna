@@ -5,7 +5,7 @@ import { SupportedLocale } from '../util/SupportedLocale'
 import { EN_US, RO_RO } from './LocaleSettings'
 
 export interface LocalizedData {
-  [key: string]: string | React.ReactNode
+  [key: string]: string | React.ReactNode | any
 }
 
 /** An interface containing the terms used globally on the website. */
