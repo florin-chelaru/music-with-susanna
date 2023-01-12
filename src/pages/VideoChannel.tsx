@@ -33,12 +33,11 @@ export default function VideoChannel() {
           </Grid2>
           <Grid2 xs={12}>
             <Typography variant="body1">
-              Text about how the available materials for children in Romanian are not that great,
-              and you wanted to do something better. Lorem ipsum dolor sit amet. Quo vero
-              consequatur et error magnam qui perspiciatis inventore ad inventore repellat ut
-              galisum necessitatibus et maxime rerum qui corrupti beatae. Ut ducimus placeat aut
-              iste ipsum aut aliquam eaque qui nostrum soluta est quis voluptas et corrupti
-              voluptates ea deleniti aliquid.
+              I originally started the channel during the pandemic to reach my students while
+              schools were closed. Since then, it has evolved to become a source of musical games,
+              songs, read-alouds and arrangements for students, parents and teachers. My future
+              vision for the channel is to create arrangements of Romanian children’s songs and
+              guides for parents of children studying violin and viola.
             </Typography>
           </Grid2>
           <Grid2 xs={12}>

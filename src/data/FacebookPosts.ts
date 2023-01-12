@@ -401,21 +401,6 @@ const FACEBOOK_POSTS: PrettyPost[] = [
     ]
   },
   {
-    id: '104306382395618_114267911399465',
-    url: 'https://www.facebook.com/104306382395618/posts/1689521454753720/?substory_index=1689521454753720',
-    creationTime: '2022-08-27T15:16:33+0000',
-    userName: 'Susanna Johnson-Chelaru',
-    attachments: [
-      {
-        type: 'profile_media',
-        url: 'https://facebook.com/MusicwithMsJohnson',
-        width: 720,
-        height: 720,
-        thumbnailUrl: '/static/img/facebook-posts/104306382395618_114267911399465_0.jpeg'
-      }
-    ]
-  },
-  {
     id: '104306382395618_114266931399563',
     url: 'https://www.facebook.com/104306382395618/posts/114266931399563/',
     message:
