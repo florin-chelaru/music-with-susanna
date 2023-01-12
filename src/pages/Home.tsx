@@ -34,7 +34,7 @@ export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: Ho
             </Divider>
           </Grid2>
           <Grid2 xs={12} ref={testimonialsRef}>
-            <TestimonialsMasonry />
+            <TestimonialsMasonry showFeaturedTestimonials />
           </Grid2>
           <Grid2
             xs={12}

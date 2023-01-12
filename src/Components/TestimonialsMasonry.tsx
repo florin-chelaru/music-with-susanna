@@ -94,10 +94,12 @@ interface TestimonialInfo {
 }
 
 export interface TestimonialsMasonryProps {
-  showFeaturedTestimonial?: boolean
+  showFeaturedTestimonials?: boolean
 }
 
-export default function TestimonialsMasonry({ showFeaturedTestimonial }: TestimonialsMasonryProps) {
+export default function TestimonialsMasonry({
+  showFeaturedTestimonials
+}: TestimonialsMasonryProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(() => {
     const enUS = TESTIMONIALS.reduce(
@@ -138,20 +140,22 @@ export default function TestimonialsMasonry({ showFeaturedTestimonial }: Testimo
   const componentStrings = localeManager.componentStrings(TestimonialsMasonry.name)
   const testimonials: TestimonialInfo[] = TESTIMONIALS.map((_, i) => componentStrings[`${i}`])
 
-  // const featured
   return (
     <>
       <Grid2 container>
-        {testimonials
-          .filter((t) => t.testimonial.featured)
-          .map((t, i) => (
-            <Grid2 xs={12} key={i}>
-              {t.card}
-            </Grid2>
-          ))}
+        {showFeaturedTestimonials &&
+          testimonials
+            .filter((t) => t.testimonial.featured)
+            .map((t, i) => (
+              <Grid2 xs={12} key={i}>
+                {t.card}
+              </Grid2>
+            ))}
         <Grid2 xs={12} sx={{ p: 0 }}>
           <Masonry columns={{ xs: 1, sm: 2, md: 2 }} spacing={2} sx={{ m: 0, p: 0 }}>
-            {testimonials.filter((t) => !t.testimonial.featured).map((t) => t.card)}
+            {testimonials
+              .filter((t) => !showFeaturedTestimonials || !t.testimonial.featured)
+              .map((t) => t.card)}
           </Masonry>
         </Grid2>
       </Grid2>
