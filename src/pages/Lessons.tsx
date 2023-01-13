@@ -35,16 +35,7 @@ export default function Lessons({}: LessonsProps) {
 
   const intro = (
     <Grid2 container>
-      <Grid2
-        xs={12}
-        md={6}
-        // For getting the image to stretch to the available space.
-        // See https://stackoverflow.com/questions/14142378/how-can-i-fill-a-div-with-an-image-while-keeping-it-proportional
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          overflow: 'hidden'
-        }}>
+      <Grid2 xs={12} md={6} sx={{ display: 'flex' }}>
         <CardMedia
           component="img"
           // TODO: Breakpoints
@@ -53,14 +44,11 @@ export default function Lessons({}: LessonsProps) {
               ? '/static/img/lessons/teaching-violin-01.jpeg'
               : '/static/img/lessons/teaching-violin-02.jpeg'
           }
-          // TODO: Localize
           alt="Private violin lesson"
-          // For getting the image to stretch to the available space.
-          // See https://stackoverflow.com/questions/14142378/how-can-i-fill-a-div-with-an-image-while-keeping-it-proportional
           sx={{
-            flexShrink: 0,
             minWidth: '100%',
-            minHeight: '100%'
+            minHeight: '100%',
+            objectPosition: 'left'
           }}
         />
       </Grid2>
@@ -110,25 +98,7 @@ export default function Lessons({}: LessonsProps) {
                 />
               )}
               <Typography variant="body1" paragraph>
-                The Suzuki Method has a long established history of success of more than fifty years
-                originating from Japan, and spreading to the United States, to Europe and worldwide.
-                Suzuki teachers believe every child can learn music. Founder of the method, Shinichi
-                Suzuki, described the method as the “mother-tongue approach”. As an officially
-                trained Suzuki teacher (Suzuki Violin Levels 1 & 2 Certification in 2012 and 2014),
-                Susanna follows the mother-tongue approach that imitates natural native language
-                acquisition. In the Suzuki Method, children start learning music at a very young age
-                (as young as 3 years old). As part of the mother-tongue approach of music learning,
-                Susanna implements listening, repetition and review, and delayed note-reading (as
-                children learn to read after they speak the language). Another very important aspect
-                of the Suzuki Method when children are very young is parental participation. Parents
-                sit in on lessons, participate in the activities with the child during the lesson
-                and assist the children with practice at home. This is no burden as every lesson is
-                joyful, and full of games and activities that ease the learning. At the same time,
-                Susanna believes in holding every child to a high standard and promoting motivation
-                through achievement. Susanna uses a combination of the Suzuki Method repertoire and
-                repertoire collected throughout her 15+ years of teaching experience in schools and
-                music programs that give students a sense of accomplishment and achievement after
-                every lesson. The trick is small and deliberate steps.
+                {componentStrings.suzukiMethod}
               </Typography>
             </CardContent>
           </Grid2>
