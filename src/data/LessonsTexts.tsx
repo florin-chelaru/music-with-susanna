@@ -6,6 +6,7 @@ import { SupportedLocale } from '../util/SupportedLocale'
 export interface LessonsTexts extends LocalizedData {
   intro: React.ReactNode
   philosophy: string
+  suzukiMethod: React.ReactNode
 }
 
 const EN_US: LessonsTexts = {
@@ -102,7 +103,41 @@ const EN_US: LessonsTexts = {
     </Typography>
   ),
   philosophy:
-    'Susanna’s teaching philosophy aims at having students leave every lesson feeling confident, accomplished and excited to practice at home. She introduces concepts in small pieces, reviews old concepts constantly, and builds up repertoire and technique on a strong foundation. '
+    'Susanna’s teaching philosophy aims at having students leave every lesson feeling confident, accomplished and excited to practice at home. She introduces concepts in small pieces, reviews old concepts constantly, and builds up repertoire and technique on a strong foundation. ',
+  suzukiMethod: (
+    <>
+      The{' '}
+      <Link
+        underline="hover"
+        href="https://suzukiassociation.org/about/suzuki-method/"
+        rel="noreferrer"
+        target="_blank">
+        Suzuki
+      </Link>{' '}
+      Method has a long established history of success of more than fifty years originating from
+      Japan, and spreading to the United States, to Europe and worldwide. Suzuki teachers believe
+      every child can learn music. Founder of the method, Shinichi Suzuki, described the method as
+      the “mother-tongue approach”. As an officially trained Suzuki teacher (Suzuki Violin Levels 1
+      & 2 Certification in 2012 and 2014), Susanna follows the mother-tongue approach that imitates
+      natural native language acquisition. In the Suzuki Method, children start learning music at a
+      very young age (as young as 3 years old). As part of the mother-tongue approach of music
+      learning, Susanna implements listening, repetition and review, and delayed note-reading (as
+      children learn to read after they speak the language).
+      <br />
+      <br />
+      Another very important aspect of the Suzuki Method when children are very young is parental
+      participation. Parents sit in on lessons, participate in the activities with the child during
+      the lesson and assist the children with practice at home. This is no burden as every lesson is
+      joyful, and full of games and activities that ease the learning. At the same time, Susanna
+      believes in holding every child to a high standard and promoting motivation through
+      achievement.
+      <br />
+      <br />
+      Susanna uses a combination of the Suzuki Method repertoire and repertoire collected throughout
+      her 15+ years of teaching experience in schools and music programs that give students a sense
+      of accomplishment and achievement after every lesson. The trick is small and deliberate steps.
+    </>
+  )
 }
 
 const RO_RO: LessonsTexts = {
@@ -207,7 +242,45 @@ const RO_RO: LessonsTexts = {
     </Typography>
   ),
   philosophy:
-    'Filozofia pedagogică a Susannei urmărește ca la sfârșitul fiecărei lecții, elevii să fie încrezători, împliniți, și entuziasmați de a exersa acasă. Conceptele sunt introduse în fragmente scurte, elementele cunoscute sunt periodic revizitate, iar repertoriul și tehnica sunt construite pe o fundație solidă.'
+    'Filozofia pedagogică a Susannei urmărește ca la sfârșitul fiecărei lecții, elevii să fie încrezători, împliniți, și entuziasmați de a exersa acasă. Conceptele sunt introduse în fragmente scurte, elementele cunoscute sunt periodic revizitate, iar repertoriul și tehnica sunt construite pe o fundație solidă.',
+  suzukiMethod: (
+    <>
+      Metoda{' '}
+      <Link
+        underline="hover"
+        href="https://suzukiassociation.org/about/suzuki-method/"
+        rel="noreferrer"
+        target="_blank">
+        Suzuki
+      </Link>{' '}
+      este consacrată ca o metodă pedagogică de succes cu o istorie de mai bine de cinzeci de ani,
+      pornind din Japonia, răspândindu-se apoi în SUA și Europa, și în cele din urmă în întreaga
+      lume. Instructorii Suzuki sunt de părere că <b>orice copil</b> poate învăța muzică. Fondatorul
+      metodei, Shinichi Suzuki, descria metoda ca <i>metoda limbii materne</i>. În calitate de
+      profesor certificat Suzuki (a obținut certificările pentru nivelurile 1 și 2 în 2012 și 2014),
+      Susanna urmează abordarea <i>limbii materne</i>, care constă din imitarea felului în care
+      copiii învață să vorbească, în procesul de predare a muzicii. În metoda Suzuki, copiii încep
+      să învețe muzică de la vârste foarte fragede (chiar și de la trei ani). În cadrul filozofiei
+      de imitare a învățării limbii materne, Susanna învață copiii mai întâi să cânte, să asculte,
+      să repete și să reviziteze conceptele predate, și abia mai târziu să citească notele muzicale,
+      în același fel în care copiii învață să citească abia după învață să vorbească.
+      <br />
+      <br />
+      Un alt concept important caracteristic metodei Suzuki este, atunci când copiii sunt foarte
+      mici, participarea părinților la procesul de învățare. Părinții pot asista la lecții,
+      participa la activitățile muzicale cu copilul în timpul lecției, și sunt încurajați să îl
+      ajute acasă în timp ce exersează. Aceasta nu reprezintă o povară pentru părinți, întrucât
+      fiecare lecție este jovială și plină de jocuri și activități care înlesnesc învățarea. În
+      același timp, Susanna crede în ridicarea fiecărui copil la un înalt standard și motivarea prin
+      realizări.
+      <br />
+      <br />
+      Susanna folosește o combinație de repertoriu specific metodei Suzuki, și repertoriu acumulat
+      în cei mai bine de 15 ani de experiență pedagogică în școli și programe muzicale, care oferă
+      elevilor un sentiment de realizare la sfârșitul fiecărei lecții. Esențial este ca fiecare pas
+      în drumul învățării să fie mic și să aibă un scop binedefinit.
+    </>
+  )
 }
 
 export const LESSONS_TEXTS = new Map<SupportedLocale, LocalizedData>([
