@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useContext, useMemo } from 'react'
 import {
+  Button,
   Card,
+  CardActions,
   CardContent,
   CardMedia,
   Container,
-  Link,
   Typography,
   useMediaQuery,
   useTheme
@@ -12,6 +13,9 @@ import {
 import Toolbar from '@mui/material/Toolbar'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import PhotoCard from '../Components/PhotoCard'
+import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
+import { useNavigate } from 'react-router-dom'
+import { LESSONS_TEXTS, LessonsTexts } from '../data/LessonsTexts'
 
 export interface LessonsProps {}
 
@@ -20,11 +24,19 @@ export default function Lessons({}: LessonsProps) {
   const sm = useMediaQuery(theme.breakpoints.up('sm'))
   const md = useMediaQuery(theme.breakpoints.up('md'))
   const xs = useMediaQuery(theme.breakpoints.up('xs'))
+
+  const navigate = useNavigate()
+  const localeManager = useContext<LocaleHandler>(LocaleContext)
+  const strings = localeManager.globalStringList
+
+  useMemo(() => localeManager.registerComponentStrings(Lessons.name, LESSONS_TEXTS), [])
+
+  const componentStrings = localeManager.componentStrings(Lessons.name) as LessonsTexts
+
   const intro = (
     <Grid2 container>
       <Grid2
         xs={12}
-        // sm={6}
         md={6}
         // For getting the image to stretch to the available space.
         // See https://stackoverflow.com/questions/14142378/how-can-i-fill-a-div-with-an-image-while-keeping-it-proportional
@@ -53,48 +65,12 @@ export default function Lessons({}: LessonsProps) {
         />
       </Grid2>
       <Grid2 xs={12} sm={12} md={6}>
-        <CardContent>
-          <Typography variant="body1" paragraph>
-            Susanna Johnson este o profesoară de muzică și violistă americancă, educată la una din
-            cele mai prestigioase universități de muzică din SUA: Indiana University — Bloomington,
-            și cu studii postuniversitare la Boston Conservatory și University of Maryland. În
-            America a fost profesoară de muzică la liceul Bridge Boston Charter School și
-            conservatorul de muzică pentru copii South Shore Conservatory, a participat la programe
-            de muzică tip{' '}
-            <Link color="inherit" href="https://elsistemausa.org/" rel="noreferrer" target="_blank">
-              El Sistema
-            </Link>{' '}
-            în El Salvador, și a ținut lecții private atât pentru copii cât și pentru adulți.
-            <br />
-            <br />
-            Metoda pedagocică{' '}
-            <Link
-              color="inherit"
-              href="https://suzukiassociation.org/about/suzuki-method/"
-              rel="noreferrer"
-              target="_blank">
-              Suzuki
-            </Link>
-            , folosită de Susanna, constă dintr-o curiculă muzicală și filosofie a predării folosite
-            în America și Japonia încă de la jumătatea secolului 20, creată de faimosul violonist și
-            pedagog{' '}
-            <Link
-              color="inherit"
-              href="https://suzukiassociation.org/about/suzuki-method/shinichi-suzuki/"
-              rel="noreferrer"
-              target="_blank">
-              Shinichi Suzuki
-            </Link>{' '}
-            (1898–1998). Metoda urmărește să creeze un mediu de învățare a muzicii asemenea mediului
-            lingvistic de dobândire a limbii natale. Suzuki era de părere că acest mediu poate hrăni
-            și întreține o bună fibră morală.
-            <br />
-            <br />
-            S-a mutat din Boston în Iași, cu dorința de a oferi comunității de baștină a soțului ei
-            român, Florin, o perspectivă diferită în ce privește pedagogia artei, și a muzicii în
-            mod deosebit.
-          </Typography>
-        </CardContent>
+        <CardContent>{componentStrings.intro}</CardContent>
+        <CardActions sx={{ justifyContent: 'center' }}>
+          <Button size="small" variant="contained" onClick={() => navigate('/contact')}>
+            {strings.signUp}
+          </Button>
+        </CardActions>
       </Grid2>
     </Grid2>
   )
@@ -105,9 +81,7 @@ export default function Lessons({}: LessonsProps) {
         TEACHING PHILOSOPHY
       </Typography>
       <Typography variant="body1" paragraph>
-        Susanna’s teaching philosophy combines the pedagogical techniques of the Suzuki Method, the
-        principles and values of El Sistema and the music learning philosophy of John Feierabend’s
-        First Steps in Music.
+        {componentStrings.philosophy}
       </Typography>
       <Card>
         <Grid2 container>

@@ -18,7 +18,6 @@ export default function VideosMasonry({ onVideoSelected, maxVideos }: VideoMason
   })).slice(0, maxVideos ?? YOUTUBE_VIDEOS.length)
 
   const theme = useTheme()
-  const sm = useMediaQuery(theme.breakpoints.up('sm'))
   const md = useMediaQuery(theme.breakpoints.up('md'))
 
   const itemsPerPage = 6
@@ -46,7 +45,7 @@ export default function VideosMasonry({ onVideoSelected, maxVideos }: VideoMason
             hasMore={hasMore}
             loader={<h4 className="loader">Loading...</h4>}
             useWindow={true}>
-            <ImageList cols={md ? 3 : sm ? 2 : 1} gap={16}>
+            <ImageList cols={md ? 3 : 2} gap={16}>
               {videoCardProps.slice(0, records).map((props, i) => (
                 <VideoThumbnailCard key={i} onSelected={onVideoSelected} {...props} />
               ))}
