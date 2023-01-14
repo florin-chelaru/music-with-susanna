@@ -66,7 +66,7 @@ export default function Lessons({}: LessonsProps) {
   const philosophy = (
     <>
       <Typography variant="h5" paragraph>
-        TEACHING PHILOSOPHY
+        {componentStrings.philosophyTitle}
       </Typography>
       <Typography variant="body1" paragraph>
         {componentStrings.philosophy}
@@ -78,19 +78,18 @@ export default function Lessons({}: LessonsProps) {
               <CardMedia
                 component="img"
                 image="/static/img/lessons/dylan-trophy.jpeg"
-                alt="Dylan age six, just earned his 30-day practice trophy"
+                alt={componentStrings.suzukiPhotoCaption}
               />
             )}
             <CardContent>
               <Typography variant="h6" paragraph>
-                THE SUZUKI METHOD
+                {componentStrings.suzukiTitle}
               </Typography>
               {sm && (
                 <PhotoCard
                   image="/static/img/lessons/dylan-trophy.jpeg"
-                  // TODO: Localize
-                  alt="Dylan age six, just earned his 30-day practice trophy"
-                  caption="Dylan age six, just earned his 30-day practice trophy"
+                  alt={componentStrings.suzukiPhotoCaption}
+                  caption={componentStrings.suzukiPhotoCaption}
                   sx={{
                     float: { xs: 'none', sm: 'right' },
                     maxWidth: { xs: 'none', sm: 400 }
@@ -98,7 +97,7 @@ export default function Lessons({}: LessonsProps) {
                 />
               )}
               <Typography variant="body1" paragraph>
-                {componentStrings.suzukiMethod}
+                {componentStrings.suzuki}
               </Typography>
             </CardContent>
           </Grid2>
@@ -111,19 +110,18 @@ export default function Lessons({}: LessonsProps) {
               <CardMedia
                 component="img"
                 image="/static/img/lessons/teaching-group-violin-01.jpeg"
-                alt="Susanna teaching a group class at the El Sistema program in Sibiu, Romania"
+                alt={componentStrings.elSistemaPhotoCaption}
               />
             )}
             <CardContent>
               <Typography variant="h6" paragraph>
-                EL SISTEMA
+                {componentStrings.elSistemaTitle}
               </Typography>
               {md && (
                 <PhotoCard
                   image="/static/img/lessons/teaching-group-violin-01.jpeg"
-                  // TODO: Localize
-                  alt="Susanna teaching a group class at the El Sistema program in Sibiu, Romania"
-                  caption="Susanna teaching a group class at the El Sistema program in Sibiu, Romania"
+                  alt={componentStrings.elSistemaPhotoCaption}
+                  caption={componentStrings.elSistemaPhotoCaption}
                   sx={{
                     float: { xs: 'none', sm: 'right' },
                     maxWidth: { xs: 'none', sm: 500 }
@@ -131,31 +129,7 @@ export default function Lessons({}: LessonsProps) {
                 />
               )}
               <Typography variant="body1" paragraph>
-                Susanna has worked in various El Sistema music programs since 2012, in the United
-                States, El Salvador, Sweden and Romania, teaching group violin and string ensemble
-                classes. El Sistema is a music education philosophy that originated in Venezuela in
-                1975. The main philosophy behind El Sistema is that every child should have access
-                to quality music education, and El Sistema programs are designed so that children
-                learn together in a group setting. Susanna has adopted many of the principles and
-                values from El Sistema music programs into her teaching. She believes that
-                disadvantaged children should have access to quality music education. These music
-                education programs should be local, convenient and very high quality. She also truly
-                believes in and has seen the power and magic in group learning. Specifically,
-                Susanna strives to teach group music classes the El Sistema way: with joyful and
-                supportive group learning, using activities made for and made better when done in a
-                group and making sure that children are able to participate in the group ensembles
-                from the very beginning of their instrumental learning. El Sistema programs focus on
-                intensive and joyful music making as a vehicle for social development. As such, when
-                teaching group music, Susanna focuses on peer learning and using music as a tool for
-                developing community and positive relationships in the group. One final very
-                important aspect of El Sistema is the importance of performing in the community and
-                performing often. Students in an El Sistema program should be performing within
-                their first month of learning their instrument. Performing and sharing music with
-                the community should be one of the main goals of an El Sistema program. Susanna
-                believes that students should have as many opportunities to perform as possible,
-                whether they are more informal or more formal. Frequent performances remove
-                performance jitters and refocus the students on the joy of learning to play an
-                instrument: through sharing it!
+                {componentStrings.elSistema}
               </Typography>
             </CardContent>
           </Grid2>
@@ -168,20 +142,18 @@ export default function Lessons({}: LessonsProps) {
               <CardMedia
                 component="img"
                 image="/static/img/lessons/teaching-group-violin-02.jpeg"
-                // TODO: Localize
-                alt="Susanna teaching a group class at the Bridge Boston Charter School"
+                alt={componentStrings.firstStepsPhotoCaption}
               />
             )}
             <CardContent>
               <Typography variant="h6" paragraph>
-                FIRST STEPS IN MUSIC
+                {componentStrings.firstStepsTitle}
               </Typography>
               {md && (
                 <PhotoCard
                   image="/static/img/lessons/teaching-group-violin-02.jpeg"
-                  // TODO: Localize
-                  alt="Susanna teaching a group class at the Bridge Boston Charter School"
-                  caption="Susanna teaching a group class at the Bridge Boston Charter School"
+                  alt={componentStrings.firstStepsPhotoCaption}
+                  caption={componentStrings.firstStepsPhotoCaption}
                   sx={{
                     float: { xs: 'none', md: 'right' },
                     maxWidth: { xs: 'none', md: 500 }
@@ -189,27 +161,7 @@ export default function Lessons({}: LessonsProps) {
                 />
               )}
               <Typography variant="body1" paragraph>
-                Since 2016, Susanna has been using John Feierabend’s First Steps in Music method
-                from the United States to teach general music to preschool, kindergarten and
-                elementary students at Bridge Boston Charter School. In the summer of 2019, Susanna
-                received special training in the method at Gordon College as part of her Music
-                Education License degree that she received in 2021. Feierabend’s music learning
-                philosophy says that students should learn to be “tuneful”, “beatful” and “artful”.
-                Tuneful children learn to hear tunes in their heads and coordinate their vocal
-                muscles to sing these tunes. Beatful children feel the pulse in the music and how
-                the pulse is organized in groups of 2s and 3s. Artful children are moved by music in
-                the many ways music can elicit a feelingful response. The goal of a teacher of this
-                method is that children who learn in this way grow to be tuneful, beatful and artful
-                adults. This means that they will have the ability to participate in music that is
-                interwoven throughout their lives. Tuneful adults can sing happy birthday to friends
-                and family, sing lullabies to their children and sing ceremonial songs at important
-                events and holidays. Beatful adults can rock to the beat while they sing that
-                lullaby, dance at weddings and clap to the beat at sporting events. Artful adults
-                are moved by music, seek out artful events and enjoy being moved by music. Susanna
-                believes that music education is valuable to all children as it gives them the
-                ability to benefit from what music has to offer. Whether or not they seek to become
-                professionals in the field of music, they will be enriched by their understanding
-                and their ability to share in the language of music for the rest of their lives.
+                {componentStrings.firstSteps}
               </Typography>
             </CardContent>
           </Grid2>
