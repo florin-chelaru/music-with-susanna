@@ -5,8 +5,17 @@ import { SupportedLocale } from '../util/SupportedLocale'
 
 export interface LessonsTexts extends LocalizedData {
   intro: React.ReactNode
+  philosophyTitle: string
   philosophy: string
-  suzukiMethod: React.ReactNode
+  suzukiTitle: string
+  suzuki: React.ReactNode
+  suzukiPhotoCaption: string
+  elSistemaTitle: string
+  elSistema: React.ReactNode
+  elSistemaPhotoCaption: string
+  firstStepsTitle: string
+  firstSteps: React.ReactNode
+  firstStepsPhotoCaption: string
 }
 
 const EN_US: LessonsTexts = {
@@ -102,9 +111,11 @@ const EN_US: LessonsTexts = {
       music in particular.
     </Typography>
   ),
+  philosophyTitle: 'TEACHING PHILOSOPHY',
   philosophy:
     'Susanna’s teaching philosophy aims at having students leave every lesson feeling confident, accomplished and excited to practice at home. She introduces concepts in small pieces, reviews old concepts constantly, and builds up repertoire and technique on a strong foundation. ',
-  suzukiMethod: (
+  suzukiTitle: 'THE SUZUKI METHOD',
+  suzuki: (
     <>
       The{' '}
       <Link
@@ -137,7 +148,62 @@ const EN_US: LessonsTexts = {
       her 15+ years of teaching experience in schools and music programs that give students a sense
       of accomplishment and achievement after every lesson. The trick is small and deliberate steps.
     </>
-  )
+  ),
+  suzukiPhotoCaption: 'Dylan age six, just earned his 30-day practice trophy',
+  elSistemaTitle: 'EL SISTEMA',
+  elSistema: (
+    <>
+      Susanna has worked in various El Sistema music programs since 2012, in the United States, El
+      Salvador, Sweden and Romania, teaching group violin and string ensemble classes. El Sistema is
+      a music education philosophy that originated in Venezuela in 1975. The main philosophy behind
+      El Sistema is that every child should have access to quality music education, and El Sistema
+      programs are designed so that children learn together in a group setting. Susanna has adopted
+      many of the principles and values from El Sistema music programs into her teaching. She
+      believes that disadvantaged children should have access to quality music education. These
+      music education programs should be local, convenient and very high quality. She also truly
+      believes in and has seen the power and magic in group learning. Specifically, Susanna strives
+      to teach group music classes the El Sistema way: with joyful and supportive group learning,
+      using activities made for and made better when done in a group and making sure that children
+      are able to participate in the group ensembles from the very beginning of their instrumental
+      learning. El Sistema programs focus on intensive and joyful music making as a vehicle for
+      social development. As such, when teaching group music, Susanna focuses on peer learning and
+      using music as a tool for developing community and positive relationships in the group. One
+      final very important aspect of El Sistema is the importance of performing in the community and
+      performing often. Students in an El Sistema program should be performing within their first
+      month of learning their instrument. Performing and sharing music with the community should be
+      one of the main goals of an El Sistema program. Susanna believes that students should have as
+      many opportunities to perform as possible, whether they are more informal or more formal.
+      Frequent performances remove performance jitters and refocus the students on the joy of
+      learning to play an instrument: through sharing it!
+    </>
+  ),
+  elSistemaPhotoCaption:
+    'Susanna teaching a group class at the El Sistema program in Sibiu, Romania',
+  firstStepsTitle: 'FIRST STEPS IN MUSIC',
+  firstSteps: (
+    <>
+      Since 2016, Susanna has been using John Feierabend’s First Steps in Music method from the
+      United States to teach general music to preschool, kindergarten and elementary students at
+      Bridge Boston Charter School. In the summer of 2019, Susanna received special training in the
+      method at Gordon College as part of her Music Education License degree that she received in
+      2021. Feierabend’s music learning philosophy says that students should learn to be “tuneful”,
+      “beatful” and “artful”. Tuneful children learn to hear tunes in their heads and coordinate
+      their vocal muscles to sing these tunes. Beatful children feel the pulse in the music and how
+      the pulse is organized in groups of 2s and 3s. Artful children are moved by music in the many
+      ways music can elicit a feelingful response. The goal of a teacher of this method is that
+      children who learn in this way grow to be tuneful, beatful and artful adults. This means that
+      they will have the ability to participate in music that is interwoven throughout their lives.
+      Tuneful adults can sing happy birthday to friends and family, sing lullabies to their children
+      and sing ceremonial songs at important events and holidays. Beatful adults can rock to the
+      beat while they sing that lullaby, dance at weddings and clap to the beat at sporting events.
+      Artful adults are moved by music, seek out artful events and enjoy being moved by music.
+      Susanna believes that music education is valuable to all children as it gives them the ability
+      to benefit from what music has to offer. Whether or not they seek to become professionals in
+      the field of music, they will be enriched by their understanding and their ability to share in
+      the language of music for the rest of their lives.
+    </>
+  ),
+  firstStepsPhotoCaption: 'Susanna teaching a group class at the Bridge Boston Charter School'
 }
 
 const RO_RO: LessonsTexts = {
@@ -241,9 +307,11 @@ const RO_RO: LessonsTexts = {
       Florin, o perspectivă diferită în ce privește pedagogia artei, și a muzicii în mod deosebit.
     </Typography>
   ),
+  philosophyTitle: 'FILOSOFIA PEDAGOGICĂ',
   philosophy:
     'Filozofia pedagogică a Susannei urmărește ca la sfârșitul fiecărei lecții, elevii să fie încrezători, împliniți, și entuziasmați de a exersa acasă. Conceptele sunt introduse în fragmente scurte, elementele cunoscute sunt periodic revizitate, iar repertoriul și tehnica sunt construite pe o fundație solidă.',
-  suzukiMethod: (
+  suzukiTitle: 'METODA SUZUKI',
+  suzuki: (
     <>
       Metoda{' '}
       <Link
@@ -280,7 +348,55 @@ const RO_RO: LessonsTexts = {
       elevilor un sentiment de realizare la sfârșitul fiecărei lecții. Esențial este ca fiecare pas
       în drumul învățării să fie mic și să aibă un scop binedefinit.
     </>
-  )
+  ),
+  suzukiPhotoCaption: 'Dylan de șase ani, cu trofeul pentru 30 de zile de exersat vioara',
+  elSistemaTitle: 'EL SISTEMA',
+  elSistema: (
+    <>
+      Susanna a lucrat, în calitate de instructor de ansambluri de coarde, cu numeroase programe de
+      tip{' '}
+      <Link
+        underline="hover"
+        href="https://elsistemausa.org/about/"
+        rel="noreferrer"
+        target="_blank">
+        El Sistema
+      </Link>
+      , încă din 2012, atât în Statele Unite, cât și în El Salvador, Suedia, și mai recent, în
+      România, la Sibiu. <i>El Sistema</i> este o filosofie a educației muzicale originând în
+      Venezuela anului 1975. Ideea din spatele ei este că orice copil ar trebui să aibă acces la
+      educație muzicală de calitate. Programele El Sistema sunt proiectate în așa fel încât elevii
+      să învețe împreună în cadrul unui grup. Copiii provenind din medii dezavantajate economic și
+      social trebuie să poată beneficia de educație muzicală ce întrunește standarde înalte,
+      disponibilă local și în mod convenabil.
+      <br />
+      <br />
+      Susanna a adoptat principii și valori izvorâte din această filozofie. De exemplu, ea crede cu
+      tărie în puterea și importanța învățării în cadrul unui grup, și țintește spre a preda
+      lecțiile la clasă într-un mod recreativ, folosind activități destinate grupurilor, și
+      distractive mai ales în grup. Lecțiile sunt structurate în așa fel încât copiii pot participa
+      în ansambluri instrumentale din primul moment al educației lor muzicale. Programele El Sistema
+      folosesc învățarea intensivă a muzicii într-un cadru distractiv, ca un vehicul pentru
+      dezvoltarea socială. Ca atare, când predă muzică ansamblurilor de copii, Susanna folosește
+      învățarea reciprocă (fiecare elev de la ceilalți, și nu doar de la profesor) ca o unealtă
+      pentru dezvoltarea unei comunități și a unor relații bine coagulate în cadrul grupului.
+      <br />
+      <br />
+      Un ultim aspect esențial al programelor El Sistema este importanța interpretării cât mai dese
+      în cadrul comunității. Elevii participă la primele concerte încă din prima lună de când au
+      început să învețe un instrument. Folosirea instrumentului și împărtășirea muzicii sunt două
+      din țelurile principale ale acestui program. Susanna crede că elevii ar trebui să aibă cât mai
+      multe prilejuri de a cânta în public, fie că acestea sunt într-un cadru formal, sau unul
+      informal. Cu cât copilul cântă mai des în public, cu atât dispar tracul și emoțiile cauzate de
+      prezența pe scenă, și îi concentrează atenția la bucuria care vine la pachet cu învățarea unui
+      instrument: împărtășirea muzicii cu lumea întreagă!
+    </>
+  ),
+  elSistemaPhotoCaption:
+    'Susanna predă o lecție de grup la programul Elijah tip El Sistema din Sibiu',
+  firstStepsTitle: 'PRIMII PAȘI ÎN MUZICĂ',
+  firstSteps: <></>,
+  firstStepsPhotoCaption: 'Susanna predă o lecție de vioară la liceul Bridge Boston Charter School'
 }
 
 export const LESSONS_TEXTS = new Map<SupportedLocale, LocalizedData>([
