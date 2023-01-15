@@ -128,12 +128,12 @@ const EN_US: LessonsTexts = {
       Method has a long established history of success of more than fifty years originating from
       Japan, and spreading to the United States, to Europe and worldwide. Suzuki teachers believe
       every child can learn music. Founder of the method, Shinichi Suzuki, described the method as
-      the “mother-tongue approach”. As an officially trained Suzuki teacher (Suzuki Violin Levels 1
-      & 2 Certification in 2012 and 2014), Susanna follows the mother-tongue approach that imitates
-      natural native language acquisition. In the Suzuki Method, children start learning music at a
-      very young age (as young as 3 years old). As part of the mother-tongue approach of music
-      learning, Susanna implements listening, repetition and review, and delayed note-reading (as
-      children learn to read after they speak the language).
+      the &quot;mother-tongue approach&quot;. As an officially trained Suzuki teacher (Suzuki Violin
+      Levels 1 & 2 Certification in 2012 and 2014), Susanna follows the mother-tongue approach that
+      imitates natural native language acquisition. In the Suzuki Method, children start learning
+      music at a very young age (as young as 3 years old). As part of the mother-tongue approach of
+      music learning, Susanna implements listening, repetition and review, and delayed note-reading
+      (as children learn to read after they speak the language).
       <br />
       <br />
       Another very important aspect of the Suzuki Method when children are very young is parental
@@ -153,28 +153,41 @@ const EN_US: LessonsTexts = {
   elSistemaTitle: 'EL SISTEMA',
   elSistema: (
     <>
-      Susanna has worked in various El Sistema music programs since 2012, in the United States, El
-      Salvador, Sweden and Romania, teaching group violin and string ensemble classes. El Sistema is
-      a music education philosophy that originated in Venezuela in 1975. The main philosophy behind
-      El Sistema is that every child should have access to quality music education, and El Sistema
-      programs are designed so that children learn together in a group setting. Susanna has adopted
-      many of the principles and values from El Sistema music programs into her teaching. She
-      believes that disadvantaged children should have access to quality music education. These
-      music education programs should be local, convenient and very high quality. She also truly
-      believes in and has seen the power and magic in group learning. Specifically, Susanna strives
-      to teach group music classes the El Sistema way: with joyful and supportive group learning,
-      using activities made for and made better when done in a group and making sure that children
-      are able to participate in the group ensembles from the very beginning of their instrumental
-      learning. El Sistema programs focus on intensive and joyful music making as a vehicle for
-      social development. As such, when teaching group music, Susanna focuses on peer learning and
-      using music as a tool for developing community and positive relationships in the group. One
-      final very important aspect of El Sistema is the importance of performing in the community and
-      performing often. Students in an El Sistema program should be performing within their first
-      month of learning their instrument. Performing and sharing music with the community should be
-      one of the main goals of an El Sistema program. Susanna believes that students should have as
-      many opportunities to perform as possible, whether they are more informal or more formal.
-      Frequent performances remove performance jitters and refocus the students on the joy of
-      learning to play an instrument: through sharing it!
+      Susanna has worked in various{' '}
+      <Link
+        underline="hover"
+        href="https://elsistemausa.org/about/"
+        rel="noreferrer"
+        target="_blank">
+        El Sistema
+      </Link>{' '}
+      music programs since 2012, in the United States, El Salvador, Sweden and Romania, teaching
+      group violin and string ensemble classes. El Sistema is a music education philosophy that
+      originated in Venezuela in 1975. The main philosophy behind El Sistema is that every child
+      should have access to quality music education, and El Sistema programs are designed so that
+      children learn together in a group setting.
+      <br />
+      <br />
+      Susanna has adopted many of the principles and values from El Sistema music programs into her
+      teaching. She believes that disadvantaged children should have access to quality music
+      education. These music education programs should be local, convenient and very high quality.
+      She also truly believes in and has seen the power and magic in group learning. Specifically,
+      Susanna strives to teach group music classes the El Sistema way: with joyful and supportive
+      group learning, using activities made for and made better when done in a group and making sure
+      that children are able to participate in the group ensembles from the very beginning of their
+      instrumental learning. El Sistema programs focus on intensive and joyful music making as a
+      vehicle for social development. As such, when teaching group music, Susanna focuses on peer
+      learning and using music as a tool for developing community and positive relationships in the
+      group.
+      <br />
+      <br />
+      One final very important aspect of El Sistema is the importance of performing in the community
+      and performing often. Students in an El Sistema program should be performing within their
+      first month of learning their instrument. Performing and sharing music with the community
+      should be one of the main goals of an El Sistema program. Susanna believes that students
+      should have as many opportunities to perform as possible, whether they are more informal or
+      more formal. Frequent performances remove performance jitters and refocus the students on the
+      joy of learning to play an instrument: through sharing it!
     </>
   ),
   elSistemaPhotoCaption:
@@ -182,21 +195,36 @@ const EN_US: LessonsTexts = {
   firstStepsTitle: 'FIRST STEPS IN MUSIC',
   firstSteps: (
     <>
-      Since 2016, Susanna has been using John Feierabend’s First Steps in Music method from the
-      United States to teach general music to preschool, kindergarten and elementary students at
-      Bridge Boston Charter School. In the summer of 2019, Susanna received special training in the
-      method at Gordon College as part of her Music Education License degree that she received in
-      2021. Feierabend’s music learning philosophy says that students should learn to be “tuneful”,
-      “beatful” and “artful”. Tuneful children learn to hear tunes in their heads and coordinate
-      their vocal muscles to sing these tunes. Beatful children feel the pulse in the music and how
-      the pulse is organized in groups of 2s and 3s. Artful children are moved by music in the many
-      ways music can elicit a feelingful response. The goal of a teacher of this method is that
-      children who learn in this way grow to be tuneful, beatful and artful adults. This means that
-      they will have the ability to participate in music that is interwoven throughout their lives.
-      Tuneful adults can sing happy birthday to friends and family, sing lullabies to their children
-      and sing ceremonial songs at important events and holidays. Beatful adults can rock to the
-      beat while they sing that lullaby, dance at weddings and clap to the beat at sporting events.
-      Artful adults are moved by music, seek out artful events and enjoy being moved by music.
+      Since 2016, Susanna has been using John Feierabend&apos;s{' '}
+      <Link
+        underline="hover"
+        href="https://www.feierabendmusic.org/first-steps-in-music-for-preschool-and-beyond/"
+        rel="noreferrer"
+        target="_blank">
+        First Steps in Music
+      </Link>{' '}
+      method from the United States to teach general music to preschool, kindergarten and elementary
+      students at Bridge Boston Charter School. In the summer of 2019, Susanna received special
+      training in the method at Gordon College as part of her Music Education License degree that
+      she received in 2021.
+      <br />
+      <br />
+      Feierabend’s music learning philosophy says that students should learn to be
+      &quot;tuneful&quot;, &quot;beatful&quot; and &quot;artful&quot;. Tuneful children learn to
+      hear tunes in their heads and coordinate their vocal muscles to sing these tunes. Beatful
+      children feel the pulse in the music and how the pulse is organized in groups of 2s and 3s.
+      Artful children are moved by music in the many ways music can elicit a feelingful response.
+      <br />
+      <br />
+      The goal of a teacher of this method is that children who learn in this way grow to be
+      tuneful, beatful and artful adults. This means that they will have the ability to participate
+      in music that is interwoven throughout their lives. Tuneful adults can sing happy birthday to
+      friends and family, sing lullabies to their children and sing ceremonial songs at important
+      events and holidays. Beatful adults can rock to the beat while they sing that lullaby, dance
+      at weddings and clap to the beat at sporting events. Artful adults are moved by music, seek
+      out artful events and enjoy being moved by music.
+      <br />
+      <br />
       Susanna believes that music education is valuable to all children as it gives them the ability
       to benefit from what music has to offer. Whether or not they seek to become professionals in
       the field of music, they will be enriched by their understanding and their ability to share in
@@ -296,7 +324,15 @@ const RO_RO: LessonsTexts = {
         target="_blank">
         Dalcroze School of Boston
       </Link>
-      , și metoda First Steps in Music John Feierabend la universitatea{' '}
+      , și metoda{' '}
+      <Link
+        underline="hover"
+        href="https://www.feierabendmusic.org/first-steps-in-music-for-preschool-and-beyond/"
+        rel="noreferrer"
+        target="_blank">
+        First Steps in Music
+      </Link>{' '}
+      John Feierabend la universitatea{' '}
       <Link underline="hover" href="https://www.gordon.edu/music" rel="noreferrer" target="_blank">
         Gordon College
       </Link>{' '}
@@ -395,7 +431,48 @@ const RO_RO: LessonsTexts = {
   elSistemaPhotoCaption:
     'Susanna predă o lecție de grup la programul Elijah tip El Sistema din Sibiu',
   firstStepsTitle: 'PRIMII PAȘI ÎN MUZICĂ',
-  firstSteps: <></>,
+  firstSteps: (
+    <>
+      Din 2016, Susanna a folosit metoda John Feierabend&apos;s{' '}
+      <Link
+        underline="hover"
+        href="https://www.feierabendmusic.org/first-steps-in-music-for-preschool-and-beyond/"
+        rel="noreferrer"
+        target="_blank">
+        First Steps in Music
+      </Link>{' '}
+      din Statele Unite, pentru predarea muzicii copiilor de grădiniță și școală primară de la
+      liceul Bridge Boston Charter School. În vara lui 2019, Susanna a primit educație formală în
+      această metodă la universitatea Gordon College în cadrul cursurilor pentru obținerea licenței
+      pedagogice de predare în școlile publice din statul Massachusetts.
+      <br />
+      <br />
+      Conform filosofiei acestei metode, elevii învață să fie <i>melodioși</i>, <i>frumoși</i> și{' '}
+      <i>artistici</i>. Copiii <i>melodioși</i> învață să audă melodii în mintea lor și să
+      coordoneze mușchii vocali pentru a cânta aceste melodii. Copii <i>frumoși</i> simt pulsul
+      muzicii și felul în care pulsul este organizat în grupuri de două sau trei secunde. Copiii{' '}
+      <i>artistici</i> se simt mișcați de muzică în numeroasele feluri în care muzica poate provoca
+      un răspuns plin de sentimente.
+      <br />
+      <br />
+      Scopul profesorului este să modeleze copiii în așa fel încât aceștia să crească în adulți{' '}
+      <i>melodioși</i>, <i>frumoși</i> și <i>artistici</i>. Cu alte cuvinte, vor avea capacitatea să
+      participe în muzica întrețesută în viața lor. Adulții <i>melodioși</i> vor fi în stare să
+      cânte <i>Mulți ani trăiască</i> prietenilor și familiei, cântece de adormit copiilor lor, și
+      cântece ceremoniale la evenimente și sărbători importante. Adulții <i>frumoși</i> vor putea
+      suplimenta cântecele cu percuție, dansa la petreceri, și bate din palme în ritmul muzicii la
+      evenimente sportive. Pentru adulții <i>artistici</i>, muzica va ocupa un loc intim în sufletul
+      lor. Ei vor căuta întotdeauna și în permanență evenimente artistice în jurul lor și se vor
+      bucura în profunzime de fiecare strop de muzică.
+      <br />
+      <br />
+      Susanna consideră că educația muzicală este valoroasă pentru toți copiii, întrucât le oferă
+      capacitatea de a beneficia de tot ce are de oferit muzica. Indiferent dacă ei vor decide să
+      devină muzicieni profesioniști, sau vor prefera să păstreze cu ea o simplă relație amicală,
+      vor rămâne îmbogățiți de înțelegerea și capacitatea de a împărtăși limbajul muzicii pentru tot
+      restul vieților lor.{' '}
+    </>
+  ),
   firstStepsPhotoCaption: 'Susanna predă o lecție de vioară la liceul Bridge Boston Charter School'
 }
 
