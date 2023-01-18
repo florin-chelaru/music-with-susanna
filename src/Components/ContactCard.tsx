@@ -5,6 +5,7 @@ import EmailIcon from '@mui/icons-material/Email'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import FacebookIcon from '@mui/icons-material/Facebook'
 import YouTubeIcon from '@mui/icons-material/YouTube'
+import InstagramIcon from '@mui/icons-material/Instagram'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 
@@ -158,6 +159,20 @@ export default function ContactCard() {
                   textDecoration: 'none'
                 }}>
                 <FacebookIcon fontSize="small" sx={{ mr: 1 }} /> MusicwithMsJohnson
+              </Link>
+            </Typography>
+            <Typography variant="body2">
+              <Link
+                rel="noreferrer"
+                target="_blank"
+                href="https://www.instagram.com/music.with.ms.johnson"
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  textDecoration: 'none'
+                }}>
+                <InstagramIcon fontSize="small" sx={{ mr: 1 }} /> Insta: music.with.ms.johnson
               </Link>
             </Typography>
             <Typography variant="body2">

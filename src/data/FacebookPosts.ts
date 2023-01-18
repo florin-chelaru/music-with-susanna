@@ -5,6 +5,53 @@ export const FACEBOOK_AVATAR =
 
 const FACEBOOK_POSTS: PrettyPost[] = [
   {
+    id: '104306382395618_150040327831896',
+    url: 'https://www.facebook.com/135810155921580/posts/150040327831896',
+    message:
+      'How to install fine-tuners on your violin! Seven simple steps! Cum se instalează fixurile de vioară pe vioară! Șapte pași simpli!\n\nMusic by https://www.free-stock-music.com',
+    creationTime: '2023-01-17T16:25:07+0000',
+    userName: 'Susanna Johnson-Chelaru',
+    attachments: [
+      {
+        type: 'video_inline',
+        url: 'https://www.facebook.com/135810155921580/videos/703719771416030',
+        width: 720,
+        height: 405,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_150040327831896_0.jpeg'
+      }
+    ]
+  },
+  {
+    id: '104306382395618_149779171191345',
+    url: 'https://www.facebook.com/135810155921580/posts/149779171191345',
+    message: 'Terapie muzicală',
+    creationTime: '2023-01-16T13:17:40+0000',
+    userName: 'Susanna Johnson-Chelaru',
+    attachments: [
+      {
+        type: 'album',
+        url: 'https://www.facebook.com/467943638795390/posts/505993631657057',
+        width: 959,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_149779171191345_0.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=505993591657061&set=a.425460196377068&type=3',
+        width: 959,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_149779171191345_1.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=505993618323725&set=a.425460196377068&type=3',
+        width: 762,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_149779171191345_2.jpeg'
+      }
+    ]
+  },
+  {
     id: '104306382395618_136612999174629',
     url: 'https://www.facebook.com/135810155921580/posts/136612999174629',
     message:

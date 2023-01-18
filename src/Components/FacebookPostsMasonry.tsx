@@ -185,7 +185,7 @@ export function FacebookPostCard({ post }: FacebookPostCardProps) {
 
 export default function FacebookPostsMasonry() {
   return (
-    <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={1} sx={{ m: 0, p: 0 }}>
+    <Masonry columns={{ xs: 1, sm: 2, md: 2 }} spacing={1} sx={{ m: 0, p: 0 }}>
       {FACEBOOK_POSTS.map((p) => (
         <FacebookPostCard key={p.id} post={p} />
       ))}
