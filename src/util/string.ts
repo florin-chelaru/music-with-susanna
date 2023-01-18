@@ -4,3 +4,7 @@ export function shortenText(text: string, maxLength: number): string {
   }
   return `${text.substring(0, maxLength)}...`
 }
+
+export function withBaseURL(url: string): string {
+  return `${process.env.PUBLIC_URL}${url}`
+}

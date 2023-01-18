@@ -53,11 +53,7 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <List>
         {navItems.map((item) => (
-          <ListItemButton
-            key={`listitem-${item.key}`}
-            // onClick={() => item.onClick?.()}
-            component={DomLink}
-            to={item.path}>
+          <ListItemButton key={`listitem-${item.key}`} component={DomLink} to={item.path}>
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.label(strings)} />
           </ListItemButton>

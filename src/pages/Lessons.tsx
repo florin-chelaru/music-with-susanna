@@ -16,6 +16,7 @@ import PhotoCard from '../Components/PhotoCard'
 import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import { useNavigate } from 'react-router-dom'
 import { LESSONS_TEXTS, LessonsTexts } from '../data/LessonsTexts'
+import { withBaseURL } from '../util/string'
 
 export interface LessonsProps {}
 
@@ -39,11 +40,11 @@ export default function Lessons({}: LessonsProps) {
         <CardMedia
           component="img"
           // TODO: Breakpoints
-          image={
+          image={withBaseURL(
             md
               ? '/static/img/lessons/teaching-violin-01.jpeg'
               : '/static/img/lessons/teaching-violin-02.jpeg'
-          }
+          )}
           alt="Private violin lesson"
           sx={{
             minWidth: '100%',
@@ -77,7 +78,7 @@ export default function Lessons({}: LessonsProps) {
             {xs && !sm && (
               <CardMedia
                 component="img"
-                image="/static/img/lessons/dylan-trophy.jpeg"
+                image={withBaseURL('/static/img/lessons/dylan-trophy.jpeg')}
                 alt={componentStrings.suzukiPhotoCaption}
               />
             )}
@@ -87,7 +88,7 @@ export default function Lessons({}: LessonsProps) {
               </Typography>
               {sm && (
                 <PhotoCard
-                  image="/static/img/lessons/dylan-trophy.jpeg"
+                  image={withBaseURL('/static/img/lessons/dylan-trophy.jpeg')}
                   alt={componentStrings.suzukiPhotoCaption}
                   caption={componentStrings.suzukiPhotoCaption}
                   sx={{
@@ -109,7 +110,7 @@ export default function Lessons({}: LessonsProps) {
             {xs && !md && (
               <CardMedia
                 component="img"
-                image="/static/img/lessons/teaching-group-violin-01.jpeg"
+                image={withBaseURL('/static/img/lessons/teaching-group-violin-01.jpeg')}
                 alt={componentStrings.elSistemaPhotoCaption}
               />
             )}
@@ -119,7 +120,7 @@ export default function Lessons({}: LessonsProps) {
               </Typography>
               {md && (
                 <PhotoCard
-                  image="/static/img/lessons/teaching-group-violin-01.jpeg"
+                  image={withBaseURL('/static/img/lessons/teaching-group-violin-01.jpeg')}
                   alt={componentStrings.elSistemaPhotoCaption}
                   caption={componentStrings.elSistemaPhotoCaption}
                   sx={{
@@ -141,7 +142,7 @@ export default function Lessons({}: LessonsProps) {
             {xs && !md && (
               <CardMedia
                 component="img"
-                image="/static/img/lessons/teaching-group-violin-02.jpeg"
+                image={withBaseURL('/static/img/lessons/teaching-group-violin-02.jpeg')}
                 alt={componentStrings.firstStepsPhotoCaption}
               />
             )}
@@ -151,7 +152,7 @@ export default function Lessons({}: LessonsProps) {
               </Typography>
               {md && (
                 <PhotoCard
-                  image="/static/img/lessons/teaching-group-violin-02.jpeg"
+                  image={withBaseURL('/static/img/lessons/teaching-group-violin-02.jpeg')}
                   alt={componentStrings.firstStepsPhotoCaption}
                   caption={componentStrings.firstStepsPhotoCaption}
                   sx={{

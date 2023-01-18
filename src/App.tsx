@@ -24,6 +24,9 @@ function App() {
   const homeRef = useRef<HTMLDivElement>(null)
   const testimonialsRef = useRef<HTMLDivElement>(null)
   const youtubeChannelRef = useRef<HTMLDivElement>(null)
+
+  const baseURL = process.env.PUBLIC_URL
+
   const navItems: NavItemInfo[] = [
     {
       key: 'home',
@@ -69,12 +72,13 @@ function App() {
       path: '/contact'
     }
   ]
+  // navItems.forEach(i=>i.path = )
 
   return (
     <CustomThemeProvider>
       <LocaleProvider>
         <SelectedVideoProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={baseURL}>
             <DrawerAppBar navItems={navItems} />
             <Grid2 container>
               <Grid2 xs={12}>

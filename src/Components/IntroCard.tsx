@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { useNavigate } from 'react-router-dom'
+import { withBaseURL } from '../util/string'
 
 interface IntroTexts extends LocalizedData {
   subtitle: string
@@ -129,7 +130,7 @@ export default function IntroCard() {
           <CardMedia
             component="img"
             // TODO: Use breakpoint images (smaller images for smaller screens)
-            image="/static/img/img-01_4000x4000.jpeg"
+            image={withBaseURL('/static/img/img-01_4000x4000.jpeg')}
             alt="Susanna Johnson"
             // For getting the image to stretch to the available space.
             // See https://stackoverflow.com/questions/14142378/how-can-i-fill-a-div-with-an-image-while-keeping-it-proportional

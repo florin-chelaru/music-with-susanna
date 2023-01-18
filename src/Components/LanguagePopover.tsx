@@ -7,6 +7,7 @@ import MenuPopover from './MenuPopover'
 import LocaleInfo from '../util/LocaleInfo'
 import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import CountryFlagIcon from './CountryFlagIcon'
+import { withBaseURL } from '../util/string'
 
 // ----------------------------------------------------------------------
 
@@ -66,7 +67,12 @@ export default function LanguagePopover({ languages, onChange }: LanguagePopover
                 onChange?.(lang)
                 handleClose()
               }}>
-              <Box component="img" alt={lang.label} src={lang.icon} sx={{ width: 28, mr: 2 }} />
+              <Box
+                component="img"
+                alt={lang.label}
+                src={withBaseURL(lang.icon)}
+                sx={{ width: 28, mr: 2 }}
+              />
 
               {lang.label}
             </MenuItem>

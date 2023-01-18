@@ -26,6 +26,7 @@ import ExpandMoreButton from './ExpandMoreButton'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import Fab from '@mui/material/Fab'
 import FACEBOOK_POSTS, { FACEBOOK_AVATAR } from '../data/FacebookPosts'
+import { withBaseURL } from '../util/string'
 
 export interface FacebookPostCardProps {
   post: PrettyPost
@@ -56,7 +57,7 @@ export function PostMedia({ attachments }: PostMediaProps) {
               position: 'relative'
             }}>
             <img
-              src={attachment.thumbnailUrl ?? attachment.url}
+              src={withBaseURL(attachment.thumbnailUrl ?? attachment.url)}
               alt="Photo from the post"
               // For getting the image to stretch to the available space.
               // See https://stackoverflow.com/questions/14142378/how-can-i-fill-a-div-with-an-image-while-keeping-it-proportional
@@ -92,7 +93,7 @@ export function PostMedia({ attachments }: PostMediaProps) {
           target="_blank"
           href={attachment.url}>
           <img
-            src={attachment.thumbnailUrl ?? attachment.url}
+            src={withBaseURL(attachment.thumbnailUrl ?? attachment.url)}
             loading="lazy"
             alt="Photo from the post"
           />
