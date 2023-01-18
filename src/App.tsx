@@ -76,9 +76,9 @@ function App() {
 
   return (
     <CustomThemeProvider>
-      <LocaleProvider>
-        <SelectedVideoProvider>
-          <BrowserRouter basename={baseURL}>
+      <SelectedVideoProvider>
+        <BrowserRouter basename={baseURL}>
+          <LocaleProvider>
             <DrawerAppBar navItems={navItems} />
             <Grid2 container>
               <Grid2 xs={12}>
@@ -103,9 +103,9 @@ function App() {
               </Grid2>
             </Grid2>
             <ScrollTop />
-          </BrowserRouter>
-        </SelectedVideoProvider>
-      </LocaleProvider>
+          </LocaleProvider>
+        </BrowserRouter>
+      </SelectedVideoProvider>
     </CustomThemeProvider>
   )
 }

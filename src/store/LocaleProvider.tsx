@@ -3,6 +3,7 @@ import { createTheme, ThemeProvider, useTheme } from '@mui/material'
 import * as muiLocales from '@mui/material/locale'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { EN_US, RO_RO } from './LocaleSettings'
+import { useSearchParams } from 'react-router-dom'
 
 export interface LocalizedData {
   [key: string]: string | React.ReactNode | any
@@ -118,10 +119,16 @@ class LocaleManager implements LocaleHandler {
 class LocaleManagerWrapper implements LocaleHandler {
   private readonly localeManager: LocaleManager
   private readonly setLocaleState: (locale: SupportedLocale) => void
+  private readonly setSearchParams: (params: any) => void
 
-  constructor(localeManager: LocaleManager, setLocaleState: (locale: SupportedLocale) => void) {
+  constructor(
+    localeManager: LocaleManager,
+    setLocaleState: (locale: SupportedLocale) => void,
+    setSearchParams: (params: any) => void
+  ) {
     this.localeManager = localeManager
     this.setLocaleState = setLocaleState
+    this.setSearchParams = setSearchParams
   }
 
   get locale(): string {
@@ -135,6 +142,7 @@ class LocaleManagerWrapper implements LocaleHandler {
   changeLocale(locale: SupportedLocale) {
     this.localeManager.changeLocale(locale)
     this.setLocaleState(locale)
+    this.setSearchParams({ hl: locale })
   }
 
   registerComponentStrings(
@@ -168,14 +176,16 @@ export interface LocaleProviderProps {
 }
 
 const LocaleProvider = ({ defaultLocale, children }: LocaleProviderProps) => {
-  const [locale, setLocale] = useState<SupportedLocale | undefined>(defaultLocale)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [locale, setLocale] = useState<SupportedLocale | undefined>(
+    defaultLocale ?? (searchParams.get('hl') as SupportedLocale | null) ?? undefined
+  )
 
   const theme = useTheme()
 
-  const themeWithLocale = useMemo(
-    () => createTheme(theme, muiLocales[locale ?? SupportedLocale.RO_RO]),
-    [locale, theme]
-  )
+  const themeWithLocale = useMemo(() => {
+    return createTheme(theme, muiLocales[locale ?? SupportedLocale.RO_RO])
+  }, [locale, theme])
 
   const localeManager = useMemo<LocaleManager>(
     () =>
@@ -189,7 +199,10 @@ const LocaleProvider = ({ defaultLocale, children }: LocaleProviderProps) => {
     []
   )
 
-  const localeWrapper = useMemo(() => new LocaleManagerWrapper(localeManager, setLocale), [locale])
+  const localeWrapper = useMemo(
+    () => new LocaleManagerWrapper(localeManager, setLocale, setSearchParams),
+    [locale]
+  )
 
   return (
     <LocaleContext.Provider value={localeWrapper}>
