@@ -363,8 +363,6 @@ export const RESUME_EN_US: Resume = {
                   sx={{ textDecoration: 'none' }}>
                   jdavis@bridgebostoncs.org
                 </Link>
-                <br />
-                (315) 345-0084
               </Typography>
             </>
           )
@@ -394,8 +392,6 @@ export const RESUME_EN_US: Resume = {
                   sx={{ textDecoration: 'none' }}>
                   mynameisgeorgelittle@yahoo.com
                 </Link>
-                <br />
-                (617) 962-1655
               </Typography>
             </>
           )
@@ -769,8 +765,6 @@ export const RESUME_RO_RO: Resume = {
                   sx={{ textDecoration: 'none' }}>
                   jdavis@bridgebostoncs.org
                 </Link>
-                <br />
-                (315) 345-0084
               </Typography>
             </>
           )
@@ -800,8 +794,6 @@ export const RESUME_RO_RO: Resume = {
                   sx={{ textDecoration: 'none' }}>
                   mynameisgeorgelittle@yahoo.com
                 </Link>
-                <br />
-                (617) 962-1655
               </Typography>
             </>
           )
