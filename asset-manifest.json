@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/music-with-susanna/static/css/main.321f0c49.css",
-    "main.js": "/music-with-susanna/static/js/main.7e0426de.js",
+    "main.js": "/music-with-susanna/static/js/main.c88c415f.js",
     "static/js/787.9433a01f.chunk.js": "/music-with-susanna/static/js/787.9433a01f.chunk.js",
     "static/media/roboto-all-500-normal.woff": "/music-with-susanna/static/media/roboto-all-500-normal.0ab669b7a0d19b178f57.woff",
     "static/media/roboto-all-700-normal.woff": "/music-with-susanna/static/media/roboto-all-700-normal.a457fde362a540fcadff.woff",
@@ -37,11 +37,11 @@
     "static/media/roboto-greek-ext-700-normal.woff2": "/music-with-susanna/static/media/roboto-greek-ext-700-normal.bd9854c751441ccc1a70.woff2",
     "index.html": "/music-with-susanna/index.html",
     "main.321f0c49.css.map": "/music-with-susanna/static/css/main.321f0c49.css.map",
-    "main.7e0426de.js.map": "/music-with-susanna/static/js/main.7e0426de.js.map",
+    "main.c88c415f.js.map": "/music-with-susanna/static/js/main.c88c415f.js.map",
     "787.9433a01f.chunk.js.map": "/music-with-susanna/static/js/787.9433a01f.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.321f0c49.css",
-    "static/js/main.7e0426de.js"
+    "static/js/main.c88c415f.js"
   ]
 }
