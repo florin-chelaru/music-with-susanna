@@ -142,7 +142,7 @@ class LocaleManagerWrapper implements LocaleHandler {
   changeLocale(locale: SupportedLocale) {
     this.localeManager.changeLocale(locale)
     this.setLocaleState(locale)
-    this.setSearchParams({ hl: locale })
+    // this.setSearchParams({ hl: locale })
   }
 
   registerComponentStrings(
