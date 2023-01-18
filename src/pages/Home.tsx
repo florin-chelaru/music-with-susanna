@@ -9,6 +9,7 @@ import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import Typography from '@mui/material/Typography'
 import { SelectedVideoContext, SelectedVideoManager } from '../store/SelectedVideoProvider'
 import { useNavigate } from 'react-router-dom'
+import { withBaseURL } from '../util/string'
 
 export interface HomeProps {
   homeRef: RefObject<HTMLDivElement>
@@ -66,7 +67,7 @@ export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: Ho
               }}>
               <Avatar
                 alt="Susanna Johnson"
-                src="/static/img/youtube-thumbs/avatar-3.jpeg"
+                src={withBaseURL('/static/img/youtube-thumbs/avatar-3.jpeg')}
                 sx={{
                   width: 66,
                   height: 66

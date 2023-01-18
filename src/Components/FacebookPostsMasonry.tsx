@@ -130,7 +130,11 @@ export function FacebookPostCard({ post }: FacebookPostCardProps) {
       <CardHeader
         avatar={
           <Link href="https://www.facebook.com/MusicwithMsJohnson" rel="noreferrer" target="_blank">
-            <Avatar alt={post.userName} src={FACEBOOK_AVATAR} aria-label={post.userName} />
+            <Avatar
+              alt={post.userName}
+              src={withBaseURL(FACEBOOK_AVATAR)}
+              aria-label={post.userName}
+            />
           </Link>
         }
         title={

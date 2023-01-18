@@ -1,5 +1,32 @@
 const YOUTUBE_VIDEOS = [
   {
+    videoId: 'DrX8v53t4-A',
+    snippet: {
+      publishedAt: '2023-01-17T15:03:51Z',
+      title:
+        'How to install fine-tuners on your violin! (Cum se instalează fixurile de vioară pe vioară!)',
+      description:
+        'You will need: fine-tuners, a flat-head screwdriver and pliers. 1. Loosen the string 2. Unscrew the fine-tuner 3. Insert the fine-tuner ...',
+      thumbnails: {
+        default: {
+          url: 'https://i.ytimg.com/vi/DrX8v53t4-A/default.jpg',
+          width: 120,
+          height: 90
+        },
+        medium: {
+          url: 'https://i.ytimg.com/vi/DrX8v53t4-A/mqdefault.jpg',
+          width: 320,
+          height: 180
+        },
+        high: {
+          url: 'https://i.ytimg.com/vi/DrX8v53t4-A/hqdefault.jpg',
+          width: 480,
+          height: 360
+        }
+      }
+    }
+  },
+  {
     videoId: 'LwyeMCVhxEQ',
     snippet: {
       publishedAt: '2022-07-13T12:52:54Z',
