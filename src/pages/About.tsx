@@ -17,6 +17,7 @@ import PhotoCard from '../Components/PhotoCard'
 import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import { ABOUT_TEXTS, AboutTexts } from '../data/Resume'
 import { useNavigate } from 'react-router-dom'
+import { withBaseURL } from '../util/string'
 
 export interface AboutProps {}
 
@@ -36,7 +37,10 @@ export default function About({}: AboutProps) {
   const content = (
     <Grid2 container>
       <Grid2 xs={12} sm={4}>
-        <PhotoCard image="/static/img/bio-photo.jpeg" alt="Susanna Johnson" />
+        <PhotoCard
+          image={withBaseURL('/static/img/bio-photo.jpeg')}
+          alt="Susanna Johnson-Chelaru"
+        />
       </Grid2>
       <Grid2 xs={12} sm={8}>
         <Typography variant="h5">SUSANNA JOHNSON-CHELARU</Typography>

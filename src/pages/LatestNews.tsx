@@ -18,6 +18,7 @@ import FacebookPostsMasonry from '../Components/FacebookPostsMasonry'
 import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import { FACEBOOK_AVATAR } from '../data/FacebookPosts'
 import FacebookIcon from '@mui/icons-material/Facebook'
+import { withBaseURL } from '../util/string'
 
 export default function LatestNews() {
   const strings = useContext<LocaleHandler>(LocaleContext).globalStringList
@@ -43,7 +44,7 @@ export default function LatestNews() {
                 <CardMedia
                   component="img"
                   // TODO: Use breakpoint images (smaller images for smaller screens)
-                  image="/static/img/facebook-cover-photo.jpeg"
+                  image={withBaseURL('/static/img/facebook-cover-photo.jpeg')}
                   alt="Cover Photo"
                   // For getting the image to stretch to the available space.
                   // See https://stackoverflow.com/questions/14142378/how-can-i-fill-a-div-with-an-image-while-keeping-it-proportional
@@ -58,7 +59,7 @@ export default function LatestNews() {
             <CardContent sx={{ position: 'relative', p: 0 }}>
               <Avatar
                 alt="Susanna Johnson"
-                src={FACEBOOK_AVATAR}
+                src={withBaseURL(FACEBOOK_AVATAR)}
                 sx={{
                   width: 168,
                   height: 168,

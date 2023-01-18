@@ -17,6 +17,7 @@ import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProv
 import ExpandMoreButton from './ExpandMoreButton'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { Testimonial, TESTIMONIALS } from '../data/Testimonials'
+import { withBaseURL } from '../util/string'
 
 interface TestimonialCardProps {
   testimonial: Testimonial
@@ -79,11 +80,13 @@ const TestimonialCard = React.memo(({ testimonial }: TestimonialCardProps) => {
         </CardActions>
       )}
       {testimonial.image && typeof testimonial.image === 'string' && (
-        <CardMedia component="img" image={testimonial.image} />
+        <CardMedia component="img" image={withBaseURL(testimonial.image)} />
       )}
       {testimonial.image &&
         Array.isArray(testimonial.image) &&
-        testimonial.image.map((img, i) => <CardMedia component="img" image={img} key={i} />)}
+        testimonial.image.map((img, i) => (
+          <CardMedia component="img" image={withBaseURL(img)} key={i} />
+        ))}
     </Card>
   )
 })

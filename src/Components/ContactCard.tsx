@@ -8,6 +8,7 @@ import YouTubeIcon from '@mui/icons-material/YouTube'
 import InstagramIcon from '@mui/icons-material/Instagram'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
+import { withBaseURL } from '../util/string'
 
 interface ContactTexts {
   title: string
@@ -93,7 +94,7 @@ export default function ContactCard() {
           <CardMedia
             component="img"
             // TODO: Breakpoints
-            image="/static/img/contact-large.jpeg"
+            image={withBaseURL('/static/img/contact-large.jpeg')}
             alt="Susanna Johnson-Chelaru"
             // For getting the image to stretch to the available space.
             // See https://stackoverflow.com/questions/14142378/how-can-i-fill-a-div-with-an-image-while-keeping-it-proportional
