@@ -26,8 +26,8 @@ const EN_US: IntroTexts = {
         target="_blank">
         Suzuki
       </Link>{' '}
-      method, used by Susanna Johnson, is a music curriculum and teaching philosophy dating from the
-      mid-20th century, created by Japanese violinist and pedagogue{' '}
+      method, used by Susanna Johnson-Chelaru, is a music curriculum and teaching philosophy dating
+      from the mid-20th century, created by Japanese violinist and pedagogue{' '}
       <Link
         color="inherit"
         href="https://suzukiassociation.org/about/suzuki-method/shinichi-suzuki/"
@@ -55,9 +55,9 @@ const RO_RO: IntroTexts = {
         target="_blank">
         Suzuki
       </Link>
-      , folosită de Susanna Johnson, constă dintr-o curiculă muzicală și filosofie a predării
-      folosite în America și Japonia încă de la jumătatea secolului 20, creată de faimosul violonist
-      și pedagog{' '}
+      , folosită de Susanna Johnson-Chelaru, constă dintr-o curiculă muzicală și filosofie a
+      predării folosite în America și Japonia încă de la jumătatea secolului 20, creată de faimosul
+      violonist și pedagog{' '}
       <Link
         color="inherit"
         href="https://suzukiassociation.org/about/suzuki-method/shinichi-suzuki/"
@@ -131,7 +131,7 @@ export default function IntroCard() {
             component="img"
             // TODO: Use breakpoint images (smaller images for smaller screens)
             image={withBaseURL('/static/img/img-01_4000x4000.jpeg')}
-            alt="Susanna Johnson"
+            alt="Susanna Johnson-Chelaru"
             // For getting the image to stretch to the available space.
             // See https://stackoverflow.com/questions/14142378/how-can-i-fill-a-div-with-an-image-while-keeping-it-proportional
             sx={{

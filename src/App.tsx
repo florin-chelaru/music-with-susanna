@@ -11,6 +11,7 @@ import ContactMailIcon from '@mui/icons-material/ContactMail'
 import YouTubeIcon from '@mui/icons-material/YouTube'
 import FacebookIcon from '@mui/icons-material/Facebook'
 import SchoolIcon from '@mui/icons-material/School'
+import AttributionIcon from '@mui/icons-material/Attribution'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Lessons from './pages/Lessons'
 import About from './pages/About'
@@ -19,6 +20,7 @@ import VideoChannel from './pages/VideoChannel'
 import SelectedVideoProvider from './store/SelectedVideoProvider'
 import LatestNews from './pages/LatestNews'
 import ScrollTop from './Components/ScrollTop'
+import Credits from './pages/Credits'
 
 function App() {
   const homeRef = useRef<HTMLDivElement>(null)
@@ -64,12 +66,17 @@ function App() {
       icon: <FacebookIcon />,
       path: '/news'
     },
-
     {
       key: 'contact',
       label: (strings) => strings.contact,
       icon: <ContactMailIcon />,
       path: '/contact'
+    },
+    {
+      key: 'credits',
+      label: (strings) => strings.credits,
+      icon: <AttributionIcon />,
+      path: '/credits'
     }
   ]
   // navItems.forEach(i=>i.path = )
@@ -99,6 +106,7 @@ function App() {
                   <Route path="/videos" element={<VideoChannel />} />
                   <Route path="/news" element={<LatestNews />} />
                   <Route path="/contact" element={<Contact />} />
+                  <Route path="/credits" element={<Credits />} />
                 </Routes>
               </Grid2>
             </Grid2>

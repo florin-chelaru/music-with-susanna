@@ -58,7 +58,7 @@ export default function LatestNews() {
             </Grid2>
             <CardContent sx={{ position: 'relative', p: 0 }}>
               <Avatar
-                alt="Susanna Johnson"
+                alt="Susanna Johnson-Chelaru"
                 src={withBaseURL(FACEBOOK_AVATAR)}
                 sx={{
                   width: 168,

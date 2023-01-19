@@ -66,7 +66,7 @@ export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: Ho
                 m: 'auto'
               }}>
               <Avatar
-                alt="Susanna Johnson"
+                alt="Susanna Johnson-Chelaru"
                 src={withBaseURL('/static/img/youtube-thumbs/avatar-3.jpeg')}
                 sx={{
                   width: 66,

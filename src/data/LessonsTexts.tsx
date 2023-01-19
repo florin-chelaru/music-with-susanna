@@ -117,7 +117,7 @@ const EN_US: LessonsTexts = {
   suzukiTitle: 'THE SUZUKI METHOD',
   suzuki: (
     <>
-      The{' '}
+      Susanna is an officially trained{' '}
       <Link
         underline="hover"
         href="https://suzukiassociation.org/about/suzuki-method/"
@@ -125,28 +125,27 @@ const EN_US: LessonsTexts = {
         target="_blank">
         Suzuki
       </Link>{' '}
-      Method has a long established history of success of more than fifty years originating from
-      Japan, and spreading to the United States, to Europe and worldwide. Suzuki teachers believe
-      every child can learn music. Founder of the method, Shinichi Suzuki, described the method as
-      the &quot;mother-tongue approach&quot;. As an officially trained Suzuki teacher (Suzuki Violin
-      Levels 1 & 2 Certification in 2012 and 2014), Susanna follows the mother-tongue approach that
-      imitates natural native language acquisition. In the Suzuki Method, children start learning
-      music at a very young age (as young as 3 years old). As part of the mother-tongue approach of
-      music learning, Susanna implements listening, repetition and review, and delayed note-reading
-      (as children learn to read after they speak the language).
+      teacher (Suzuki Violin Levels 1 & 2 Certification in 2012 and 2014). The Suzuki Method,
+      originating from Japan, has a history of success of more than fifty years, spreading
+      throughout the United States, Europe and worldwide. Suzuki teachers believe every child can
+      learn music. Founder of the method, Shinichi Suzuki, described the method as the
+      <i>mother-tongue approach</i>. The mother-tongue approach imitates natural native language
+      acquisition. In the Suzuki Method, children start learning music at a very young age (as young
+      as 3 years old). In addition, Suzuki teachers implement listening, repetition and review, and
+      delayed note-reading (as children learn to read after they speak the language).
       <br />
       <br />
-      Another very important aspect of the Suzuki Method when children are very young is parental
-      participation. Parents sit in on lessons, participate in the activities with the child during
-      the lesson and assist the children with practice at home. This is no burden as every lesson is
-      joyful, and full of games and activities that ease the learning. At the same time, Susanna
-      believes in holding every child to a high standard and promoting motivation through
-      achievement.
+      Another very important aspect of the Suzuki Method is parental participation. Especially when
+      children are very young, parents sit in on lessons, participate in the activities with the
+      child during the lesson and assist the child with practice at home. This is no burden as every
+      lesson is joyful, and full of games and activities that ease the learning. At the same time,
+      every child is held to a high standard and motivated by achievement.
       <br />
       <br />
       Susanna uses a combination of the Suzuki Method repertoire and repertoire collected throughout
-      her 15+ years of teaching experience in schools and music programs that give students a sense
-      of accomplishment and achievement after every lesson. The trick is small and deliberate steps.
+      her 15+ years of teaching experience in schools and music programs. This carefully curated
+      curriculum gives students a sense of accomplishment and achievement after every lesson through
+      small and deliberate steps.
     </>
   ),
   suzukiPhotoCaption: 'Dylan age six, just earned his 30-day practice trophy',
@@ -163,8 +162,8 @@ const EN_US: LessonsTexts = {
       </Link>{' '}
       music programs since 2012, in the United States, El Salvador, Sweden and Romania, teaching
       group violin and string ensemble classes. El Sistema is a music education philosophy that
-      originated in Venezuela in 1975. The main philosophy behind El Sistema is that every child
-      should have access to quality music education, and El Sistema programs are designed so that
+      originated in Venezuela in 1975. The main principle behind El Sistema is that every child
+      should have access to quality music education. El Sistema programs are designed so that
       children learn together in a group setting.
       <br />
       <br />
@@ -172,22 +171,16 @@ const EN_US: LessonsTexts = {
       teaching. She believes that disadvantaged children should have access to quality music
       education. These music education programs should be local, convenient and very high quality.
       She also truly believes in and has seen the power and magic in group learning. Specifically,
-      Susanna strives to teach group music classes the El Sistema way: with joyful and supportive
-      group learning, using activities made for and made better when done in a group and making sure
-      that children are able to participate in the group ensembles from the very beginning of their
-      instrumental learning. El Sistema programs focus on intensive and joyful music making as a
-      vehicle for social development. As such, when teaching group music, Susanna focuses on peer
-      learning and using music as a tool for developing community and positive relationships in the
-      group.
+      Susanna strives to teach with joyful and supportive learning, using activities made for and
+      made better when done in a group. She also aims for children to be able to participate in
+      ensembles from the very beginning of their instrumental learning.
       <br />
       <br />
       One final very important aspect of El Sistema is the importance of performing in the community
-      and performing often. Students in an El Sistema program should be performing within their
-      first month of learning their instrument. Performing and sharing music with the community
-      should be one of the main goals of an El Sistema program. Susanna believes that students
-      should have as many opportunities to perform as possible, whether they are more informal or
-      more formal. Frequent performances remove performance jitters and refocus the students on the
-      joy of learning to play an instrument: through sharing it!
+      and performing often. Susanna believes that students should have as many opportunities to
+      perform as possible, whether they are more informal or more formal. Frequent performances
+      remove performance jitters and refocus the students on the joy of learning to play an
+      instrument: through sharing it!
     </>
   ),
   elSistemaPhotoCaption:
@@ -209,20 +202,20 @@ const EN_US: LessonsTexts = {
       she received in 2021.
       <br />
       <br />
-      Feierabend’s music learning philosophy says that students should learn to be
+      Feierabend&apos;s music learning philosophy says that students should learn to be
       &quot;tuneful&quot;, &quot;beatful&quot; and &quot;artful&quot;. Tuneful children learn to
       hear tunes in their heads and coordinate their vocal muscles to sing these tunes. Beatful
       children feel the pulse in the music and how the pulse is organized in groups of 2s and 3s.
       Artful children are moved by music in the many ways music can elicit a feelingful response.
       <br />
       <br />
-      The goal of a teacher of this method is that children who learn in this way grow to be
-      tuneful, beatful and artful adults. This means that they will have the ability to participate
-      in music that is interwoven throughout their lives. Tuneful adults can sing happy birthday to
-      friends and family, sing lullabies to their children and sing ceremonial songs at important
-      events and holidays. Beatful adults can rock to the beat while they sing that lullaby, dance
-      at weddings and clap to the beat at sporting events. Artful adults are moved by music, seek
-      out artful events and enjoy being moved by music.
+      The goal of a teacher of this method is to ensure that the students grow to be tuneful,
+      beatful and artful adults. This means that they will have the ability to participate in music
+      that is interwoven throughout their lives. Tuneful adults can sing happy birthday to friends
+      and family, sing lullabies to their children and sing ceremonial songs at important events and
+      holidays. Beatful adults can rock to the beat while they sing that lullaby, dance at weddings
+      and clap to the beat at sporting events. Artful adults are moved by music, seek out artful
+      events and enjoy being moved by music.
       <br />
       <br />
       Susanna believes that music education is valuable to all children as it gives them the ability
@@ -447,19 +440,19 @@ const RO_RO: LessonsTexts = {
       pedagogice de predare în școlile publice din statul Massachusetts.
       <br />
       <br />
-      Conform filosofiei acestei metode, elevii învață să fie <i>melodioși</i>, <i>frumoși</i> și{' '}
+      Conform filosofiei acestei metode, elevii învață să fie <i>melodioși</i>, <i>ritmici</i> și{' '}
       <i>artistici</i>. Copiii <i>melodioși</i> învață să audă melodii în mintea lor și să
-      coordoneze mușchii vocali pentru a cânta aceste melodii. Copii <i>frumoși</i> simt pulsul
+      coordoneze mușchii vocali pentru a cânta aceste melodii. Copii <i>ritmici</i> simt pulsul
       muzicii și felul în care pulsul este organizat în grupuri de două sau trei secunde. Copiii{' '}
       <i>artistici</i> se simt mișcați de muzică în numeroasele feluri în care muzica poate provoca
       un răspuns plin de sentimente.
       <br />
       <br />
       Scopul profesorului este să modeleze copiii în așa fel încât aceștia să crească în adulți{' '}
-      <i>melodioși</i>, <i>frumoși</i> și <i>artistici</i>. Cu alte cuvinte, vor avea capacitatea să
+      <i>melodioși</i>, <i>ritmici</i> și <i>artistici</i>. Cu alte cuvinte, vor avea capacitatea să
       participe în muzica întrețesută în viața lor. Adulții <i>melodioși</i> vor fi în stare să
       cânte <i>Mulți ani trăiască</i> prietenilor și familiei, cântece de adormit copiilor lor, și
-      cântece ceremoniale la evenimente și sărbători importante. Adulții <i>frumoși</i> vor putea
+      cântece ceremoniale la evenimente și sărbători importante. Adulții <i>ritmici</i> vor putea
       suplimenta cântecele cu percuție, dansa la petreceri, și bate din palme în ritmul muzicii la
       evenimente sportive. Pentru adulții <i>artistici</i>, muzica va ocupa un loc intim în sufletul
       lor. Ei vor căuta întotdeauna și în permanență evenimente artistice în jurul lor și se vor
