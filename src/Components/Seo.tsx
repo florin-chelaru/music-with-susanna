@@ -39,6 +39,14 @@ export default function Seo() {
       <title>{componentStrings.title}</title>
       <link rel="canonical" href={`https://vioara-cu-susanna.ro/?hl=${localeManager.locale}`} />
       <meta name="description" content={componentStrings.description} />
+      <meta property="og:title" content={componentStrings.title} />
+      <meta
+        property="og:url"
+        content={`https://vioara-cu-susanna.ro/?hl=${localeManager.locale}`}
+      />
+      <meta property="og:description" content={componentStrings.description} />
+      <meta name="twitter:title" content={componentStrings.title} />
+      <meta name="twitter:description" content={componentStrings.description} />
     </Helmet>
   )
 }
