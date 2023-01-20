@@ -23,6 +23,7 @@ export const EN_US: GlobalLocalizedData = {
   home: 'Home',
   language: 'Language',
   lessons: 'The Music Lessons',
+  more: 'More',
   musicWithMsJohnson: 'Music with Ms. Johnson',
   news: 'Latest News',
   readMore: 'Read more',
@@ -39,10 +40,11 @@ export const RO_RO: GlobalLocalizedData = {
   home: 'Acasă',
   language: 'Limba',
   lessons: 'Lecțiile de Muzică',
+  more: 'Mai mult',
   musicWithMsJohnson: 'Cântăm cu Ms. Johnson',
   news: 'Ultimele Noutăți',
   readMore: 'Citește mai mult',
   signUp: 'Înscrie-te',
   testimonials: 'Testimoniale',
-  youtubeChildrensChannel: 'Canal YouTube pentru Copii'
+  youtubeChildrensChannel: 'Canalul YouTube pentru Copii'
 }
