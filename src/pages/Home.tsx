@@ -1,6 +1,6 @@
-import React, { RefObject, useContext } from 'react'
+import React, { useContext } from 'react'
 import Toolbar from '@mui/material/Toolbar'
-import { Avatar, Button, Chip, Container, Divider, Link, Stack } from '@mui/material'
+import { Avatar, Button, Container, Stack } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import IntroCard from '../Components/IntroCard'
 import TestimonialsMasonry from '../Components/TestimonialsMasonry'
@@ -11,13 +11,9 @@ import { SelectedVideoContext, SelectedVideoManager } from '../store/SelectedVid
 import { useNavigate } from 'react-router-dom'
 import { withBaseURL } from '../util/string'
 
-export interface HomeProps {
-  homeRef: RefObject<HTMLDivElement>
-  testimonialsRef: RefObject<HTMLDivElement>
-  youtubeChannelRef: RefObject<HTMLDivElement>
-}
+export interface HomeProps {}
 
-export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: HomeProps) {
+export default function Home({}: HomeProps) {
   const strings = useContext<LocaleHandler>(LocaleContext).globalStringList
   const selectedVideoManager = useContext<SelectedVideoManager>(SelectedVideoContext)
   const navigate = useNavigate()
@@ -26,15 +22,16 @@ export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: Ho
       <Container maxWidth="md" sx={{ pt: 3 }}>
         <Toolbar />
         <Grid2 container spacing={2}>
-          <Grid2 xs={12} ref={homeRef}>
+          <Grid2 xs={12}>
             <IntroCard />
           </Grid2>
-          <Grid2 xs={12}>
-            <Divider variant="middle" sx={{ m: 1 }}>
-              <Chip label={strings.testimonials} />
-            </Divider>
+          <Grid2 xs={12} sx={{ justifyContent: 'center', alignItems: 'center' }}>
+            <br />
+            <Typography variant="h5" component="h2" sx={{ textAlign: 'center' }}>
+              {strings.testimonials.toUpperCase()}
+            </Typography>
           </Grid2>
-          <Grid2 xs={12} ref={testimonialsRef}>
+          <Grid2 xs={12}>
             <TestimonialsMasonry showFeaturedTestimonials />
           </Grid2>
           <Grid2
@@ -47,11 +44,6 @@ export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: Ho
             <Button size="medium" variant="contained" onClick={() => navigate('/contact')}>
               {strings.signUp}
             </Button>
-          </Grid2>
-          <Grid2 xs={12} ref={youtubeChannelRef}>
-            <Divider variant="middle" sx={{ m: 1 }}>
-              <Chip label={strings.youtubeChildrensChannel} />
-            </Divider>
           </Grid2>
           <Grid2 xs={12}>
             <Stack
@@ -73,18 +65,8 @@ export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: Ho
                   height: 66
                 }}
               />
-              <Typography
-                variant="h5"
-                gutterBottom
-                component={Link}
-                underline="hover"
-                color="inherit"
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault()
-                  navigate('/videos')
-                }}>
-                {strings.musicWithMsJohnson}
+              <Typography variant="h5" gutterBottom component="h2">
+                {strings.youtubeChildrensChannel.toUpperCase()}
               </Typography>
             </Stack>
           </Grid2>
@@ -114,7 +96,7 @@ export default function Home({ homeRef, testimonialsRef, youtubeChannelRef }: Ho
               variant="outlined"
               onClick={() => navigate('/videos')}
               sx={{ mr: 2 }}>
-              {strings.readMore}
+              {strings.more}
             </Button>
             <Button size="medium" variant="contained" onClick={() => navigate('/contact')}>
               {strings.signUp}

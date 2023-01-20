@@ -96,7 +96,7 @@ export default function IntroCard() {
               height: '100%'
             }}>
             <CardContent>
-              <Typography gutterBottom variant="h5" component="div">
+              <Typography gutterBottom variant="h5" component="h1">
                 {strings.lessons.toUpperCase()}
               </Typography>
               <Typography gutterBottom variant="subtitle2" component="div">
