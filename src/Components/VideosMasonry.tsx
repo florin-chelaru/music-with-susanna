@@ -20,13 +20,12 @@ export default function VideosMasonry({ onVideoSelected, maxVideos }: VideoMason
   const theme = useTheme()
   const md = useMediaQuery(theme.breakpoints.up('md'))
 
-  const itemsPerPage = 6
+  const itemsPerPage = 8
   const [initialLoad, setInitialLoad] = useState(true)
   const [hasMore, setHasMore] = useState(true)
   const [records, setRecords] = useState(itemsPerPage)
   const loadMore = () => {
     setInitialLoad(false)
-    console.log(`loading more. records: ${records}`)
     if (records >= YOUTUBE_VIDEOS.length) {
       setHasMore(false)
     } else {
