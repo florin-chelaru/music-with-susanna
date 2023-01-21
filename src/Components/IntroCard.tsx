@@ -7,6 +7,7 @@ import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProv
 import { SupportedLocale } from '../util/SupportedLocale'
 import { useNavigate } from 'react-router-dom'
 import { withBaseURL } from '../util/string'
+import { scrollToTop } from '../util/window'
 
 interface IntroTexts extends LocalizedData {
   subtitle: string
@@ -36,15 +37,26 @@ const EN_US: IntroTexts = {
         Shinichi Suzuki
       </Link>{' '}
       (1898–1998). The method aims to create an environment for learning music which parallels the
-      linguistic environment of acquiring a native language. Suzuki believed that this environment
-      would also help to foster good moral character.
+      linguistic environment of acquiring a native language.
+      <br />
+      <br />
+      Susanna teaches violin and viola lessons in Iași,{' '}
+      <Link
+        href="https://goo.gl/maps/penDBbDqRtBaubUA7"
+        color="inherit"
+        rel="noreferrer"
+        target="_blank">
+        in the Copou area
+      </Link>
+      .
     </>
   )
 }
 
 const RO_RO: IntroTexts = {
   subtitle:
-    'Învață copilul tău să cânte la vioară sau violă, folosind metode pedagogice consacrate din Statele Unite ale Americii și Japonia!',
+    'Învață-l pe copilul tău să cânte la vioară sau la violă, folosind metode pedagogice consacrate din Statele Unite ale ' +
+    'Americii și Japonia!',
   shortDescription: (
     <>
       Metoda{' '}
@@ -59,15 +71,25 @@ const RO_RO: IntroTexts = {
       predării folosite în America și Japonia încă de la jumătatea secolului 20, creată de faimosul
       violonist și pedagog{' '}
       <Link
-        color="inherit"
         href="https://suzukiassociation.org/about/suzuki-method/shinichi-suzuki/"
+        color="inherit"
         rel="noreferrer"
         target="_blank">
         Shinichi Suzuki
       </Link>{' '}
       (1898–1998). Metoda urmărește să creeze un mediu de învățare a muzicii asemenea mediului
-      lingvistic de dobândire a limbii natale. Suzuki era de părere că acest mediu poate hrăni și
-      întreține o bună fibră morală.
+      lingvistic de dobândire a limbii materne.
+      <br />
+      <br />
+      Susanna oferă lecții de vioară și violă la Iași, în Copou,{' '}
+      <Link
+        href="https://goo.gl/maps/penDBbDqRtBaubUA7"
+        color="inherit"
+        rel="noreferrer"
+        target="_blank">
+        în spatele Palatului Copiilor
+      </Link>
+      .
     </>
   )
 }
@@ -102,16 +124,29 @@ export default function IntroCard() {
               <Typography gutterBottom variant="subtitle2" component="div">
                 {componentStrings.subtitle}
               </Typography>
+              <br />
               <Typography variant="body2" color="text.secondary">
                 {componentStrings.shortDescription}
               </Typography>
             </CardContent>
             <CardActions>
-              <Button size="small" color="primary" onClick={() => navigate('/lessons')}>
-                {strings.readMore}
+              <Button
+                size="small"
+                color="primary"
+                onClick={() => {
+                  navigate('/lessons')
+                  scrollToTop()
+                }}>
+                {strings.more}
               </Button>
-              <Button size="small" variant="contained" onClick={() => navigate('/contact')}>
-                {strings.signUp}
+              <Button
+                size="small"
+                variant="contained"
+                onClick={() => {
+                  navigate('/contact')
+                  scrollToTop()
+                }}>
+                {strings.contactMe}
               </Button>
             </CardActions>
           </Box>

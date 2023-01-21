@@ -117,7 +117,7 @@ export const RESUME_EN_US: Resume = {
                 <b>Assistant Teacher:</b>
               </Typography>
               <Typography variant="body2" paragraph>
-                String orchestra, viola, violin and cello sectionals, 3<sup>rd</sup> through 8
+                String orchestra, violin, viola, and cello sectionals, 3<sup>rd</sup> through 8
                 <sup>th</sup> grade
               </Typography>
               <Typography variant="body2">
@@ -437,7 +437,7 @@ export const RESUME_RO_RO: Resume = {
           content: (
             <>
               <Typography variant="body2">
-                <b>Diplomă de Master în Muzica:</b> Interpretare de Violă
+                <b>Diplomă de Master în Muzică:</b> Interpretare de Violă
               </Typography>
               <Typography variant="overline">University of Maryland, College Park</Typography>
             </>
@@ -466,7 +466,7 @@ export const RESUME_RO_RO: Resume = {
               <Typography variant="overline">
                 <b>Centrul de zi pentru copii Sfânta Marina</b> Iași, România
               </Typography>
-              <Typography variant="body2">Instructor Terapie Muzicală</Typography>
+              <Typography variant="body2">Profesor Terapie Muzicală</Typography>
             </>
           )
         },
@@ -482,7 +482,7 @@ export const RESUME_RO_RO: Resume = {
                 Program de Muzică tip <i>El Sistema</i>, Hosman, Sibiu
               </Typography>
               <Typography variant="body2">
-                Instructor invitat pentru ansambluri de vioară și violă și lecții particulare
+                Profesor invitat pentru ansambluri de vioară și violă și lecții particulare
               </Typography>
             </>
           )
@@ -509,7 +509,7 @@ export const RESUME_RO_RO: Resume = {
                 <b>Profesor Asistent:</b>
               </Typography>
               <Typography variant="body2" paragraph>
-                Orchestră de coarde: violă, vioară și violoncel, clasele a II-a până la a VIII-a
+                Orchestră de coarde: vioară, violă și violoncel, clasele a II-a până la a VIII-a
               </Typography>
               <Typography variant="body2">
                 <b>Artist Didactic de Violă și Vioară:</b>
@@ -527,8 +527,8 @@ export const RESUME_RO_RO: Resume = {
                 <br />
                 Hingham, MA
               </Typography>
-              <Typography variant="body2">Instructor de Vioară, metoda Suzuki</Typography>
-              <Typography variant="body2">Instructor de Vioară și Violă, metodă clasică</Typography>
+              <Typography variant="body2">Profesor de Vioară, metoda Suzuki</Typography>
+              <Typography variant="body2">Profesor de Vioară și Violă, metodă clasică</Typography>
             </>
           )
         },
@@ -543,9 +543,9 @@ export const RESUME_RO_RO: Resume = {
                 Asistent Didactic Masterand, Ansamblu Orchestră
               </Typography>
               <Typography variant="body2">
-                Trainer, Secțiunea Violă a Orchestrei de Repertoriu, University of Maryland
+                Coordonator, Secțiunea Violă a University of Maryland Repertoire Orchestra
               </Typography>
-              <Typography variant="body2">Instructor de Tehnică pentru Violă</Typography>
+              <Typography variant="body2">Profesor de Tehnică pentru Violă</Typography>
             </>
           )
         },
@@ -559,9 +559,9 @@ export const RESUME_RO_RO: Resume = {
                 Program tip <i>El Sistema</i>, El Salvador, San Salvador
               </Typography>
               <Typography variant="body2">
-                Instructor de Violă: masterclasses, cursuri de grup și lecții particulare
+                Profesor de Violă: masterclasses, cursuri de grup și lecții particulare
               </Typography>
-              <Typography variant="body2">Instructor de Pedagogie pentru Violă</Typography>
+              <Typography variant="body2">Profesor de Pedagogie pentru Violă</Typography>
             </>
           )
         },
@@ -571,7 +571,7 @@ export const RESUME_RO_RO: Resume = {
             <>
               <Typography variant="overline">
                 <b>
-                  Proiectul Fairview Elementary pentru Instrumente cu Coardă, Indiana University
+                  Proiectul Fairview Elementary pentru Instrumente cu Coarde, Indiana University
                 </b>
                 <br />
                 Bloomington, IN
@@ -591,7 +591,7 @@ export const RESUME_RO_RO: Resume = {
                 <b>Melody Music Shop</b> Bloomington, IN
               </Typography>
               <Typography variant="body2">
-                Instructor Particular: vioară, violă, pian. Elevi cu vârste între 5 și 17 ani
+                Profesor Particular: vioară, violă, pian. Elevi cu vârste între 5 și 17 ani
               </Typography>
             </>
           )
@@ -608,7 +608,7 @@ export const RESUME_RO_RO: Resume = {
               <Typography variant="overline">
                 <b>Academia El Sistema</b> Stockholm, Suedia
               </Typography>
-              <Typography variant="body2">Instructori: Ron Alvarez, Eva Nivbrant Wedin</Typography>
+              <Typography variant="body2">Profesori: Ron Alvarez, Eva Nivbrant Wedin</Typography>
             </>
           )
         },
@@ -617,11 +617,11 @@ export const RESUME_RO_RO: Resume = {
           content: (
             <>
               <Typography variant="overline">
-                <b>Pedagogia Instrumentelor de Coardă</b>
+                <b>Pedagogia Instrumentelor de Coarde</b>
                 <br />
                 University of Maryland, College Park
               </Typography>
-              <Typography variant="body2">Instructor: Rebecca Henry</Typography>
+              <Typography variant="body2">Profesor: Rebecca Henry</Typography>
             </>
           )
         },
@@ -635,7 +635,7 @@ export const RESUME_RO_RO: Resume = {
               <Typography variant="body2">
                 Atestat de Predare – Nivelul 2 Vioară Suzuki
                 <br />
-                Instructor: Allen Lieb
+                Profesor: Allen Lieb
               </Typography>
             </>
           )
@@ -650,7 +650,7 @@ export const RESUME_RO_RO: Resume = {
               <Typography variant="body2">
                 Atestat de Predare – <i>Every Child Can</i> și Nivelul 1 Vioară Suzuki
                 <br />
-                Instructor: Linda Stieg
+                Profesor: Linda Stieg
               </Typography>
             </>
           )
@@ -663,10 +663,10 @@ export const RESUME_RO_RO: Resume = {
                 <b>Indiana University – Jacobs School of Music, String Academy</b>
               </Typography>
               <Typography variant="body2">
-                Pedagogie Vioară și Violă II, Instructor: Mimi Zweig
+                Pedagogie Vioară și Violă II, Profesor: Mimi Zweig
               </Typography>
               <Typography variant="body2">
-                Pedagogie Vioară și Violă I, Instructor: Brenda Brenner
+                Pedagogie Vioară și Violă I, Profesor: Brenda Brenner
               </Typography>
             </>
           )
@@ -681,10 +681,10 @@ export const RESUME_RO_RO: Resume = {
           content: (
             <>
               <Typography variant="body2">
-                Urmat Cursul de <b>Introducere în Metoda Dalcroze pentru Instructori de Muzică</b>,
+                Urmat Cursul de <b>Introducere în Metoda Dalcroze pentru Profesori de Muzică</b>,
                 Dalcroze School of Boston
               </Typography>
-              <Typography variant="body2">Instructor: Guy Mendilow</Typography>
+              <Typography variant="body2">Profesor: Guy Mendilow</Typography>
             </>
           )
         },
@@ -695,7 +695,7 @@ export const RESUME_RO_RO: Resume = {
               <Typography variant="body2">
                 Participant Invitat, <b>Dream Orchestra El Sistema Sweden</b>, Gothenburg, Suedia
               </Typography>
-              <Typography variant="body2">Instructor: Ron Alvarez</Typography>
+              <Typography variant="body2">Profesor: Ron Alvarez</Typography>
             </>
           )
         },
@@ -707,7 +707,7 @@ export const RESUME_RO_RO: Resume = {
                 <b>Fellowship Mass Cultural Council META</b> Boston, MA
               </Typography>
               <Typography variant="body2">
-                Program de Fellowship pentru Instructori de Muzică/Artiști Didactici
+                Program de Fellowship pentru Profesori de Muzică/Artiști Didactici
               </Typography>
             </>
           )
@@ -820,7 +820,7 @@ const RO_RO: AboutTexts = {
   resume: RESUME_RO_RO,
   subtitle: 'Violă • Vioară • Profesor de Muzică',
   intro:
-    'Sunt licențiată în interpretare violă la renumita Jacobs School of Music, Indiana University, și am diplomă de master de la University of Maryland, College Park, Statele Unite. Experiența mea pedagogică include programe de predare a muzicii în numeroase locuri, atât din Statele Unite, cât și Suedia, El Salvador, și recent, Sibiu, România. Am studiat pedagogia instrumentelor de coardă cu Mimi Zweig și Rebecca Henry, metoda Suzuki pentru vioară cu Allen Lieb și Linda Stieg, metoda Dalcroze la Dalcroze School of Boston, și metoda First Steps in Music John Feierabend pentru educație muzicală generală la Gordon College, Massachusetts.'
+    'Sunt licențiată în interpretare violă la renumita Jacobs School of Music, Indiana University, și am diplomă de master de la University of Maryland, College Park, Statele Unite. Experiența mea pedagogică include programe de predare a muzicii în numeroase instituții, atât din Statele Unite, cât și Suedia, El Salvador, și recent, Sibiu, România. Am studiat pedagogia instrumentelor de coarde cu Mimi Zweig și Rebecca Henry, metoda Suzuki pentru vioară cu Allen Lieb și Linda Stieg, metoda Dalcroze la Dalcroze School of Boston, și metoda First Steps in Music John Feierabend pentru educație muzicală generală la Gordon College, Massachusetts.'
 }
 
 export const ABOUT_TEXTS = new Map<SupportedLocale, LocalizedData>([

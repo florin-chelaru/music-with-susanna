@@ -2,7 +2,7 @@ import { alpha } from '@mui/material/styles'
 import { Shadows } from '@mui/material/styles/shadows'
 import { GREY } from './palette'
 
-const LIGHT_MODE = GREY[500]
+const LIGHT_MODE = GREY[900]
 
 const createShadow = (color: string): Shadows => {
   const transparent1 = alpha(color, 0.2)

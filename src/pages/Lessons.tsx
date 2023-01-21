@@ -17,6 +17,7 @@ import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import { useNavigate } from 'react-router-dom'
 import { LESSONS_TEXTS, LessonsTexts } from '../data/LessonsTexts'
 import { withBaseURL } from '../util/string'
+import { scrollToTop } from '../util/window'
 
 export interface LessonsProps {}
 
@@ -56,8 +57,14 @@ export default function Lessons({}: LessonsProps) {
       <Grid2 xs={12} sm={12} md={6}>
         <CardContent>{componentStrings.intro}</CardContent>
         <CardActions sx={{ justifyContent: 'center' }}>
-          <Button size="small" variant="contained" onClick={() => navigate('/contact')}>
-            {strings.signUp}
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => {
+              navigate('/contact')
+              scrollToTop()
+            }}>
+            {strings.contactMe}
           </Button>
         </CardActions>
       </Grid2>
@@ -66,7 +73,7 @@ export default function Lessons({}: LessonsProps) {
 
   const philosophy = (
     <>
-      <Typography variant="h5" paragraph>
+      <Typography variant="h5" paragraph component="h1">
         {componentStrings.philosophyTitle}
       </Typography>
       <Typography variant="body1" paragraph>
@@ -83,7 +90,7 @@ export default function Lessons({}: LessonsProps) {
               />
             )}
             <CardContent>
-              <Typography variant="h6" paragraph>
+              <Typography variant="h6" paragraph component="h2">
                 {componentStrings.suzukiTitle}
               </Typography>
               {sm && (
@@ -115,7 +122,7 @@ export default function Lessons({}: LessonsProps) {
               />
             )}
             <CardContent>
-              <Typography variant="h6" paragraph>
+              <Typography variant="h6" paragraph component="h2">
                 {componentStrings.elSistemaTitle}
               </Typography>
               {md && (
@@ -147,7 +154,7 @@ export default function Lessons({}: LessonsProps) {
               />
             )}
             <CardContent>
-              <Typography variant="h6" paragraph>
+              <Typography variant="h6" paragraph component="h2">
                 {componentStrings.firstStepsTitle}
               </Typography>
               {md && (

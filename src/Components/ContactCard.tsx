@@ -37,7 +37,8 @@ const EN_US: ContactTexts = {
         sx={{ textDecoration: 'none' }}>
         send me an email{' '}
       </Link>
-      to schedule a trial lesson or ask me a question.
+      to schedule a trial lesson or ask me a question. The lessons are taught in my apartment in
+      Iași, on Strada Nicolae Gane behind Palatului Copiilor (see map below).
     </>
   ),
   whatsAppLinkWithMessage:
@@ -50,8 +51,8 @@ const RO_RO: ContactTexts = {
   title: 'CONTACTEAZĂ-MĂ',
   content: (
     <>
-      Dacă vrei să programezi o lecție de probă sau să mă întrebi ceva, îmi poți trimite un mesaj
-      sau suna pe{' '}
+      Dacă vrei să programezi o lecție de probă sau să întrebi ceva, îmi poți trimite un mesaj sau
+      poți suna pe{' '}
       <Link
         rel="noreferrer"
         target="_blank"
@@ -59,7 +60,7 @@ const RO_RO: ContactTexts = {
         sx={{ textDecoration: 'none' }}>
         WhatsApp
       </Link>
-      {', sau îmi poți scrie un email la '}
+      . Sau îmi poți scrie un email la{' '}
       <Link
         rel="noreferrer"
         target="_blank"
@@ -67,7 +68,8 @@ const RO_RO: ContactTexts = {
         sx={{ textDecoration: 'none' }}>
         susanna.alice.j@gmail.com
       </Link>
-      .
+      . Lecțiile sunt predate în apartamentul meu din Iași, pe Strada Nicolae Gane, în spatele
+      Palatului Copiilor (vezi harta mai jos).
     </>
   ),
   whatsAppLinkWithMessage:
@@ -193,6 +195,16 @@ export default function ContactCard() {
           </CardContent>
         </Grid2>
       </Grid2>
+      <CardMedia sx={{ mb: '-7px' }}>
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1356.123225821133!2d27.5774722!3d47.1726111!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x32da219e24d22664!2zNDfCsDEwJzIxLjQiTiAyN8KwMzQnMzguOSJF!5e0!3m2!1sen!2sro!4v1674318932988!5m2!1sen!2sro"
+          width="100%"
+          height="450"
+          style={{ border: 0 }}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </CardMedia>
     </Card>
   )
 }

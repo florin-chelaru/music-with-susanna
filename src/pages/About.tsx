@@ -18,6 +18,7 @@ import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import { ABOUT_TEXTS, AboutTexts } from '../data/Resume'
 import { useNavigate } from 'react-router-dom'
 import { withBaseURL } from '../util/string'
+import { scrollToTop } from '../util/window'
 
 export interface AboutProps {}
 
@@ -49,7 +50,13 @@ export default function About({}: AboutProps) {
           <FormatQuoteIcon />
           {componentStrings.intro}
         </Typography>
-        <Button size="small" variant="contained" onClick={() => navigate('/contact')}>
+        <Button
+          size="small"
+          variant="contained"
+          onClick={() => {
+            navigate('/contact')
+            scrollToTop()
+          }}>
           {strings.contact}
         </Button>
       </Grid2>

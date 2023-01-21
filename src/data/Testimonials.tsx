@@ -42,9 +42,15 @@ export const TESTIMONIALS: LocalizedTestimonial[] = [
       subtitle: 'Mama lui Tudor, elev de șapte ani',
       content: (
         <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
-          {'Intr-o propoziție: Susanna, a făcut o treabă extraordinară din aceste cursuri de vioară! Apreciez foarte mult modul în care am văzut, gradual, cum informațiile i-au fost predate lui Tudor. Totul pare o joacă, totul e distractiv și vesel, astfel încât copilul să fie captivat de ceea ce învață, dar totodată constați ca adult că sunt noțiuni cu mare profunzime și că în joaca lui ajunge să le stăpânească, uimindu-te!\n' +
+          {'Susanna a făcut o treabă extraordinară cu aceste cursuri de vioară! Apreciez foarte mult modul ' +
+            'în care am văzut, gradual, cum informațiile i-au fost predate lui Tudor. Totul pare o joacă, totul e ' +
+            'distractiv și vesel, astfel încât copilul să fie captivat de ceea ce învață. Totodată constați ca adult ' +
+            'că sunt noțiuni cu mare profunzime și că în joaca lui ajunge să le stăpânească, uimindu-te!\n' +
             '\n' +
-            'Muzica deschide un univers fantastic și mă bucur mult că am avut ocazia, prin munca Susannei, sa îi arat copilului meu această deschidere. Înainte de a începe cursurile cu Susanna, mă gandeam ca ar fi necesară "ureche muzicală", un anumit talent, ore interminabile de studiu, dar ea mi-a arătat că joaca e unul dintre cele mai frumoase moduri de a învăța și că bucuria muzicii este pentru '}
+            'Muzica deschide un univers fantastic și mă bucur mult că am avut ocazia, prin munca Susannei, sa îi arat ' +
+            'copilului meu această deschidere. Înainte de a începe cursurile cu Susanna, mă gândeam că ar fi necesară ' +
+            'ureche muzicală", un anumit talent, ore interminabile de studiu, dar ea mi-a arătat că jocul e unul ' +
+            'dintre cele mai frumoase moduri de a învăța și că bucuria muzicii este pentru '}
           <b>oricine</b>
           {' are curiozitatea de a descoperi un instrument muzical!'}
         </Typography>
@@ -95,7 +101,7 @@ export const TESTIMONIALS: LocalizedTestimonial[] = [
       content: (
         <>
           <Typography variant="body2" color="text.secondary" paragraph>
-            Ms Susanna, cum era cunoscută în casa noastră, a fost prima profesoară de vioară a
+            Doamna Susanna, cum era cunoscută în casa noastră, a fost prima profesoară de vioară a
             fiului nostru — una cu adevărat remarcabilă! Savi, care are dificultăți de învățare,
             avea nevoie de un instructor cu răbdare, care să își adapteze metoda de predare la
             nivelul lui de atenție și la lucrurile pe care el le găsește interesante. Susanna a fost
@@ -115,11 +121,11 @@ export const TESTIMONIALS: LocalizedTestimonial[] = [
             în cadrul serbării de sfârșit de an, Savi a fost recunoscut ca cel mai bun violonist
             dintre toți copiii care făceau lecții de muzică, iar bucuria care i-a izvorât din
             cântatul la vioară a fost de necontestat. Recent, s-a întors dintr-o tabără școlară și
-            primul lucru pe care l-a făcut când a ajuns acasă a fost să fugă după vioară și să cânte
+            primul lucru pe care l-a făcut când a ajuns acasă a fost să fugă la vioară și să cânte{' '}
             <i>Cântecul Vântului</i>.
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            Aș recomanda-o pe Susanna fără nicio ezitare! Dacă viitoarii profesori ai lui Savi sunt
+            Aș recomanda-o pe Susanna fără nicio ezitare! Dacă viitorii profesori ai lui Savi vor fi
             măcar pe jumătate atât de buni, mă voi considera cu adevărat norocos.
           </Typography>
         </>
@@ -175,7 +181,11 @@ export const TESTIMONIALS: LocalizedTestimonial[] = [
       title: 'Rawi',
       subtitle: 'Adult, student de violă',
       content:
-        'Susanna este un instructor foarte grijuliu și inovator. Am învățat enorm de la ea, și numai după câteva luni, sunt în stare să cânt la violă. Asta în contextul în care am petrecut mulți ani de zile luptându-mă cu alți profesori. Amărăciunea pe care am resimțit-o realizând că lecțiile de muzică vor lua sfârșit, izvorăște din faptul că a fost unul din cei mai buni instructori pe care i-am avut vreodată! Sunt trist să o văd plecând la Boston, dar pierderea mea este câștigul vostru. O recomand cu căldură!',
+        'Susanna este un instructor foarte grijuliu și inovator. Am învățat enorm de la ea, și numai după câteva luni, ' +
+        'sunt în stare să cânt la violă. Asta în contextul în care am petrecut mulți ani "luptându-mă" cu alți ' +
+        'profesori. Amărăciunea pe care am resimțit-o realizând că lecțiile de muzică vor lua sfârșit, izvorăște din ' +
+        'faptul că a fost unul dintre cei mai buni profesori pe care i-am avut vreodată! Sunt trist să o văd plecând la ' +
+        'Boston, dar pierderea mea este câștigul vostru. O recomand cu căldură!',
       rating: 5,
       ratingUrl: 'https://takelessons.com/profile/susanna-j#reviews'
     }
@@ -209,7 +219,13 @@ export const TESTIMONIALS: LocalizedTestimonial[] = [
       title: 'Mariana',
       subtitle: 'Mama lui Ema, elevă de liceu',
       content:
-        'Susanna a fost profesoara de violă a fiicei mele adolescente. Fiica mea cântase la nivel începător din clasa a patra, iar Susanna i-a ținut lecții mai departe timp de doi ani. A făcut o treabă excepțională. A fost întotdeauna punctuală și dedicată, petrecând adesea chiar mai mult timp decât intervalul orar alocat. Susanna a dat dovadă atât de răbdare, cât și de spirit de inițiativă, căutând în permanență muzică nouă care să îi extindă repertoriul. Pe lângă acestea, a ajutat-o și îndrumat-o pe fiica mea pe parcursul a multe concerte și festivaluri. A fost o experiență minunată și ne pare rău să o vedem părăsindu-ne, dar sperăm că va servi drept mentor altor elevi din Boston.',
+        'Susanna a fost profesoara de violă a fiicei mele adolescente. Fiica mea cântase la nivel începător din clasa ' +
+        'a patra, iar Susanna a îndrumat-o mai departe timp de doi ani. A făcut o treabă excepțională. A fost ' +
+        'întotdeauna punctuală și dedicată, petrecând adesea chiar mai mult timp decât intervalul orar alocat. ' +
+        'Susanna a dat dovadă atât de răbdare, cât și de inițiativă, căutând în permanență muzică nouă care ' +
+        'să îi extindă repertoriul. Pe lângă acestea, a ajutat-o și îndrumat-o pe fiica mea pe parcursul a multe ' +
+        'concerte și festivaluri. A fost o experiență minunată și ne pare rău să o vedem părăsindu-ne, dar sperăm că ' +
+        'va servi drept mentor altor elevi din Boston.',
       rating: 5,
       ratingUrl: 'https://takelessons.com/profile/susanna-j#reviews'
     }
@@ -227,7 +243,10 @@ export const TESTIMONIALS: LocalizedTestimonial[] = [
       title: 'Joanna',
       subtitle: 'Mama lui Myra, fetiță de cinci ani',
       content:
-        'Susanna a fost o profesoară extrem de răbdătoare cu fetița noastră zbenguită de cinci ani. Copiii au o limită redusă de atenție, dar Susanna a fost în stare să îi concentreze atenția fetiței noastre și să o mențină angajată în timpul lecției. Sunt tare bucuroasă că am putut să îi ofer fiicei mele o introducere pozitivă în lumea muzicii.',
+        'Susanna a fost o profesoară extrem de răbdătoare cu fetița noastră neastâmpărată de cinci ani. Copiii au o limită ' +
+        'redusă de atenție, dar Susanna a fost în stare să îi concentreze atenția fetiței noastre și să o mențină ' +
+        'angajată în timpul lecției. Sunt tare bucuroasă că am putut să îi ofer fiicei mele o intrare plăcută în ' +
+        'lumea muzicii.',
       rating: 5,
       ratingUrl: 'https://takelessons.com/profile/susanna-j#reviews'
     }
