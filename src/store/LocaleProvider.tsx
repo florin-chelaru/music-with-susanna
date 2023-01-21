@@ -15,6 +15,7 @@ export interface GlobalLocalizedData extends LocalizedData {
   about: string
   channel: string
   contact: string
+  contactMe: string
   credits: string
   home: string
   language: string

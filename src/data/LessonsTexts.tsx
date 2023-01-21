@@ -230,12 +230,12 @@ const EN_US: LessonsTexts = {
 const RO_RO: LessonsTexts = {
   intro: (
     <Typography variant="body1" paragraph>
-      Susanna este profesoară de muzică și violistă americancă, educată la una din cele mai
+      Susanna este profesoară de muzică și violistă americană, educată la una din cele mai
       prestigioase universități de muzică din SUA:{' '}
       <Link underline="hover" href="https://music.indiana.edu/" rel="noreferrer" target="_blank">
         Indiana University, Bloomington
       </Link>
-      . Are studii masterale la{' '}
+      . A absolvit masterul la{' '}
       <Link
         underline="hover"
         href="https://bostonconservatory.berklee.edu/"
@@ -332,13 +332,16 @@ const RO_RO: LessonsTexts = {
       din Massachussets.
       <br />
       <br />
-      S-a mutat din Boston în Iași, cu dorința de a oferi comunității de baștină a soțului ei român,
-      Florin, o perspectivă diferită în ce privește pedagogia artei, și a muzicii în mod deosebit.
+      S-a mutat din Boston la Iași, cu dorința de a oferi comunității natale a soțului ei român,
+      Florin, o perspectivă diferită în ceea ce privește pedagogia artei, și a muzicii în mod
+      deosebit.
     </Typography>
   ),
   philosophyTitle: 'FILOSOFIA PEDAGOGICĂ',
   philosophy:
-    'Filozofia pedagogică a Susannei urmărește ca la sfârșitul fiecărei lecții, elevii să fie încrezători, împliniți, și entuziasmați de a exersa acasă. Conceptele sunt introduse în fragmente scurte, elementele cunoscute sunt periodic revizitate, iar repertoriul și tehnica sunt construite pe o fundație solidă.',
+    'Filosofia pedagogică a Susannei urmărește ca la sfârșitul fiecărei lecții, elevii să fie încrezători, împliniți, ' +
+    'și dornici de a exersa acasă. Conceptele sunt introduse în fragmente scurte, elementele cunoscute sunt ' +
+    'periodic reluate, iar repertoriul și tehnica sunt construite pe o fundație solidă.',
   suzukiTitle: 'METODA SUZUKI',
   suzuki: (
     <>
@@ -352,38 +355,38 @@ const RO_RO: LessonsTexts = {
       </Link>{' '}
       este consacrată ca o metodă pedagogică de succes cu o istorie de mai bine de cinzeci de ani,
       pornind din Japonia, răspândindu-se apoi în SUA și Europa, și în cele din urmă în întreaga
-      lume. Instructorii Suzuki sunt de părere că <b>orice copil</b> poate învăța muzică. Fondatorul
-      metodei, Shinichi Suzuki, descria metoda ca <i>metoda limbii materne</i>. În calitate de
+      lume. Educatorii Suzuki sunt de părere că <b>orice copil</b> poate învăța muzică. Fondatorul
+      metodei, Shinichi Suzuki, o descria ca <i>metoda asimilării limbii materne</i>. În calitate de
       profesor certificat Suzuki (a obținut certificările pentru nivelurile 1 și 2 în 2012 și 2014),
-      Susanna urmează abordarea <i>limbii materne</i>, care constă din imitarea felului în care
-      copiii învață să vorbească, în procesul de predare a muzicii. În metoda Suzuki, copiii încep
-      să învețe muzică de la vârste foarte fragede (chiar și de la trei ani). În cadrul filozofiei
-      de imitare a învățării limbii materne, Susanna învață copiii mai întâi să cânte, să asculte,
-      să repete și să reviziteze conceptele predate, și abia mai târziu să citească notele muzicale,
-      în același fel în care copiii învață să citească abia după învață să vorbească.
+      Susanna urmează tehnica <i>asimilării limbii materne</i>, care constă din imitarea felului în
+      care copiii învață să vorbească, în procesul de predare a muzicii. În metoda Suzuki, copiii
+      încep să învețe muzică de la vârste foarte fragede (chiar și de la trei ani). În cadrul
+      filosofiei de imitare a învățării limbii materne, Susanna învață copiii mai întâi să cânte, să
+      asculte, să repete și să reia conceptele predate, și abia mai târziu să citească notele
+      muzicale, în același fel în care copiii învață să citească abia după ce învață să vorbească.
       <br />
       <br />
       Un alt concept important caracteristic metodei Suzuki este, atunci când copiii sunt foarte
-      mici, participarea părinților la procesul de învățare. Părinții pot asista la lecții,
+      mici, participarea părinților la procesul de învățare. Părinții pot asista la lecții, pot
       participa la activitățile muzicale cu copilul în timpul lecției, și sunt încurajați să îl
       ajute acasă în timp ce exersează. Aceasta nu reprezintă o povară pentru părinți, întrucât
-      fiecare lecție este jovială și plină de jocuri și activități care înlesnesc învățarea. În
-      același timp, Susanna crede în ridicarea fiecărui copil la un înalt standard și motivarea prin
-      realizări.
+      fiecare lecție este distractivă și plină de jocuri și activități care înlesnesc învățarea. În
+      același timp, Susanna crede în ridicarea fiecărui copil la un înalt standard și motivarea lui
+      prin realizări.
       <br />
       <br />
-      Susanna folosește o combinație de repertoriu specific metodei Suzuki, și repertoriu acumulat
+      Susanna folosește o combinație de repertoriu specific metodei Suzuki, și repertoriul acumulat
       în cei mai bine de 15 ani de experiență pedagogică în școli și programe muzicale, care oferă
-      elevilor un sentiment de realizare la sfârșitul fiecărei lecții. Esențial este ca fiecare pas
-      în drumul învățării să fie mic și să aibă un scop binedefinit.
+      elevilor un sentiment de satisfacție împlinită la sfârșitul fiecărei lecții. Esențial este ca
+      fiecare pas în drumul învățării să fie mic și să aibă un scop bine definit.
     </>
   ),
   suzukiPhotoCaption: 'Dylan de șase ani, cu trofeul pentru 30 de zile de exersat vioara',
   elSistemaTitle: 'EL SISTEMA',
   elSistema: (
     <>
-      Susanna a lucrat, în calitate de instructor de ansambluri de coarde, cu numeroase programe de
-      tip{' '}
+      Susanna a lucrat, în calitate de profesor îndrumător de ansambluri de coarde, cu numeroase
+      programe de tip{' '}
       <Link
         underline="hover"
         href="https://elsistemausa.org/about/"
@@ -392,33 +395,33 @@ const RO_RO: LessonsTexts = {
         El Sistema
       </Link>
       , încă din 2012, atât în Statele Unite, cât și în El Salvador, Suedia, și mai recent, în
-      România, la Sibiu. <i>El Sistema</i> este o filosofie a educației muzicale originând în
-      Venezuela anului 1975. Ideea din spatele ei este că orice copil ar trebui să aibă acces la
+      România, la Sibiu. <i>El Sistema</i> este o filosofie a educației muzicale creată în
+      Venezuela, în anul 1975. Ideea din spatele ei este că orice copil ar trebui să aibă acces la
       educație muzicală de calitate. Programele El Sistema sunt proiectate în așa fel încât elevii
       să învețe împreună în cadrul unui grup. Copiii provenind din medii dezavantajate economic și
-      social trebuie să poată beneficia de educație muzicală ce întrunește standarde înalte,
-      disponibilă local și în mod convenabil.
+      social trebuie să poată beneficia de educație muzicală ce întrunește standarde înalte și este
+      ușor accesibilă.
       <br />
       <br />
-      Susanna a adoptat principii și valori izvorâte din această filozofie. De exemplu, ea crede cu
+      Susanna a adoptat principii și valori izvorâte din această filosofie. De exemplu, ea crede cu
       tărie în puterea și importanța învățării în cadrul unui grup, și țintește spre a preda
       lecțiile la clasă într-un mod recreativ, folosind activități destinate grupurilor, și
       distractive mai ales în grup. Lecțiile sunt structurate în așa fel încât copiii pot participa
       în ansambluri instrumentale din primul moment al educației lor muzicale. Programele El Sistema
       folosesc învățarea intensivă a muzicii într-un cadru distractiv, ca un vehicul pentru
       dezvoltarea socială. Ca atare, când predă muzică ansamblurilor de copii, Susanna folosește
-      învățarea reciprocă (fiecare elev de la ceilalți, și nu doar de la profesor) ca o unealtă
-      pentru dezvoltarea unei comunități și a unor relații bine coagulate în cadrul grupului.
+      învățarea reciprocă (fiecare elev învață de la ceilalți, și nu doar de la profesor) ca un
+      mijloc pentru dezvoltarea unei comunități și a unor relații bine coagulate în cadrul grupului.
       <br />
       <br />
-      Un ultim aspect esențial al programelor El Sistema este importanța interpretării cât mai dese
-      în cadrul comunității. Elevii participă la primele concerte încă din prima lună de când au
-      început să învețe un instrument. Folosirea instrumentului și împărtășirea muzicii sunt două
-      din țelurile principale ale acestui program. Susanna crede că elevii ar trebui să aibă cât mai
-      multe prilejuri de a cânta în public, fie că acestea sunt într-un cadru formal, sau unul
-      informal. Cu cât copilul cântă mai des în public, cu atât dispar tracul și emoțiile cauzate de
-      prezența pe scenă, și îi concentrează atenția la bucuria care vine la pachet cu învățarea unui
-      instrument: împărtășirea muzicii cu lumea întreagă!
+      Un ultim aspect esențial al programelor El Sistema este importanța ieșirii cât mai dese în
+      public, în cadrul comunității. Elevii participă la primele concerte încă din prima lună de
+      când au început să învețe un instrument. Folosirea instrumentului și împărtășirea muzicii sunt
+      două din țelurile principale ale acestui program. Susanna crede că elevii ar trebui să aibă
+      cât mai multe prilejuri de a cânta în public, fie că acestea sunt într-un cadru formal, sau
+      unul informal. Cu cât copilul cântă mai des în public, cu atât dispar tracul și emoțiile
+      cauzate de prezența pe scenă, și îi concentrează atenția la bucuria care însoțește învățarea
+      unui instrument: împărtășirea muzicii cu lumea întreagă!
     </>
   ),
   elSistemaPhotoCaption:
@@ -434,36 +437,36 @@ const RO_RO: LessonsTexts = {
         target="_blank">
         First Steps in Music
       </Link>{' '}
-      din Statele Unite, pentru predarea muzicii copiilor de grădiniță și școală primară de la
+      din Statele Unite, pentru predarea muzicii la copiii de grădiniță și școală primară de la
       liceul Bridge Boston Charter School. În vara lui 2019, Susanna a primit educație formală în
       această metodă la universitatea Gordon College în cadrul cursurilor pentru obținerea licenței
       pedagogice de predare în școlile publice din statul Massachusetts.
       <br />
       <br />
-      Conform filosofiei acestei metode, elevii învață să fie <i>melodioși</i>, <i>ritmici</i> și{' '}
-      <i>artistici</i>. Copiii <i>melodioși</i> învață să audă melodii în mintea lor și să
-      coordoneze mușchii vocali pentru a cânta aceste melodii. Copii <i>ritmici</i> simt pulsul
-      muzicii și felul în care pulsul este organizat în grupuri de două sau trei secunde. Copiii{' '}
-      <i>artistici</i> se simt mișcați de muzică în numeroasele feluri în care muzica poate provoca
-      un răspuns plin de sentimente.
+      Conform principiilor acestei metode, elevii învață să fie <i>muzicali</i>, <i>ritmici</i> și{' '}
+      <i>artistici</i>. Copiii <i>muzicali</i> învață să audă melodii în mintea lor și să coordoneze
+      mușchii vocali pentru a cânta aceste melodii în mod corect. Copiii <i>ritmici</i> simt pulsul
+      muzicii și felul în care acesta este organizat în grupuri de două sau trei secunde. Copiii{' '}
+      <i>artistici</i> se simt impresionați de muzică în numeroasele feluri în care muzica poate
+      provoca o reacție plină de sentimente.
       <br />
       <br />
-      Scopul profesorului este să modeleze copiii în așa fel încât aceștia să crească în adulți{' '}
-      <i>melodioși</i>, <i>ritmici</i> și <i>artistici</i>. Cu alte cuvinte, vor avea capacitatea să
-      participe în muzica întrețesută în viața lor. Adulții <i>melodioși</i> vor fi în stare să
-      cânte <i>Mulți ani trăiască</i> prietenilor și familiei, cântece de adormit copiilor lor, și
-      cântece ceremoniale la evenimente și sărbători importante. Adulții <i>ritmici</i> vor putea
-      suplimenta cântecele cu percuție, dansa la petreceri, și bate din palme în ritmul muzicii la
-      evenimente sportive. Pentru adulții <i>artistici</i>, muzica va ocupa un loc intim în sufletul
-      lor. Ei vor căuta întotdeauna și în permanență evenimente artistice în jurul lor și se vor
-      bucura în profunzime de fiecare strop de muzică.
+      Scopul profesorului este să modeleze copiii în așa fel încât aceștia să devină cu timpul
+      adulți <i>muzicali</i>, <i>ritmici</i> și <i>artistici</i>. Cu alte cuvinte, vor avea
+      capacitatea să participe în muzica întrețesută în viața lor. Adulții <i>muzicali</i> vor fi în
+      stare să cânte <i>Mulți ani trăiască</i> prietenilor și familiei, cântece de leagăn copiilor
+      lor, și cântece ceremoniale la evenimente și sărbători importante. Adulții <i>ritmici</i> vor
+      putea suplimenta cântecele cu percuție, dansa la petreceri, și bate din palme în ritmul
+      muzicii la evenimente sportive. Cât despre adulții <i>artistici</i>, muzica va ocupa un loc
+      intim în sufletul lor. Ei vor căuta întotdeauna și în permanență evenimente artistice în jurul
+      lor și se vor bucura intens de fiecare strop de muzică.
       <br />
       <br />
       Susanna consideră că educația muzicală este valoroasă pentru toți copiii, întrucât le oferă
       capacitatea de a beneficia de tot ce are de oferit muzica. Indiferent dacă ei vor decide să
-      devină muzicieni profesioniști, sau vor prefera să păstreze cu ea o simplă relație amicală,
-      vor rămâne îmbogățiți de înțelegerea și capacitatea de a împărtăși limbajul muzicii pentru tot
-      restul vieților lor.{' '}
+      devină muzicieni profesioniști, sau vor prefera să păstreze cu ea o relație amicală, vor
+      rămâne îmbogățiți pentru tot restul vieții prin înțelegerea și capacitatea de a împărtăși
+      limbajul muzicii.
     </>
   ),
   firstStepsPhotoCaption: 'Susanna predă o lecție de vioară la liceul Bridge Boston Charter School'

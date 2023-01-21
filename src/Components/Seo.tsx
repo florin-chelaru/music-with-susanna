@@ -11,14 +11,14 @@ interface SeoFields {
 const EN_US: SeoFields = {
   title: 'Music Lessons with Susanna',
   description:
-    'Music lessons for children with Susanna Johnson-Chelaru. Sign up for violin or viola lessons and find out ' +
+    'Music lessons for children in Iași with Susanna Johnson-Chelaru. Sign up for violin or viola lessons and find out ' +
     "more about Susanna's background."
 }
 
 const RO_RO: SeoFields = {
   title: 'Lecții de Vioară cu Susanna',
   description:
-    'Lecții de muzică pentru copii cu Susanna Johnson-Chelaru. Înscrie-te la lecțiile de vioară și violă ' +
+    'Lecții de muzică pentru copii în Iași cu Susanna Johnson-Chelaru. Înscrie-te la lecțiile de vioară și violă ' +
     'și citește mai multe despre Susanna și experiența sa pedagogică.'
 }
 

@@ -10,3 +10,10 @@ export function scrollToElement(element: HTMLDivElement, offset: number = 56) {
     scrollTo({ top: targetPosition })
   }, 0)
 }
+
+export function scrollToTop() {
+  // Using setTimeout to call scrollIntoView asynchronously
+  setTimeout(() => {
+    scrollTo({ top: 0 })
+  }, 0)
+}

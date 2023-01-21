@@ -27,7 +27,7 @@ export default function CustomThemeProvider({ children, mode }: CustomThemeProvi
   if (mode === 'dark') {
     palette.background = { paper: '#2B2D3E', default: '#343E59' }
   } else {
-    palette.background = { default: GREY[100] }
+    palette.background = { default: GREY[300] }
     themeOptions.shadows = shadows
   }
   themeOptions.palette = palette

@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import Toolbar from '@mui/material/Toolbar'
-import { Avatar, Button, Container, Stack } from '@mui/material'
+import { Avatar, Button, Container, Link, Stack } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import IntroCard from '../Components/IntroCard'
 import TestimonialsMasonry from '../Components/TestimonialsMasonry'
@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography'
 import { SelectedVideoContext, SelectedVideoManager } from '../store/SelectedVideoProvider'
 import { useNavigate } from 'react-router-dom'
 import { withBaseURL } from '../util/string'
+import { scrollToTop } from '../util/window'
 
 export interface HomeProps {}
 
@@ -41,8 +42,14 @@ export default function Home({}: HomeProps) {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-            <Button size="medium" variant="contained" onClick={() => navigate('/contact')}>
-              {strings.signUp}
+            <Button
+              size="medium"
+              variant="contained"
+              onClick={() => {
+                navigate('/contact')
+                scrollToTop()
+              }}>
+              {strings.contactMe}
             </Button>
           </Grid2>
           <Grid2 xs={12}>
@@ -65,9 +72,20 @@ export default function Home({}: HomeProps) {
                   height: 66
                 }}
               />
-              <Typography variant="h5" gutterBottom component="h2">
-                {strings.youtubeChildrensChannel.toUpperCase()}
-              </Typography>
+
+              <Link
+                underline="hover"
+                color="inherit"
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  navigate('/videos')
+                  scrollToTop()
+                }}>
+                <Typography variant="h5" gutterBottom component="h2">
+                  {strings.youtubeChildrensChannel.toUpperCase()}
+                </Typography>
+              </Link>
             </Stack>
           </Grid2>
           <Grid2 xs={12}>
@@ -77,10 +95,7 @@ export default function Home({}: HomeProps) {
                 console.log('navigating to /videos')
                 selectedVideoManager.setSelectedVideo(videoId)
                 navigate('/videos')
-                // Using setTimeout to call scrollIntoView asynchronously
-                setTimeout(() => {
-                  scrollTo({ top: 0 })
-                }, 0)
+                scrollToTop()
               }}
             />
           </Grid2>
@@ -94,12 +109,21 @@ export default function Home({}: HomeProps) {
             <Button
               size="medium"
               variant="outlined"
-              onClick={() => navigate('/videos')}
+              onClick={() => {
+                navigate('/videos')
+                scrollToTop()
+              }}
               sx={{ mr: 2 }}>
               {strings.more}
             </Button>
-            <Button size="medium" variant="contained" onClick={() => navigate('/contact')}>
-              {strings.signUp}
+            <Button
+              size="medium"
+              variant="contained"
+              onClick={() => {
+                navigate('/contact')
+                scrollToTop()
+              }}>
+              {strings.contactMe}
             </Button>
           </Grid2>
         </Grid2>
