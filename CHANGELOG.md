@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0](https://github.com/florin-chelaru/music-with-susanna/compare/v0.1.16...v1.0.0) (2023-01-21)
+
 ### [0.1.16](https://github.com/florin-chelaru/music-with-susanna/compare/v0.1.15...v0.1.16) (2023-01-21)
 
 ### [0.1.15](https://github.com/florin-chelaru/music-with-susanna/compare/v0.1.14...v0.1.15) (2023-01-21)
