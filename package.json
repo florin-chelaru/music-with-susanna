@@ -1,6 +1,6 @@
 {
   "name": "music-with-susanna",
-  "version": "0.1.16",
+  "version": "1.0.0",
   "homepage": "https://vioara-cu-susanna.ro",
   "private": true,
   "dependencies": {
@@ -35,7 +35,8 @@
     "lint:fix": "eslint --fix",
     "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc",
     "predeploy": "npm run build",
-    "deploy": "standard-version && git push --follow-tags origin main && gh-pages -d build"
+    "deploy": "standard-version && git push --follow-tags origin main && gh-pages -d build",
+    "release": "standard-version"
   },
   "eslintConfig": {
     "extends": [
