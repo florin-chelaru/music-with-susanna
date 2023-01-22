@@ -69,16 +69,14 @@ export default function About({}: AboutProps) {
               </Typography>
               <Grid2 container>
                 {section.entries.map((entry, j) => (
-                  <>
-                    <Grid2 xs={3} key={`dates-${j}`}>
+                  <React.Fragment key={`entry-${j}`}>
+                    <Grid2 xs={3}>
                       <Typography variant="subtitle2" align="right" sx={{ whiteSpace: 'pre-line' }}>
                         {entry.dates}
                       </Typography>
                     </Grid2>
-                    <Grid2 xs={9} key={`content-${j}`}>
-                      {entry.content}
-                    </Grid2>
-                  </>
+                    <Grid2 xs={9}>{entry.content}</Grid2>
+                  </React.Fragment>
                 ))}
               </Grid2>
             </Box>
