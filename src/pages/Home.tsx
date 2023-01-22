@@ -92,7 +92,6 @@ export default function Home({}: HomeProps) {
             <VideosMasonry
               maxVideos={8}
               onVideoSelected={(videoId) => {
-                console.log('navigating to /videos')
                 selectedVideoManager.setSelectedVideo(videoId)
                 navigate('/videos')
                 scrollToTop()

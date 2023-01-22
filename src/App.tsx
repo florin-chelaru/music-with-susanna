@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import './App.css'
 import DrawerAppBar, { NavItemInfo } from './Components/DrawerAppBar'
 import LocaleProvider from './store/LocaleProvider'
@@ -12,7 +12,7 @@ import YouTubeIcon from '@mui/icons-material/YouTube'
 import FacebookIcon from '@mui/icons-material/Facebook'
 import SchoolIcon from '@mui/icons-material/School'
 import AttributionIcon from '@mui/icons-material/Attribution'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import Lessons from './pages/Lessons'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -22,10 +22,10 @@ import LatestNews from './pages/LatestNews'
 import ScrollTop from './Components/ScrollTop'
 import Credits from './pages/Credits'
 import Seo from './Components/Seo'
+import LocalizedCookieConsent from './Components/LocalizedCookieConsent'
+import { gaSendPageView } from './util/google-analytics'
 
 function App() {
-  const baseURL = process.env.PUBLIC_URL
-
   const navItems: NavItemInfo[] = [
     {
       key: 'home',
@@ -71,29 +71,32 @@ function App() {
     }
   ]
 
+  // Track route changes and send to Google Analytics
+  const location = useLocation()
+  useEffect(() => gaSendPageView(), [location])
+
   return (
     <CustomThemeProvider>
       <SelectedVideoProvider>
-        <BrowserRouter basename={baseURL}>
-          <LocaleProvider>
-            <Seo />
-            <DrawerAppBar navItems={navItems} />
-            <Grid2 container>
-              <Grid2 xs={12}>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/lessons" element={<Lessons />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/videos" element={<VideoChannel />} />
-                  <Route path="/news" element={<LatestNews />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/credits" element={<Credits />} />
-                </Routes>
-              </Grid2>
+        <LocaleProvider>
+          <Seo />
+          <LocalizedCookieConsent />
+          <DrawerAppBar navItems={navItems} />
+          <Grid2 container>
+            <Grid2 xs={12}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/lessons" element={<Lessons />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/videos" element={<VideoChannel />} />
+                <Route path="/news" element={<LatestNews />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/credits" element={<Credits />} />
+              </Routes>
             </Grid2>
-            <ScrollTop />
-          </LocaleProvider>
-        </BrowserRouter>
+          </Grid2>
+          <ScrollTop />
+        </LocaleProvider>
       </SelectedVideoProvider>
     </CustomThemeProvider>
   )
