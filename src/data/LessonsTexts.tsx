@@ -128,7 +128,7 @@ const EN_US: LessonsTexts = {
       teacher (Suzuki Violin Levels 1 & 2 Certification in 2012 and 2014). The Suzuki Method,
       originating from Japan, has a history of success of more than fifty years, spreading
       throughout the United States, Europe and worldwide. Suzuki teachers believe every child can
-      learn music. Founder of the method, Shinichi Suzuki, described the method as the
+      learn music. Founder of the method, Shinichi Suzuki, described the method as the{' '}
       <i>mother-tongue approach</i>. The mother-tongue approach imitates natural native language
       acquisition. In the Suzuki Method, children start learning music at a very young age (as young
       as 3 years old). In addition, Suzuki teachers implement listening, repetition and review, and
