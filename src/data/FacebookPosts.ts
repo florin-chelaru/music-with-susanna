@@ -5,6 +5,23 @@ export const FACEBOOK_AVATAR =
 
 const FACEBOOK_POSTS: PrettyPost[] = [
   {
+    id: '104306382395618_154521587383770',
+    url: 'https://www.facebook.com/135810155921580/posts/154521587383770',
+    message:
+      'Folosesc acest cântec în prima lecția de vioară cu copii mici să învățăm părțile viorii. Melodia este de fapt the Monkey Song care cântăm la vioară mai târziu!',
+    creationTime: '2023-02-04T13:38:27+0000',
+    userName: 'Susanna Johnson-Chelaru',
+    attachments: [
+      {
+        type: 'video_inline',
+        url: 'https://www.facebook.com/135810155921580/videos/818141119831910',
+        width: 720,
+        height: 405,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_154521587383770_0.jpeg'
+      }
+    ]
+  },
+  {
     id: '104306382395618_150040327831896',
     url: 'https://www.facebook.com/135810155921580/posts/150040327831896',
     message:
