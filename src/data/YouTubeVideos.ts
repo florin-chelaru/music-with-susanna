@@ -1,5 +1,57 @@
 const YOUTUBE_VIDEOS = [
   {
+    videoId: 'dRQiNdIoL84',
+    snippet: {
+      publishedAt: '2023-02-04T12:54:49Z',
+      title: 'Beginner Bow Exercise for Flexibility and Control',
+      description:
+        'I do this exercise with my students when they finish preparatory violin work (pre-twinkle) and are learning the Twinkle Variations.',
+      thumbnails: {
+        default: {
+          url: 'https://i.ytimg.com/vi/dRQiNdIoL84/default.jpg',
+          width: 120,
+          height: 90
+        },
+        medium: {
+          url: 'https://i.ytimg.com/vi/dRQiNdIoL84/mqdefault.jpg',
+          width: 320,
+          height: 180
+        },
+        high: {
+          url: 'https://i.ytimg.com/vi/dRQiNdIoL84/hqdefault.jpg',
+          width: 480,
+          height: 360
+        }
+      }
+    }
+  },
+  {
+    videoId: 'fdkehCWawWg',
+    snippet: {
+      publishedAt: '2023-02-04T13:15:54Z',
+      title: 'Cântecul Viorii (Parts of the Violin Song)',
+      description:
+        'Părțile viorii: Bărbia = the chinrest Cordarul = the tailpiece Călușul = the bridge Corzile = the strings Limba = the fingerboard ...',
+      thumbnails: {
+        default: {
+          url: 'https://i.ytimg.com/vi/fdkehCWawWg/default.jpg',
+          width: 120,
+          height: 90
+        },
+        medium: {
+          url: 'https://i.ytimg.com/vi/fdkehCWawWg/mqdefault.jpg',
+          width: 320,
+          height: 180
+        },
+        high: {
+          url: 'https://i.ytimg.com/vi/fdkehCWawWg/hqdefault.jpg',
+          width: 480,
+          height: 360
+        }
+      }
+    }
+  },
+  {
     videoId: 'DrX8v53t4-A',
     snippet: {
       publishedAt: '2023-01-17T15:03:51Z',
