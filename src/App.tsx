@@ -24,6 +24,7 @@ import Credits from './pages/Credits'
 import Seo from './Components/Seo'
 import LocalizedCookieConsent from './Components/LocalizedCookieConsent'
 import { gaSendPageView } from './util/google-analytics'
+import AnnouncementProvider from './store/AnnouncementProvider'
 
 function App() {
   const navItems: NavItemInfo[] = [
@@ -79,23 +80,25 @@ function App() {
     <CustomThemeProvider>
       <SelectedVideoProvider>
         <LocaleProvider>
-          <Seo />
-          <LocalizedCookieConsent />
-          <DrawerAppBar navItems={navItems} />
-          <Grid2 container>
-            <Grid2 xs={12}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/lessons" element={<Lessons />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/videos" element={<VideoChannel />} />
-                <Route path="/news" element={<LatestNews />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/credits" element={<Credits />} />
-              </Routes>
+          <AnnouncementProvider>
+            <Seo />
+            <LocalizedCookieConsent />
+            <DrawerAppBar navItems={navItems} />
+            <Grid2 container>
+              <Grid2 xs={12}>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/lessons" element={<Lessons />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/videos" element={<VideoChannel />} />
+                  <Route path="/news" element={<LatestNews />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/credits" element={<Credits />} />
+                </Routes>
+              </Grid2>
             </Grid2>
-          </Grid2>
-          <ScrollTop />
+            <ScrollTop />
+          </AnnouncementProvider>
         </LocaleProvider>
       </SelectedVideoProvider>
     </CustomThemeProvider>

@@ -65,7 +65,7 @@ export function PostMedia({ attachments }: PostMediaProps) {
                 flexShrink: 0,
                 minWidth: '100%',
                 minHeight: '100%',
-                maxHeight: '450px'
+                maxHeight: attachment.width >= attachment.height ? '450px' : ''
               }}
             />
             {isVideo && (

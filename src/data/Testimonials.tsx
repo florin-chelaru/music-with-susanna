@@ -21,6 +21,48 @@ type LocalizedTestimonial = {
 export const TESTIMONIALS: LocalizedTestimonial[] = [
   {
     [SupportedLocale.EN_US]: {
+      title: 'Cătălina Gubernat',
+      subtitle: 'Mother of Natalia, age five',
+      content: (
+        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
+          My daughter, Natalia, is delighted to participate in the lessons taught by Ms. Susanna!
+          Everything flowed naturally, without pressure or stress, but with the ease that opens the
+          child&apos;s mind and curiosity. The musical instrument, correct posture, language, and
+          notes were presented step by step, through songs, so that my child absorbed the concepts
+          effortlessly and harmoniously. In each session, a new notion was introduced, dressed in
+          another game, which increasingly sparked Natalia&apos;s desire for knowledge. Although we
+          travel approximately 80 km (50 mi) to attend the classes, the effort is definitely worth
+          it! I highly recommend these lessons!
+        </Typography>
+      ),
+      rating: 5,
+      image: '/static/img/natalia-large.jpeg',
+      featured: true,
+      expandable: true
+    },
+    [SupportedLocale.RO_RO]: {
+      title: 'Cătălina Gubernat',
+      subtitle: 'Mama Nataliei, de cinci ani',
+      content: (
+        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
+          Fetița mea, Natalia, este încântată să participe la lecțiile susținute de doamna Susanna!
+          Totul a curs firesc, fără presiune sau stres, ci cu naturalețea care deschide mintea și
+          curiozitatea copilului. Instrumentul muzical, poziția corectă, limbajul, notele au fost
+          prezentate rând pe rând, prin cântec, asfel încât copilul și-a însușit noțiuni pe
+          nesimțite și în armonie. În fiecare ședință a fost introdusă o noțiune noua, îmbrăcată
+          într-un alt joc, fapt ce a stârnit din ce în ce mai mult dorința de cunoaștere a Nataliei.
+          Deși parcurgem aproximativ 80 km pentru a participa la cursuri, efortul merită din plin!
+          Recomand aceste lecții!
+        </Typography>
+      ),
+      rating: 5,
+      image: '/static/img/natalia-large.jpeg',
+      featured: true,
+      expandable: true
+    }
+  },
+  {
+    [SupportedLocale.EN_US]: {
       title: 'Andreea Teleche',
       subtitle: 'Mother of Tudor, age seven',
       content: (
@@ -34,12 +76,12 @@ export const TESTIMONIALS: LocalizedTestimonial[] = [
       ),
       rating: 5,
       image: '/static/img/tudor-large.jpeg',
-      featured: true,
+      featured: false,
       expandable: true
     },
     [SupportedLocale.RO_RO]: {
       title: 'Andreea Teleche',
-      subtitle: 'Mama lui Tudor, elev de șapte ani',
+      subtitle: 'Mama lui Tudor, de șapte ani',
       content: (
         <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
           {'Susanna a făcut o treabă extraordinară cu aceste cursuri de vioară! Apreciez foarte mult modul ' +
@@ -57,7 +99,7 @@ export const TESTIMONIALS: LocalizedTestimonial[] = [
       ),
       rating: 5,
       image: '/static/img/tudor-large.jpeg',
-      featured: true,
+      featured: false,
       expandable: true
     }
   },
@@ -241,7 +283,7 @@ export const TESTIMONIALS: LocalizedTestimonial[] = [
     },
     [SupportedLocale.RO_RO]: {
       title: 'Joanna',
-      subtitle: 'Mama lui Myra, fetiță de cinci ani',
+      subtitle: 'Mama lui Myra, de cinci ani',
       content:
         'Susanna a fost o profesoară extrem de răbdătoare cu fetița noastră neastâmpărată de cinci ani. Copiii au o limită ' +
         'redusă de atenție, dar Susanna a fost în stare să îi concentreze atenția fetiței noastre și să o mențină ' +

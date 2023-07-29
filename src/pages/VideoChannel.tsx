@@ -6,10 +6,13 @@ import VideosMasonry from '../Components/VideosMasonry'
 import { SelectedVideoContext, SelectedVideoManager } from '../store/SelectedVideoProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
+import Announcement from '../Components/Announcement'
+import { AnnouncementContext, AnnouncementHandler } from '../store/AnnouncementProvider'
 
 const INTRO = 'intro'
 
 export default function VideoChannel() {
+  const announcementManager = useContext<AnnouncementHandler>(AnnouncementContext)
   const selectedVideoManager = useContext<SelectedVideoManager>(SelectedVideoContext)
 
   const localeManager = useContext<LocaleHandler>(LocaleContext)
@@ -52,6 +55,7 @@ export default function VideoChannel() {
         <Grid2 container spacing={2}>
           <Grid2 xs={12}>
             <Card>
+              {!announcementManager.hidden && <Announcement />}
               <CardMedia
                 component="iframe"
                 height="400"

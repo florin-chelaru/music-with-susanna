@@ -19,18 +19,22 @@ import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import { FACEBOOK_AVATAR } from '../data/FacebookPosts'
 import FacebookIcon from '@mui/icons-material/Facebook'
 import { withBaseURL } from '../util/string'
+import Announcement from '../Components/Announcement'
+import { AnnouncementContext, AnnouncementHandler } from '../store/AnnouncementProvider'
 
 export default function LatestNews() {
   const strings = useContext<LocaleHandler>(LocaleContext).globalStringList
   const theme = useTheme()
   const sm = useMediaQuery(theme.breakpoints.up('sm'))
   const xs = useMediaQuery(theme.breakpoints.up('xs'))
+  const announcementManager = useContext<AnnouncementHandler>(AnnouncementContext)
   return (
     <Container maxWidth="md" sx={{ pt: 3 }}>
       <Toolbar />
       <Grid2 container spacing={2}>
         <Grid2 xs={12}>
           <Card>
+            {!announcementManager.hidden && <Announcement />}
             <Grid2 container>
               <Grid2
                 xs={12}
