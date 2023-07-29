@@ -18,6 +18,8 @@ import { useNavigate } from 'react-router-dom'
 import { LESSONS_TEXTS, LessonsTexts } from '../data/LessonsTexts'
 import { withBaseURL } from '../util/string'
 import { scrollToTop } from '../util/window'
+import Announcement from '../Components/Announcement'
+import { AnnouncementContext, AnnouncementHandler } from '../store/AnnouncementProvider'
 
 export interface LessonsProps {}
 
@@ -28,6 +30,7 @@ export default function Lessons({}: LessonsProps) {
   const xs = useMediaQuery(theme.breakpoints.up('xs'))
 
   const navigate = useNavigate()
+  const announcementManager = useContext<AnnouncementHandler>(AnnouncementContext)
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   const strings = localeManager.globalStringList
 
@@ -36,39 +39,42 @@ export default function Lessons({}: LessonsProps) {
   const componentStrings = localeManager.componentStrings(Lessons.name) as LessonsTexts
 
   const intro = (
-    <Grid2 container>
-      <Grid2 xs={12} md={6} sx={{ display: 'flex' }}>
-        <CardMedia
-          component="img"
-          // TODO: Breakpoints
-          image={withBaseURL(
-            md
-              ? '/static/img/lessons/teaching-violin-01.jpeg'
-              : '/static/img/lessons/teaching-violin-02.jpeg'
-          )}
-          alt="Private violin lesson"
-          sx={{
-            minWidth: '100%',
-            minHeight: '100%',
-            objectPosition: 'left'
-          }}
-        />
+    <>
+      {!announcementManager.hidden && <Announcement />}
+      <Grid2 container>
+        <Grid2 xs={12} md={6} sx={{ display: 'flex' }}>
+          <CardMedia
+            component="img"
+            // TODO: Breakpoints
+            image={withBaseURL(
+              md
+                ? '/static/img/lessons/teaching-violin-01.jpeg'
+                : '/static/img/lessons/teaching-violin-02.jpeg'
+            )}
+            alt="Private violin lesson"
+            sx={{
+              minWidth: '100%',
+              minHeight: '100%',
+              objectPosition: 'left'
+            }}
+          />
+        </Grid2>
+        <Grid2 xs={12} sm={12} md={6}>
+          <CardContent>{componentStrings.intro}</CardContent>
+          <CardActions sx={{ justifyContent: 'center' }}>
+            <Button
+              size="small"
+              variant="contained"
+              onClick={() => {
+                navigate('/contact')
+                scrollToTop()
+              }}>
+              {strings.contactMe}
+            </Button>
+          </CardActions>
+        </Grid2>
       </Grid2>
-      <Grid2 xs={12} sm={12} md={6}>
-        <CardContent>{componentStrings.intro}</CardContent>
-        <CardActions sx={{ justifyContent: 'center' }}>
-          <Button
-            size="small"
-            variant="contained"
-            onClick={() => {
-              navigate('/contact')
-              scrollToTop()
-            }}>
-            {strings.contactMe}
-          </Button>
-        </CardActions>
-      </Grid2>
-    </Grid2>
+    </>
   )
 
   const philosophy = (

@@ -1,5 +1,31 @@
 const YOUTUBE_VIDEOS = [
   {
+    videoId: 'dMmFeZH_ROI',
+    snippet: {
+      publishedAt: '2023-03-01T15:30:30Z',
+      title: 'Cântecul Arcușului: Bow Hold Song (Română & English)',
+      description:
+        'Folosește acest cântec ca să exersezi ținerea arcușului în timp că îți imaginezi că ești pescar! Melodia este similară cu cântecul "Vulpe tu mi-ai furat gâsca..."',
+      thumbnails: {
+        default: {
+          url: 'https://i.ytimg.com/vi/dMmFeZH_ROI/default.jpg',
+          width: 120,
+          height: 90
+        },
+        medium: {
+          url: 'https://i.ytimg.com/vi/dMmFeZH_ROI/mqdefault.jpg',
+          width: 320,
+          height: 180
+        },
+        high: {
+          url: 'https://i.ytimg.com/vi/dMmFeZH_ROI/hqdefault.jpg',
+          width: 480,
+          height: 360
+        }
+      }
+    }
+  },
+  {
     videoId: 'dRQiNdIoL84',
     snippet: {
       publishedAt: '2023-02-04T12:54:49Z',

@@ -5,6 +5,237 @@ export const FACEBOOK_AVATAR =
 
 const FACEBOOK_POSTS: PrettyPost[] = [
   {
+    id: '104306382395618_234849609350967',
+    url: 'https://www.facebook.com/135810155921580/posts/234849609350967',
+    message:
+      'Happy July 4th! My little Theo is 3 weeks old and is starting to develop colic. He is fussy and prefers to be held rather than stay in baby swings or rockers. The only problem is- he weighs almost 10 pounds (4.5 kilos)! Here is a little song I invented yesterday morning when he refused to stay in the baby swing (again!).\n\nI call it... Tired and Bored...?',
+    creationTime: '2023-07-04T15:49:11+0000',
+    userName: 'Susanna Johnson-Chelaru',
+    attachments: [
+      {
+        type: 'video_inline',
+        url: 'https://www.facebook.com/135810155921580/videos/329198336098077',
+        width: 405,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_234849609350967_0.jpeg'
+      }
+    ]
+  },
+  {
+    id: '104306382395618_228354966667098',
+    url: 'https://www.facebook.com/135810155921580/posts/228354966667098',
+    message:
+      "I'm a Mommy! Here is little Theofil. He already listens to Peter and the Wolf, Pictures at an Exhibition and Britten's Young Person's Guide to the Orchestra. The music education is already starting. 🥰",
+    creationTime: '2023-06-23T14:15:21+0000',
+    userName: 'Susanna Johnson-Chelaru',
+    attachments: [
+      {
+        type: 'album',
+        url: 'https://www.facebook.com/135810155921580/posts/228354966667098',
+        width: 720,
+        height: 960,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_228354966667098_0.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=228354853333776&set=a.120472570788672&type=3',
+        width: 720,
+        height: 960,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_228354966667098_1.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=228354900000438&set=a.120472570788672&type=3',
+        width: 960,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_228354966667098_2.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=228354850000443&set=a.120472570788672&type=3',
+        width: 720,
+        height: 960,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_228354966667098_3.jpeg'
+      }
+    ]
+  },
+  {
+    id: '104306382395618_207215028781092',
+    url: 'https://www.facebook.com/135810155921580/posts/207215028781092',
+    message:
+      "Today at the Centrul de zi pentru copii Sfântă Marina I received some sweet cards and flowers from the children. I've been teaching Music Therapy there for a year now! But since baby boy will be born anytime now, they wanted to say good luck! Centrul de zi pentru copii Sfanta Marina Iasi",
+    creationTime: '2023-05-18T12:56:51+0000',
+    userName: 'Susanna Johnson-Chelaru',
+    attachments: [
+      {
+        type: 'album',
+        url: 'https://www.facebook.com/135810155921580/posts/207215028781092',
+        width: 720,
+        height: 1512,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_207215028781092_0.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=207213382114590&set=a.120472570788672&type=3',
+        width: 720,
+        height: 1512,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_207215028781092_1.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=207213352114593&set=a.120472570788672&type=3',
+        width: 720,
+        height: 839,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_207215028781092_2.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=207213328781262&set=a.120472570788672&type=3',
+        width: 720,
+        height: 960,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_207215028781092_3.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=207213318781263&set=a.120472570788672&type=3',
+        width: 720,
+        height: 960,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_207215028781092_4.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=207213395447922&set=a.120472570788672&type=3',
+        width: 720,
+        height: 960,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_207215028781092_5.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=207213508781244&set=a.120472570788672&type=3',
+        width: 720,
+        height: 897,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_207215028781092_6.jpeg'
+      }
+    ]
+  },
+  {
+    id: '104306382395618_195475013288427',
+    url: 'https://www.facebook.com/135810155921580/posts/195475013288427',
+    message:
+      'One way we practice our bow-hold is through games (that provide a great reward at the end of the lesson!). This game is called the Cup Game. Similar to "hot potato", we pass the cup back and forth while a song plays and whoever has the cup when the song ends has to do 10 jumping jacks!',
+    creationTime: '2023-04-28T10:40:55+0000',
+    userName: 'Susanna Johnson-Chelaru',
+    attachments: [
+      {
+        type: 'album',
+        url: 'https://www.facebook.com/135810155921580/posts/195475013288427',
+        width: 1080,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_195475013288427_0.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=195474623288466&set=a.120472570788672&type=3',
+        width: 1080,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_195475013288427_1.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=195474613288467&set=a.120472570788672&type=3',
+        width: 1080,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_195475013288427_2.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=195474569955138&set=a.120472570788672&type=3',
+        width: 1080,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_195475013288427_3.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=195474596621802&set=a.120472570788672&type=3',
+        width: 1080,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_195475013288427_4.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=195474603288468&set=a.120472570788672&type=3',
+        width: 1080,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_195475013288427_5.jpeg'
+      }
+    ]
+  },
+  {
+    id: '104306382395618_192836146885647',
+    url: 'https://www.facebook.com/135810155921580/posts/192836146885647',
+    message:
+      'Today was Natalia\'s 8th lesson and we started the "concerto de la" (A string concerto) for the first time. In lesson 5 we started playing the "mămăligă brânză" rhythm with the bow for the first time, and in lesson 6 we started "concerto de mi" (E string concerto). Next week we will talk about "vecinii zgomotoși" i.e. "noisy neighbors". Noisy neighbors are when you play the neighboring strings by accident, adding extra noise to your sound. The challenge for the "concerto de la" is to play without any noisy neighbors!',
+    creationTime: '2023-04-23T16:16:23+0000',
+    userName: 'Susanna Johnson-Chelaru',
+    attachments: [
+      {
+        type: 'video_inline',
+        url: 'https://www.facebook.com/reel/253102237113463/',
+        width: 720,
+        height: 405,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_192836146885647_0.jpeg'
+      }
+    ]
+  },
+  {
+    id: '104306382395618_171006379068624',
+    url: 'https://www.facebook.com/135810155921580/posts/171006379068624',
+    message:
+      'Back in January we were learning about rhythmical palindromes and learning a body percussion song at the Centrul de Zi Pentru Copii Sfanta Marina!',
+    creationTime: '2023-03-16T15:22:47+0000',
+    userName: 'Susanna Johnson-Chelaru',
+    attachments: [
+      {
+        type: 'album',
+        url: 'https://www.facebook.com/467943638795390/posts/541393791450374',
+        width: 959,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_171006379068624_0.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=541393731450380&set=a.425460199710401&type=3',
+        width: 959,
+        height: 720,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_171006379068624_1.jpeg'
+      },
+      {
+        type: 'photo',
+        url: 'https://www.facebook.com/photo.php?fbid=541393718117048&set=a.425460199710401&type=3',
+        width: 720,
+        height: 959,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_171006379068624_2.jpeg'
+      }
+    ]
+  },
+  {
+    id: '104306382395618_162125606623368',
+    url: 'https://www.facebook.com/135810155921580/posts/162125606623368',
+    message:
+      'This little song, to the tune of Song of the Wind or Vulpe Tu Mi-ai Furat Gâsca, teaches the violin bowhold in a fun way! I learned this song from another teacher and used it for many years in group violin lessons in Boston. Now I made a Romanian version for my young violin students who enjoy singing. The English version is also slightly modified from the version I learned originally to better fit my curriculum needs. I hope you enjoy it! (P.S. there are subtitles in English and Romanian) (P.P.S. my Romanian is still a work in progress, forgive the accent!) ',
+    creationTime: '2023-03-01T15:55:21+0000',
+    userName: 'Susanna Johnson-Chelaru',
+    attachments: [
+      {
+        type: 'share',
+        url: 'https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DdMmFeZH_ROI&h=AT39yBZ_pOMLFBBCKlpdPbA8YAGljfa1GKU0gjG730tVnFklc5D-QgJTHx1BTgGNeYvgWdsqROZYt_1aLi9utbATevLXRio1XE-g3sQejf8svesLW_S87c1bQ5m7ejDd&s=1',
+        width: 360,
+        height: 360,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_162125606623368_0.jpeg'
+      }
+    ]
+  },
+  {
     id: '104306382395618_154521587383770',
     url: 'https://www.facebook.com/135810155921580/posts/154521587383770',
     message:

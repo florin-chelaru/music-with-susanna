@@ -8,13 +8,17 @@ import { SupportedLocale } from '../util/SupportedLocale'
 import { useNavigate } from 'react-router-dom'
 import { withBaseURL } from '../util/string'
 import { scrollToTop } from '../util/window'
+import Announcement from './Announcement'
+import { AnnouncementContext, AnnouncementHandler } from '../store/AnnouncementProvider'
 
 interface IntroTexts extends LocalizedData {
+  title: string
   subtitle: string
   shortDescription: React.ReactNode
 }
 
 const EN_US: IntroTexts = {
+  title: 'Music Lessons',
   subtitle:
     'Teach your child to play violin and viola, using established Japanese-American pedagogical methods!',
   shortDescription: (
@@ -54,6 +58,7 @@ const EN_US: IntroTexts = {
 }
 
 const RO_RO: IntroTexts = {
+  title: 'Lecții de muzică',
   subtitle:
     'Învață-l pe copilul tău să cânte la vioară sau la violă, folosind metode pedagogice consacrate din Statele Unite ale ' +
     'Americii și Japonia!',
@@ -100,6 +105,7 @@ const TEXTS = new Map<SupportedLocale, LocalizedData>([
 ])
 
 export default function IntroCard() {
+  const announcementManager = useContext<AnnouncementHandler>(AnnouncementContext)
   const strings = useContext<LocaleHandler>(LocaleContext).globalStringList
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(() => localeManager.registerComponentStrings(IntroCard.name, TEXTS), [])
@@ -108,6 +114,7 @@ export default function IntroCard() {
 
   return (
     <Card>
+      {!announcementManager.hidden && <Announcement />}
       <Grid2 container>
         <Grid2 xs={12} sm={8} md={4}>
           <Box
@@ -119,7 +126,7 @@ export default function IntroCard() {
             }}>
             <CardContent>
               <Typography gutterBottom variant="h5" component="h1">
-                {strings.lessons.toUpperCase()}
+                {componentStrings.title.toUpperCase()}
               </Typography>
               <Typography gutterBottom variant="subtitle2" component="div">
                 {componentStrings.subtitle}

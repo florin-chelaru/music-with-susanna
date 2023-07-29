@@ -19,6 +19,8 @@ import { ABOUT_TEXTS, AboutTexts } from '../data/Resume'
 import { useNavigate } from 'react-router-dom'
 import { withBaseURL } from '../util/string'
 import { scrollToTop } from '../util/window'
+import Announcement from '../Components/Announcement'
+import { AnnouncementContext, AnnouncementHandler } from '../store/AnnouncementProvider'
 
 export interface AboutProps {}
 
@@ -26,6 +28,7 @@ export default function About({}: AboutProps) {
   const theme = useTheme()
   const atLeastSm = useMediaQuery(theme.breakpoints.up('sm'))
 
+  const announcementManager = useContext<AnnouncementHandler>(AnnouncementContext)
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   const strings = localeManager.globalStringList
 
@@ -92,10 +95,14 @@ export default function About({}: AboutProps) {
         <Grid2 xs={12}>
           {atLeastSm ? (
             <Card>
+              {!announcementManager.hidden && <Announcement />}
               <CardContent>{content}</CardContent>
             </Card>
           ) : (
-            content
+            <>
+              {!announcementManager.hidden && <Announcement />}
+              {content}
+            </>
           )}
         </Grid2>
       </Grid2>

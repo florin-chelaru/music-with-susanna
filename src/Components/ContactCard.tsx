@@ -68,8 +68,8 @@ const RO_RO: ContactTexts = {
         sx={{ textDecoration: 'none' }}>
         susanna.alice.j@gmail.com
       </Link>
-      . Lecțiile sunt predate în apartamentul meu din Iași, pe Strada Nicolae Gane, în spatele
-      Palatului Copiilor (vezi harta mai jos).
+      . Lecțiile sunt ținute în Iași, pe Strada Nicolae Gane, în spatele Palatului Copiilor (vezi
+      harta mai jos).
     </>
   ),
   whatsAppLinkWithMessage:
