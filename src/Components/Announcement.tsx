@@ -5,14 +5,18 @@ import { NavigateFunction, useNavigate } from 'react-router-dom'
 import { Alert, AlertTitle, Link } from '@mui/material'
 import { scrollToTop } from '../util/window'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import { AnnouncementContext, AnnouncementHandler } from '../store/AnnouncementProvider'
+import {
+  AnnouncementContext,
+  AnnouncementHandler,
+  HIDE_ANNOUNCEMENT_COOKIE
+} from '../store/AnnouncementProvider'
 
 export const userHidAnnouncement: () => boolean = () => {
   try {
-    return localStorage.getItem('hideAnnouncement') === 'true'
+    return localStorage.getItem(HIDE_ANNOUNCEMENT_COOKIE) === 'true'
   } catch (e) {
     console.error(
-      `Could not load hideAnnouncement preferences from localStorage. Details: ${
+      `Could not load ${HIDE_ANNOUNCEMENT_COOKIE} preferences from localStorage. Details: ${
         (e as Error).message
       }`
     )
@@ -27,7 +31,7 @@ interface AnnouncementTexts extends LocalizedData {
 const EN_US: AnnouncementTexts = {
   alert: (hide: () => void, navigate?: NavigateFunction) => (
     <Alert severity="info" sx={{ borderRadius: 0 }} onClose={hide}>
-      <AlertTitle>NOW ACCEPTING STUDENTS FOR SCHOOL YEAR 2023-2024</AlertTitle>
+      <AlertTitle>STILL ACCEPTING STUDENTS FOR SCHOOL YEAR 2023-2024</AlertTitle>
       <Link
         color="inherit"
         href=""
@@ -48,7 +52,7 @@ const EN_US: AnnouncementTexts = {
 const RO_RO: AnnouncementTexts = {
   alert: (hide: () => void, navigate?: NavigateFunction) => (
     <Alert severity="info" sx={{ borderRadius: 0 }} onClose={hide}>
-      <AlertTitle>ACUM PRIMESC ÎNSCRIERI PENTRU ANUL ȘCOLAR 2023-2024</AlertTitle>
+      <AlertTitle>ÎNCĂ PRIMESC ÎNSCRIERI PENTRU ANUL ȘCOLAR 2023-2024</AlertTitle>
       <Link
         color="inherit"
         href=""

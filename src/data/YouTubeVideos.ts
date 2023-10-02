@@ -1,5 +1,55 @@
 const YOUTUBE_VIDEOS = [
   {
+    videoId: 'G-SyAOIcvpI',
+    snippet: {
+      publishedAt: '2023-09-30T11:27:10Z',
+      title: 'How to put the fingers on the string!',
+      description: 'The first song with fingers on the string on the violin for children!',
+      thumbnails: {
+        default: {
+          url: 'https://i.ytimg.com/vi/G-SyAOIcvpI/default.jpg',
+          width: 120,
+          height: 90
+        },
+        medium: {
+          url: 'https://i.ytimg.com/vi/G-SyAOIcvpI/mqdefault.jpg',
+          width: 320,
+          height: 180
+        },
+        high: {
+          url: 'https://i.ytimg.com/vi/G-SyAOIcvpI/hqdefault.jpg',
+          width: 480,
+          height: 360
+        }
+      }
+    }
+  },
+  {
+    videoId: 'fZdw0N03taw',
+    snippet: {
+      publishedAt: '2023-09-30T10:05:44Z',
+      title: 'Cum să punem degetele pe coardă!',
+      description: 'Prima piesă cu degetele pe coardă pentru copii!',
+      thumbnails: {
+        default: {
+          url: 'https://i.ytimg.com/vi/fZdw0N03taw/default.jpg',
+          width: 120,
+          height: 90
+        },
+        medium: {
+          url: 'https://i.ytimg.com/vi/fZdw0N03taw/mqdefault.jpg',
+          width: 320,
+          height: 180
+        },
+        high: {
+          url: 'https://i.ytimg.com/vi/fZdw0N03taw/hqdefault.jpg',
+          width: 480,
+          height: 360
+        }
+      }
+    }
+  },
+  {
     videoId: 'dMmFeZH_ROI',
     snippet: {
       publishedAt: '2023-03-01T15:30:30Z',

@@ -5,6 +5,38 @@ export const FACEBOOK_AVATAR =
 
 const FACEBOOK_POSTS: PrettyPost[] = [
   {
+    id: '104306382395618_283446941157900',
+    url: 'https://www.facebook.com/135810155921580/posts/283446941157900',
+    message: 'Prima piesă cu degetele pe coardă: Ritmul cu 3 degete.',
+    creationTime: '2023-09-30T11:38:59+0000',
+    userName: 'Susanna Johnson-Chelaru',
+    attachments: [
+      {
+        type: 'video_inline',
+        url: 'https://www.facebook.com/135810155921580/videos/311171658218538',
+        width: 720,
+        height: 405,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_283446941157900_0.jpeg'
+      }
+    ]
+  },
+  {
+    id: '104306382395618_258462510323010',
+    url: 'https://www.facebook.com/135810155921580/posts/258462510323010',
+    message: 'Musical fingerplay with my 2 month old baby!',
+    creationTime: '2023-08-16T15:42:43+0000',
+    userName: 'Susanna Johnson-Chelaru',
+    attachments: [
+      {
+        type: 'video_inline',
+        url: 'https://www.facebook.com/reel/1709112619590545/',
+        width: 720,
+        height: 405,
+        thumbnailUrl: '/static/img/facebook-posts/104306382395618_258462510323010_0.jpeg'
+      }
+    ]
+  },
+  {
     id: '104306382395618_234849609350967',
     url: 'https://www.facebook.com/135810155921580/posts/234849609350967',
     message:

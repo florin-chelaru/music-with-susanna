@@ -1,6 +1,7 @@
 import React, { createContext, useMemo, useState } from 'react'
 
 export const SHOW_ANNOUNCEMENT: boolean = true
+export const HIDE_ANNOUNCEMENT_COOKIE = 'hideAnnouncement01'
 
 export interface AnnouncementHandler {
   readonly hidden: boolean
@@ -15,7 +16,7 @@ class AnnouncementManager implements AnnouncementHandler {
     let hidden = false
 
     try {
-      hidden = !SHOW_ANNOUNCEMENT || localStorage.getItem('hideAnnouncement') === 'true'
+      hidden = !SHOW_ANNOUNCEMENT || localStorage.getItem(HIDE_ANNOUNCEMENT_COOKIE) === 'true'
     } catch (e) {
       console.error(
         `Could not load announcement preferences from localStorage. Details: ${
@@ -29,7 +30,7 @@ class AnnouncementManager implements AnnouncementHandler {
   hide(): void {
     this.hidden_ = true
     try {
-      localStorage.setItem('hideAnnouncement', 'true')
+      localStorage.setItem(HIDE_ANNOUNCEMENT_COOKIE, 'true')
     } catch (e) {
       console.error(
         `Could not save the announcement preferences for the user: ${(e as Error).message}`
