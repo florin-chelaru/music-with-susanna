@@ -11,6 +11,7 @@ import { SelectedVideoContext, SelectedVideoManager } from '../store/SelectedVid
 import { useNavigate } from 'react-router-dom'
 import { withBaseURL } from '../util/string'
 import { scrollToTop } from '../util/window'
+import ImportantEventCard from '../Components/ImportantEventCard'
 
 export interface HomeProps {}
 
@@ -23,6 +24,9 @@ export default function Home({}: HomeProps) {
       <Container maxWidth="md" sx={{ pt: 3 }}>
         <Toolbar />
         <Grid2 container spacing={2}>
+          <Grid2 xs={12}>
+            <ImportantEventCard />
+          </Grid2>
           <Grid2 xs={12}>
             <IntroCard />
           </Grid2>
