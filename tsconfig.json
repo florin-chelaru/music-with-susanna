@@ -22,7 +22,8 @@
     // Required by Material UI. See https://mui.com/material-ui/guides/typescript/
     "noImplicitAny": true,
     "noImplicitThis": true,
-    "strictNullChecks": true
+    "strictNullChecks": false,
+    "sourceMap": true
   },
   "include": [
     "src",

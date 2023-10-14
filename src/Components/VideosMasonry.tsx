@@ -46,7 +46,11 @@ export default function VideosMasonry({ onVideoSelected, maxVideos }: VideoMason
             useWindow={true}>
             <ImageList cols={md ? 3 : 2} gap={16}>
               {videoCardProps.slice(0, records).map((props, i) => (
-                <VideoThumbnailCard key={i} onSelected={onVideoSelected} {...props} />
+                <VideoThumbnailCard
+                  key={`thumbnail-${i}`}
+                  onSelected={onVideoSelected}
+                  {...props}
+                />
               ))}
             </ImageList>
           </InfiniteScroll>

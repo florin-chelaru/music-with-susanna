@@ -27,6 +27,8 @@ import { gaSendPageView } from './util/google-analytics'
 import AnnouncementProvider from './store/AnnouncementProvider'
 import Login from './pages/Login'
 import PersonIcon from '@mui/icons-material/Person'
+import { HelmetProvider } from 'react-helmet-async'
+import { UserProvider } from './store/UserProvider'
 
 function App() {
   const navItems: NavItemInfo[] = [
@@ -86,32 +88,36 @@ function App() {
   useEffect(() => gaSendPageView(), [location])
 
   return (
-    <CustomThemeProvider>
-      <SelectedVideoProvider>
-        <LocaleProvider>
-          <AnnouncementProvider>
-            <Seo />
-            <LocalizedCookieConsent />
-            <DrawerAppBar navItems={navItems} />
-            <Grid2 container>
-              <Grid2 xs={12}>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/lessons" element={<Lessons />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/videos" element={<VideoChannel />} />
-                  <Route path="/news" element={<LatestNews />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/credits" element={<Credits />} />
-                  <Route path="/login" element={<Login />} />
-                </Routes>
-              </Grid2>
-            </Grid2>
-            <ScrollTop />
-          </AnnouncementProvider>
-        </LocaleProvider>
-      </SelectedVideoProvider>
-    </CustomThemeProvider>
+    <HelmetProvider>
+      <CustomThemeProvider>
+        <SelectedVideoProvider>
+          <LocaleProvider>
+            <UserProvider>
+              <AnnouncementProvider>
+                <Seo />
+                <LocalizedCookieConsent />
+                <DrawerAppBar navItems={navItems} />
+                <Grid2 container>
+                  <Grid2 xs={12}>
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/lessons" element={<Lessons />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/videos" element={<VideoChannel />} />
+                      <Route path="/news" element={<LatestNews />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/credits" element={<Credits />} />
+                      <Route path="/login" element={<Login />} />
+                    </Routes>
+                  </Grid2>
+                </Grid2>
+                <ScrollTop />
+              </AnnouncementProvider>
+            </UserProvider>
+          </LocaleProvider>
+        </SelectedVideoProvider>
+      </CustomThemeProvider>
+    </HelmetProvider>
   )
 }
 
