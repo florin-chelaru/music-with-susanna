@@ -15,23 +15,16 @@ import LanguagePopover from './LanguagePopover'
 import { ListItemIcon } from '@mui/material'
 import LocaleInfo from '../util/LocaleInfo'
 import LanguageListItem from './LanguageListItem'
-import { GlobalLocalizedData, LocaleContext, LocaleHandler } from '../store/LocaleProvider'
+import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import { SUPPORTED_LOCALES } from '../store/LocaleSettings'
 import { Link as DomLink, useLocation } from 'react-router-dom'
 import UserPopover from './UserPopover'
+import { RouteInfo } from '../data/RouteInfo'
 
 const drawerWidth = 240
 
-export interface NavItemInfo {
-  key: string
-  label: (strings: GlobalLocalizedData) => string
-  icon: React.ReactNode
-  path: string
-  hidden?: boolean
-}
-
 export interface DrawerAppBarProps {
-  navItems: NavItemInfo[]
+  navItems: RouteInfo[]
 }
 
 export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
@@ -55,7 +48,7 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <List>
         {navItems
-          .filter((item) => !item.hidden)
+          .filter((item) => !item.hiddenFromAppBar)
           .map((item) => (
             <ListItemButton key={`listitem-${item.key}`} component={DomLink} to={item.path}>
               <ListItemIcon>{item.icon}</ListItemIcon>
@@ -87,7 +80,7 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
           </Typography>
           <Box sx={{ display: { xs: 'none', md: 'block' } }}>
             {navItems
-              .filter((item) => !item.hidden)
+              .filter((item) => !item.hiddenFromAppBar)
               .map((item) => (
                 <Button
                   key={`button-${item.key}`}

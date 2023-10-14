@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useState } from 'react'
 import {
   Alert,
   Avatar,
@@ -117,7 +117,7 @@ export default function Login({}: LoginProps) {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential: UserCredential) => {
         setError(null)
-        navigate('/')
+        navigate('/user')
         scrollToTop()
       })
       .catch((error) => {
@@ -125,11 +125,11 @@ export default function Login({}: LoginProps) {
       })
   }
 
-  const handleSignOut: React.MouseEventHandler = (event) => {
-    event.preventDefault()
-
-    void signOut(auth)
-  }
+  useEffect(() => {
+    if (user.uid) {
+      navigate('/user')
+    }
+  }, [user])
 
   const signInForm = (
     <>
@@ -195,17 +195,6 @@ export default function Login({}: LoginProps) {
     </>
   )
 
-  const signedInContent = (
-    <>
-      <Box sx={{ mt: 1 }}>
-        {user.firstName && <Typography variant="body1">Hello {user.firstName}</Typography>}
-        <Button fullWidth variant="contained" sx={{ mt: 3, mb: 2 }} onClick={handleSignOut}>
-          {componentStrings.signOut}
-        </Button>
-      </Box>
-    </>
-  )
-
   return (
     <Container maxWidth="md" sx={{ pt: 3 }}>
       <Toolbar />
@@ -217,10 +206,7 @@ export default function Login({}: LoginProps) {
               flexDirection: 'column',
               alignItems: 'center'
             }}>
-            <CardContent>
-              {!user.uid && signInForm}
-              {user.uid && signedInContent}
-            </CardContent>
+            <CardContent>{signInForm}</CardContent>
           </Card>
         </Grid2>
       </Grid2>

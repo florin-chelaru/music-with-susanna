@@ -88,13 +88,13 @@ export default function UserPopover({}: UserPopoverProps) {
               <MenuItem
                 onClick={() => {
                   handleClose()
-                  navigate('/login')
+                  navigate('/user')
                   scrollToTop()
                 }}>
                 <ListItemIcon>
                   <PersonIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>{user?.firstName ?? user.email}</ListItemText>
+                <ListItemText>Dashboard</ListItemText>
               </MenuItem>
               <MenuItem
                 onClick={() => {
