@@ -18,6 +18,7 @@ import LanguageListItem from './LanguageListItem'
 import { GlobalLocalizedData, LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import { SUPPORTED_LOCALES } from '../store/LocaleSettings'
 import { Link as DomLink, useLocation } from 'react-router-dom'
+import UserPopover from './UserPopover'
 
 const drawerWidth = 240
 
@@ -26,6 +27,7 @@ export interface NavItemInfo {
   label: (strings: GlobalLocalizedData) => string
   icon: React.ReactNode
   path: string
+  hidden?: boolean
 }
 
 export interface DrawerAppBarProps {
@@ -52,12 +54,14 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <List>
-        {navItems.map((item) => (
-          <ListItemButton key={`listitem-${item.key}`} component={DomLink} to={item.path}>
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.label(strings)} />
-          </ListItemButton>
-        ))}
+        {navItems
+          .filter((item) => !item.hidden)
+          .map((item) => (
+            <ListItemButton key={`listitem-${item.key}`} component={DomLink} to={item.path}>
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.label(strings)} />
+            </ListItemButton>
+          ))}
         <LanguageListItem languages={SUPPORTED_LOCALES} onChange={onLocaleChange} />
       </List>
     </Box>
@@ -82,16 +86,22 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
             {pageTitle}
           </Typography>
           <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-            {navItems.map((item) => (
-              <Button
-                key={`button-${item.key}`}
-                sx={{ color: '#fff' }}
-                component={DomLink}
-                to={item.path}>
-                {item.label(strings)}
-              </Button>
-            ))}
+            {navItems
+              .filter((item) => !item.hidden)
+              .map((item) => (
+                <Button
+                  key={`button-${item.key}`}
+                  sx={{ color: '#fff' }}
+                  component={DomLink}
+                  to={item.path}>
+                  {item.label(strings)}
+                </Button>
+              ))}
             <LanguagePopover languages={SUPPORTED_LOCALES} onChange={onLocaleChange} />
+            <UserPopover />
+          </Box>
+          <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+            <UserPopover />
           </Box>
         </Toolbar>
       </AppBar>

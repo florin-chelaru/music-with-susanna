@@ -25,6 +25,8 @@ import Seo from './Components/Seo'
 import LocalizedCookieConsent from './Components/LocalizedCookieConsent'
 import { gaSendPageView } from './util/google-analytics'
 import AnnouncementProvider from './store/AnnouncementProvider'
+import Login from './pages/Login'
+import PersonIcon from '@mui/icons-material/Person'
 
 function App() {
   const navItems: NavItemInfo[] = [
@@ -69,6 +71,13 @@ function App() {
       label: (strings) => strings.credits,
       icon: <AttributionIcon />,
       path: '/credits'
+    },
+    {
+      key: 'login',
+      label: (strings) => strings.login,
+      icon: <PersonIcon />,
+      path: '/login',
+      hidden: true
     }
   ]
 
@@ -94,6 +103,7 @@ function App() {
                   <Route path="/news" element={<LatestNews />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/credits" element={<Credits />} />
+                  <Route path="/login" element={<Login />} />
                 </Routes>
               </Grid2>
             </Grid2>
