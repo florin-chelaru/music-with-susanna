@@ -52,7 +52,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
-      console.log(user)
       if (!user) {
         dispatch({ type: UserActionType.SIGN_OUT })
         return

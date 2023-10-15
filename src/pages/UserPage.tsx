@@ -1,27 +1,11 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react'
-import {
-  Alert,
-  Avatar,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Container,
-  Link,
-  Stack,
-  TextField,
-  Toolbar,
-  Typography
-} from '@mui/material'
+import { Card, CardContent, Container, Toolbar } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import { auth } from '../store/Firebase'
-import { signInWithEmailAndPassword, signOut, UserCredential } from 'firebase/auth'
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { useUser } from '../store/UserProvider'
 import { useNavigate } from 'react-router-dom'
-import { scrollToTop } from '../util/window'
+import ReactQuill from 'react-quill'
 
 interface UserPageTexts {}
 
@@ -33,6 +17,17 @@ const USER_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData>([
   [SupportedLocale.EN_US, EN_US],
   [SupportedLocale.RO_RO, RO_RO]
 ])
+
+const EDITOR_MODULES = {
+  toolbar: [
+    [{ header: [1, 2, false] }, { font: [] as string[] }],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ color: [] as string[] }, { background: [] as string[] }],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean']
+  ]
+}
 
 export interface UserPageProps {}
 
@@ -50,18 +45,42 @@ export default function UserPage({}: UserPageProps) {
     }
   }, [user])
 
+  const [value, setValue] = useState('')
+  const valueChanged = (v: any) => {
+    setValue(v)
+  }
+
   return (
     <Container maxWidth="md" sx={{ pt: 3 }}>
       <Toolbar />
       <Grid2 container spacing={2}>
-        <Grid2 xs={12} xsOffset={0} sm={8} smOffset={2} md={8} mdOffset={2}>
+        <Grid2 xs={12}>
           <Card
             sx={{
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center'
+              alignItems: 'center',
+              overflow: 'visible', // allow tooltips to span over the card
+              minHeight: '300px',
+              height: '100%'
             }}>
-            <CardContent>Hello {user.firstName}</CardContent>
+            <ReactQuill
+              theme="snow"
+              value={value}
+              onChange={valueChanged}
+              modules={EDITOR_MODULES}
+              style={{
+                float: 'none',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            />
+            <CardContent>
+              Hello {user.firstName}
+              <div dangerouslySetInnerHTML={{ __html: value }} />
+            </CardContent>
           </Card>
         </Grid2>
       </Grid2>

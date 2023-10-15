@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react'
-import './App.css'
 import DrawerAppBar from './Components/DrawerAppBar'
 import LocaleProvider from './store/LocaleProvider'
 import Home from './pages/Home'
@@ -24,6 +23,8 @@ import { HelmetProvider } from 'react-helmet-async'
 import { UserProvider } from './store/UserProvider'
 import { ROUTES, RouteInfo } from './data/RouteInfo'
 import UserPage from './pages/UserPage'
+import 'react-quill/dist/quill.snow.css'
+import './App.css'
 
 function App() {
   const navItems: RouteInfo[] = ROUTES

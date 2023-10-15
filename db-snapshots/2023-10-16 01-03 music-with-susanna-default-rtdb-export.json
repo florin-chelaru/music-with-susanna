@@ -1,0 +1,60 @@
+{
+  "students": {
+    "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+          "subject": "violin"
+        }
+      }
+    }
+  },
+  "teachers": {
+    "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+      "students": {
+        "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+          "homework": {
+            "id001": {
+              "content": "<p>Old homework</p>",
+              "created_at": "2023-10-15",
+              "deleted_at": "",
+              "draft_content": "<p>This is the homework for Florin</p>",
+              "status": "editing",
+              "updated_at": "",
+              "visible_to_student": false
+            },
+            "id002": {
+              "content": "<p>Other homework</p>",
+              "created_at": "2023-10-10",
+              "deleted_at": "",
+              "draft_content": "",
+              "status": "published",
+              "updated_at": "",
+              "visible_to_student": true
+            }
+          },
+          "notes": {
+            "id001": {
+              "content": "<p>My first note</p>",
+              "created_at": "2023-10-14",
+              "deleted_at": "",
+              "draft_content": "",
+              "status": "published",
+              "updated_at": ""
+            }
+          }
+        }
+      },
+      "subject": "violin"
+    }
+  },
+  "users": {
+    "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+      "name": "Susanna Johnson-Chelaru",
+      "role": "teacher"
+    },
+    "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+      "name": "Florin Chelaru",
+      "role": "student"
+    }
+  }
+}
