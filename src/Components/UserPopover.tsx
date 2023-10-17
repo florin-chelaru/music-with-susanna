@@ -88,7 +88,7 @@ export default function UserPopover({}: UserPopoverProps) {
               <MenuItem
                 onClick={() => {
                   handleClose()
-                  navigate('/user')
+                  navigate('/students')
                   scrollToTop()
                 }}>
                 <ListItemIcon>

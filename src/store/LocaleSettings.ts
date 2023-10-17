@@ -22,6 +22,7 @@ export const EN_US: GlobalLocalizedData = {
   contactMe: 'Contact me',
   credits: 'Credits',
   home: 'Home',
+  homework: 'Homework',
   language: 'Language',
   lessons: 'Music Lessons',
   login: 'Login',
@@ -30,6 +31,7 @@ export const EN_US: GlobalLocalizedData = {
   news: 'Latest News',
   readMore: 'Read more',
   signUp: 'Sign up',
+  students: 'Students',
   testimonials: 'Testimonials',
   youtubeChildrensChannel: "Children's YouTube Channel"
 }
@@ -41,6 +43,7 @@ export const RO_RO: GlobalLocalizedData = {
   contactMe: 'Contactează-mă',
   credits: 'Credits',
   home: 'Acasă',
+  homework: 'Teme pe Acasă',
   language: 'Limba',
   lessons: 'Lecții de Muzică',
   login: 'Autentificare',
@@ -49,6 +52,7 @@ export const RO_RO: GlobalLocalizedData = {
   news: 'Ultimele Noutăți',
   readMore: 'Citește mai mult',
   signUp: 'Înscrie-te',
+  students: 'Elevi',
   testimonials: 'Testimoniale',
   youtubeChildrensChannel: 'Canalul YouTube pentru Copii'
 }

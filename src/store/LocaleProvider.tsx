@@ -18,6 +18,7 @@ export interface GlobalLocalizedData extends LocalizedData {
   contactMe: string
   credits: string
   home: string
+  homework: string
   language: string
   lessons: string
   login: string
@@ -26,6 +27,7 @@ export interface GlobalLocalizedData extends LocalizedData {
   news: string
   readMore: string
   signUp: string
+  students: string
   testimonials: string
   youtubeChildrensChannel: string
 }

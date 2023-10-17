@@ -1,30 +1,30 @@
-import React, { useEffect } from 'react'
-import DrawerAppBar from './Components/DrawerAppBar'
-import LocaleProvider from './store/LocaleProvider'
-import Home from './pages/Home'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import CustomThemeProvider from './theme/CustomThemeProvider'
+import { useEffect } from 'react'
+import { HelmetProvider } from 'react-helmet-async'
+import 'react-quill/dist/quill.snow.css'
 import { Route, Routes, useLocation } from 'react-router-dom'
-import Lessons from './pages/Lessons'
+import './App.css'
+import DrawerAppBar from './Components/DrawerAppBar'
+import LocalizedCookieConsent from './Components/LocalizedCookieConsent'
+import ScrollTop from './Components/ScrollTop'
+import Seo from './Components/Seo'
+import { ROUTES, RouteInfo } from './data/RouteInfo'
 import About from './pages/About'
 import Contact from './pages/Contact'
-import VideoChannel from './pages/VideoChannel'
-import SelectedVideoProvider from './store/SelectedVideoProvider'
-import LatestNews from './pages/LatestNews'
-import ScrollTop from './Components/ScrollTop'
 import Credits from './pages/Credits'
-import Seo from './Components/Seo'
-import LocalizedCookieConsent from './Components/LocalizedCookieConsent'
-import { gaSendPageView } from './util/google-analytics'
-import AnnouncementProvider from './store/AnnouncementProvider'
+import Home from './pages/Home'
+import Homework from './pages/Homework'
+import LatestNews from './pages/LatestNews'
+import Lessons from './pages/Lessons'
 import Login from './pages/Login'
-import PersonIcon from '@mui/icons-material/Person'
-import { HelmetProvider } from 'react-helmet-async'
+import StudentsPage from './pages/StudentsPage'
+import VideoChannel from './pages/VideoChannel'
+import AnnouncementProvider from './store/AnnouncementProvider'
+import LocaleProvider from './store/LocaleProvider'
+import SelectedVideoProvider from './store/SelectedVideoProvider'
 import { UserProvider } from './store/UserProvider'
-import { ROUTES, RouteInfo } from './data/RouteInfo'
-import UserPage from './pages/UserPage'
-import 'react-quill/dist/quill.snow.css'
-import './App.css'
+import CustomThemeProvider from './theme/CustomThemeProvider'
+import { gaSendPageView } from './util/google-analytics'
 
 function App() {
   const navItems: RouteInfo[] = ROUTES
@@ -54,7 +54,8 @@ function App() {
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/credits" element={<Credits />} />
                       <Route path="/login" element={<Login />} />
-                      <Route path="/user" element={<UserPage />} />
+                      <Route path="/students" element={<StudentsPage />} />
+                      <Route path="/homework/:teacherId/:studentId" element={<Homework />} />
                     </Routes>
                   </Grid2>
                 </Grid2>

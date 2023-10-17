@@ -1,4 +1,5 @@
-.ql-toolbar {
+.ql-toolbar.ql-snow {
+  border: 0;
   background-color: #dfe3e8;
   border-top-right-radius: 8px;
   border-top-left-radius: 8px;

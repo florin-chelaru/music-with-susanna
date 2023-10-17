@@ -117,7 +117,7 @@ export default function Login({}: LoginProps) {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential: UserCredential) => {
         setError(null)
-        navigate('/user')
+        navigate('/students')
         scrollToTop()
       })
       .catch((error) => {
@@ -127,7 +127,7 @@ export default function Login({}: LoginProps) {
 
   useEffect(() => {
     if (user.uid) {
-      navigate('/user')
+      navigate('/students')
     }
   }, [user])
 

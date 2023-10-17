@@ -1,0 +1,95 @@
+{
+  "homework": {
+    "teachers": {
+      "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+        "drafts": {
+          "students": {
+            "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+              "h001": {
+                "content": "<p>Old homework</p>",
+                "created_at": "2023-10-15",
+                "deleted_at": "",
+                "edit_content": "<p>This is the homework for Florin</p>",
+                "status": "editing",
+                "updated_at": ""
+              },
+              "h003": {
+                "content": "<p>Other homework</p>",
+                "created_at": "2023-10-10",
+                "deleted_at": "",
+                "edit_content": "",
+                "status": "published",
+                "updated_at": ""
+              }
+            }
+          }
+        },
+        "students": {
+          "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+            "h002": {
+              "content": "<p>Other homework</p>",
+              "createdAt": "2023-10-10",
+              "deletedAt": "",
+              "editContent": "",
+              "status": "published",
+              "title": "Happy Strings",
+              "updatedAt": ""
+            }
+          },
+          "student-id-001": {
+            "h004": {
+              "content": "<p>Much much homework</p>",
+              "createdAt": "2023-10-12",
+              "status": "published",
+              "title": "Oac Oac"
+            },
+            "h005": {
+              "content": "<p>Some more homework</p>",
+              "createdAt": "2023-10-09",
+              "status": "published",
+              "title": "Adagio for Strings"
+            }
+          }
+        }
+      }
+    }
+  },
+  "students": {
+    "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": ""
+      }
+    },
+    "student-id-001": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": ""
+      }
+    }
+  },
+  "teachers": {
+    "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+      "students": {
+        "CrJ0nlfZOrY4ac9USwzQzaURyWx2": "",
+        "student-id-001": ""
+      }
+    }
+  },
+  "users": {
+    "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+      "email": "susannaalicej@gmail.com",
+      "name": "Susanna Johnson-Chelaru",
+      "role": "teacher",
+      "subject": "violin"
+    },
+    "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+      "email": "florin.chelaru@gmail.com",
+      "name": "Florin Chelaru",
+      "role": "student"
+    },
+    "student-id-001": {
+      "email": "natalia@gmail.com",
+      "name": "Natalia Gubernat",
+      "role": "student"
+    }
+  }
+}

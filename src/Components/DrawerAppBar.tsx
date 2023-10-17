@@ -39,8 +39,9 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
 
   const location = useLocation()
   const pageTitle =
-    navItems.find((item) => item.path === location.pathname && item.path !== '/')?.label(strings) ??
-    strings.musicWithMsJohnson
+    navItems
+      .find((item) => location.pathname.startsWith(item.path) && item.path !== '/')
+      ?.label(strings) ?? strings.musicWithMsJohnson
 
   const onLocaleChange = (l: LocaleInfo) => localeManager.changeLocale(l.locale)
 
