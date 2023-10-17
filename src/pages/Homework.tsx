@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useUser } from '../store/UserProvider'
-import { Unsubscribe, onValue, ref } from 'firebase/database'
-import HomeworkInfo from '../util/HomeworkInfo'
+import { Unsubscribe, onValue, ref, set } from 'firebase/database'
+import HomeworkInfo, { HomeworkStatus, generateHomeworkTemplate } from '../util/HomeworkInfo'
 import { database } from '../store/Firebase'
 import {
   Accordion,
@@ -30,6 +30,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import { dateStringToPrettyDate, prettyDate } from '../util/date'
 
 interface HomeworkCardProps {
   homework: HomeworkInfo
@@ -40,8 +41,8 @@ const HomeworkCard = React.memo(({ homework }: HomeworkCardProps) => {
   const handleExpandClick = () => {
     setExpanded(!expanded)
   }
-  const maxTextLength = 10 //150
-  const needsExpansion = homework.content.length > maxTextLength
+  const maxTextLength = 150
+  const needsExpansion = (homework.content?.length ?? 0) > maxTextLength
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
@@ -57,7 +58,7 @@ const HomeworkCard = React.memo(({ homework }: HomeworkCardProps) => {
       <Card>
         <CardHeader
           title={homework.title}
-          subheader={homework.createdAt}
+          subheader={dateStringToPrettyDate(homework.createdAt)}
           action={
             <IconButton aria-label="settings" onClick={handleClick}>
               <MoreVertIcon />
@@ -66,8 +67,8 @@ const HomeworkCard = React.memo(({ homework }: HomeworkCardProps) => {
           sx={{ pb: 0 }}
         />
         <Collapse in={expanded} timeout="auto" collapsedSize={100}>
-          <CardContent>
-            <div dangerouslySetInnerHTML={{ __html: homework.content }} />
+          <CardContent sx={{ paddingTop: 0 }}>
+            <div dangerouslySetInnerHTML={{ __html: homework.content ?? '' }} />
           </CardContent>
         </Collapse>
         {needsExpansion && (
@@ -148,6 +149,7 @@ export default function Homework({}: HomeworkProps) {
   const navigate = useNavigate()
 
   const homeworkUnsubscriberRef = useRef<Unsubscribe>()
+  const homeworkDraft = useRef<HomeworkInfo>(generateHomeworkTemplate())
 
   useEffect(() => {
     if (user.loading) {
@@ -166,7 +168,18 @@ export default function Homework({}: HomeworkProps) {
       (snapshot) => {
         const homeworkById = snapshot.val()
         if (homeworkById) {
-          setHomework(Object.values(homeworkById))
+          const homeworkItems: HomeworkInfo[] = []
+          for (const homeworkId in homeworkById) {
+            const item = homeworkById[homeworkId]
+            item.id = homeworkId
+            homeworkItems.push(item)
+          }
+          // sort descending
+          homeworkItems.sort(
+            (h1, h2) =>
+              new Date(h2.createdAt ?? 0).getTime() - new Date(h1.createdAt ?? 0).getTime()
+          )
+          setHomework(homeworkItems)
         } else {
           setHomework([])
         }
@@ -180,13 +193,44 @@ export default function Homework({}: HomeworkProps) {
     )
   }, [user, teacherId, studentId])
 
+  const saveHomework = async () => {
+    console.log(`saving homework ${JSON.stringify(homeworkDraft.current)}...`)
+    const hw = homeworkDraft.current
+    const content = hw.editContent ?? ''
+    hw.updatedAt = new Date().toISOString()
+    hw.content = content
+
+    const titleRegex = /^<h1>(.*?)<\/h1>/
+    const titleMatch = content.match(titleRegex)
+    if (titleMatch) {
+      hw.title = titleMatch[1]
+      hw.content = content.replace(titleRegex, '')
+    } else {
+      hw.title = 'Untitled'
+    }
+
+    hw.status = HomeworkStatus.PUBLISHED
+
+    await set(ref(database, `homework/teachers/${teacherId}/students/${studentId}/${hw.id}`), hw)
+    console.log('done')
+  }
+
   return (
     <Container maxWidth="md" sx={{ pt: 3 }}>
       <Toolbar />
       <Grid2 container spacing={2}>
         <Grid2 xs={12}>
-          <Grid2 xs={12}>
-            <EditorCard />
+          <Grid2 xs={12} sx={{}}>
+            <EditorCard
+              value={homeworkDraft.current.editContent}
+              onValueChange={(v) => {
+                console.log(v)
+                homeworkDraft.current.editContent = v
+              }}
+              onSave={() => {
+                void saveHomework()
+              }}
+            />
           </Grid2>
           {homework.map((h: HomeworkInfo, i) => (
             <Grid2 xs={12} key={`hw-${i}`}>

@@ -66,6 +66,11 @@ export default function CustomThemeProvider({ children, mode }: CustomThemeProvi
         }
       }
     },
+    MuiCardContent: {
+      styleOverrides: {
+        root: { '&:last-child': { paddingBottom: 0 } }
+      }
+    },
     MuiPopover: {
       styleOverrides: {
         paper: {
