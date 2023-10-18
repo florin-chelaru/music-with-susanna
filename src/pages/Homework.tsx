@@ -1,14 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { useUser } from '../store/UserProvider'
-import { Unsubscribe, onValue, ref, set } from 'firebase/database'
-import HomeworkInfo, { HomeworkStatus, generateHomeworkTemplate } from '../util/HomeworkInfo'
-import { database } from '../store/Firebase'
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever'
+import EditIcon from '@mui/icons-material/Edit'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Button,
+  Box,
   Card,
   CardActions,
   CardContent,
@@ -16,21 +12,26 @@ import {
   Collapse,
   Container,
   IconButton,
+  ListItemButton,
   ListItemIcon,
+  ListItemText,
   Menu,
   MenuItem,
   Toolbar,
-  Typography
+  Typography,
+  useTheme
 } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
+import { Unsubscribe, onValue, ref, set } from 'firebase/database'
+import React, { useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import EditorCard from '../Components/EditorCard'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandMoreButton from '../Components/ExpandMoreButton'
-import MoreVertIcon from '@mui/icons-material/MoreVert'
-import EditIcon from '@mui/icons-material/Edit'
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever'
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import { dateStringToPrettyDate, prettyDate } from '../util/date'
+import { database } from '../store/Firebase'
+import { useUser } from '../store/UserProvider'
+import HomeworkInfo, { HomeworkStatus, generateHomeworkTemplate } from '../util/HomeworkInfo'
+import { dateStringToPrettyDate } from '../util/date'
+import { scrollToElement } from '../util/window'
 
 interface HomeworkCardProps {
   homework: HomeworkInfo
@@ -143,6 +144,7 @@ const HomeworkCard = React.memo(({ homework }: HomeworkCardProps) => {
 export interface HomeworkProps {}
 
 export default function Homework({}: HomeworkProps) {
+  const theme = useTheme()
   const { teacherId, studentId } = useParams()
   const [homework, setHomework] = useState<HomeworkInfo[]>([])
   const { user, dispatch } = useUser()
@@ -150,6 +152,9 @@ export default function Homework({}: HomeworkProps) {
 
   const homeworkUnsubscriberRef = useRef<Unsubscribe>()
   const homeworkDraft = useRef<HomeworkInfo>(generateHomeworkTemplate())
+  const [sectionRefs, setSectionRefs] = useState<Map<string, React.RefObject<HTMLDivElement>>>(
+    new Map()
+  )
 
   useEffect(() => {
     if (user.loading) {
@@ -169,10 +174,17 @@ export default function Homework({}: HomeworkProps) {
         const homeworkById = snapshot.val()
         if (homeworkById) {
           const homeworkItems: HomeworkInfo[] = []
+          const newSectionRefs = new Map()
           for (const homeworkId in homeworkById) {
             const item = homeworkById[homeworkId]
             item.id = homeworkId
             homeworkItems.push(item)
+            if (!sectionRefs.has(homeworkId)) {
+              // sectionRefs.set(homeworkId, React.createRef())
+              newSectionRefs.set(homeworkId, React.createRef())
+            } else {
+              newSectionRefs.set(homeworkId, sectionRefs.get(homeworkId))
+            }
           }
           // sort descending
           homeworkItems.sort(
@@ -180,6 +192,8 @@ export default function Homework({}: HomeworkProps) {
               new Date(h2.createdAt ?? 0).getTime() - new Date(h1.createdAt ?? 0).getTime()
           )
           setHomework(homeworkItems)
+          setSectionRefs(newSectionRefs)
+          // React.createRef()
         } else {
           setHomework([])
         }
@@ -215,12 +229,47 @@ export default function Homework({}: HomeworkProps) {
     console.log('done')
   }
 
+  const toc = (
+    <Box sx={{ position: 'relative' }}>
+      <Box
+        sx={{
+          [theme.breakpoints.up('sm')]: {
+            position: 'fixed',
+            top: 64,
+            maxHeight: '100vh',
+            overflowY: 'auto',
+            pt: 3
+          }
+        }}>
+        <Typography variant="overline" sx={{ pl: 2 }}>
+          <b>Contents</b>
+        </Typography>
+        {homework.map((h: HomeworkInfo, i) => (
+          <ListItemButton
+            key={`item-${h.id}`}
+            sx={{ py: 0, minHeight: 32, color: 'rgba(255,255,255,.8)' }}
+            onClick={() => scrollToElement(sectionRefs.get(h?.id ?? '')?.current, 64)}
+            data-cy={`nav-item`}>
+            <ListItemText
+              primary={h.title}
+              secondary={dateStringToPrettyDate(h.createdAt)}
+              primaryTypographyProps={{ fontWeight: 'medium' }}
+            />
+          </ListItemButton>
+        ))}
+      </Box>
+    </Box>
+  )
+
   return (
     <Container maxWidth="md" sx={{ pt: 3 }}>
       <Toolbar />
       <Grid2 container spacing={2}>
-        <Grid2 xs={12}>
-          <Grid2 xs={12} sx={{}}>
+        <Grid2 xs={12} display={{ xs: 'block', sm: 'none' }}>
+          {toc}
+        </Grid2>
+        <Grid2 xs={12} sm={9} md={10}>
+          <Grid2 xs={12}>
             <EditorCard
               value={homeworkDraft.current.editContent}
               onValueChange={(v) => {
@@ -233,10 +282,24 @@ export default function Homework({}: HomeworkProps) {
             />
           </Grid2>
           {homework.map((h: HomeworkInfo, i) => (
-            <Grid2 xs={12} key={`hw-${i}`}>
+            <Grid2
+              xs={12}
+              key={`hw-${i}`}
+              id={`section-${i}`}
+              data-cy={`section-item`}
+              ref={sectionRefs.get(h?.id ?? '')}>
               <HomeworkCard homework={h} key={`hw-${i}`} />
             </Grid2>
           ))}
+        </Grid2>
+        <Grid2
+          xs={12}
+          sm={3}
+          md={2}
+          rowSpacing={0}
+          sx={{ padding: 0 }}
+          display={{ xs: 'none', sm: 'block' }}>
+          {toc}
         </Grid2>
       </Grid2>
     </Container>
