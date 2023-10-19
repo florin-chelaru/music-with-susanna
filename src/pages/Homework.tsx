@@ -22,22 +22,29 @@ import {
   useTheme
 } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import { Unsubscribe, onValue, ref, set } from 'firebase/database'
-import React, { useEffect, useRef, useState } from 'react'
+import { Unsubscribe, onValue, ref, set, remove } from 'firebase/database'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import EditorCard from '../Components/EditorCard'
 import ExpandMoreButton from '../Components/ExpandMoreButton'
 import { database } from '../store/Firebase'
 import { useUser } from '../store/UserProvider'
-import HomeworkInfo, { HomeworkStatus, generateHomeworkTemplate } from '../util/HomeworkInfo'
+import HomeworkInfo, {
+  HomeworkStatus,
+  generateHomeworkTemplate,
+  removeUndefinedKeys
+} from '../util/HomeworkInfo'
 import { dateStringToPrettyDate } from '../util/date'
 import { scrollToElement } from '../util/window'
+import FabCreate from '../Components/FabCreate'
 
 interface HomeworkCardProps {
   homework: HomeworkInfo
+  onEdit?(): void
+  onDelete?(): void
 }
 
-const HomeworkCard = React.memo(({ homework }: HomeworkCardProps) => {
+const HomeworkCard = React.memo(({ homework, onEdit, onDelete }: HomeworkCardProps) => {
   const [expanded, setExpanded] = React.useState(false)
   const handleExpandClick = () => {
     setExpanded(!expanded)
@@ -69,7 +76,10 @@ const HomeworkCard = React.memo(({ homework }: HomeworkCardProps) => {
         />
         <Collapse in={expanded} timeout="auto" collapsedSize={100}>
           <CardContent sx={{ paddingTop: 0 }}>
-            <div dangerouslySetInnerHTML={{ __html: homework.content ?? '' }} />
+            <div
+              className="ql-editor"
+              dangerouslySetInnerHTML={{ __html: homework.content ?? '' }}
+            />
           </CardContent>
         </Collapse>
         {needsExpansion && (
@@ -118,23 +128,25 @@ const HomeworkCard = React.memo(({ homework }: HomeworkCardProps) => {
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}>
-        <MenuItem onClick={handleClose}>
+        <MenuItem
+          onClick={() => {
+            handleClose()
+            onEdit?.()
+          }}>
           <ListItemIcon>
             <EditIcon fontSize="small" />
           </ListItemIcon>
           Edit
         </MenuItem>
-        <MenuItem onClick={handleClose}>
+        <MenuItem
+          onClick={() => {
+            handleClose()
+            onDelete?.()
+          }}>
           <ListItemIcon>
             <DeleteForeverIcon fontSize="small" />
           </ListItemIcon>
-          Delete
-        </MenuItem>
-        <MenuItem onClick={handleClose}>
-          <ListItemIcon>
-            <VisibilityOffIcon fontSize="small" />
-          </ListItemIcon>
-          Turn to draft
+          Trash
         </MenuItem>
       </Menu>
     </>
@@ -146,23 +158,22 @@ export interface HomeworkProps {}
 export default function Homework({}: HomeworkProps) {
   const theme = useTheme()
   const { teacherId, studentId } = useParams()
-  const [homework, setHomework] = useState<HomeworkInfo[]>([])
+  const homework = useRef<Map<string, HomeworkInfo>>(new Map())
+  const [homeworkChanged, setHomeworkChanged] = useState<number>(0)
   const { user, dispatch } = useUser()
   const navigate = useNavigate()
 
   const homeworkUnsubscriberRef = useRef<Unsubscribe>()
-  const homeworkDraft = useRef<HomeworkInfo>(generateHomeworkTemplate())
   const [sectionRefs, setSectionRefs] = useState<Map<string, React.RefObject<HTMLDivElement>>>(
     new Map()
   )
+  const homeworkDraftsToSave = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     if (user.loading) {
       return
     }
-    if (homeworkUnsubscriberRef.current) {
-      homeworkUnsubscriberRef.current()
-    }
+    homeworkUnsubscriberRef.current?.()
     if (!user.uid) {
       navigate('/login')
       return
@@ -171,63 +182,156 @@ export default function Homework({}: HomeworkProps) {
     homeworkUnsubscriberRef.current = onValue(
       ref(database, `homework/teachers/${teacherId}/students/${studentId}`),
       (snapshot) => {
-        const homeworkById = snapshot.val()
-        if (homeworkById) {
-          const homeworkItems: HomeworkInfo[] = []
-          const newSectionRefs = new Map()
-          for (const homeworkId in homeworkById) {
-            const item = homeworkById[homeworkId]
-            item.id = homeworkId
-            homeworkItems.push(item)
-            if (!sectionRefs.has(homeworkId)) {
-              // sectionRefs.set(homeworkId, React.createRef())
-              newSectionRefs.set(homeworkId, React.createRef())
+        const dbHomework = snapshot.val()
+        if (dbHomework) {
+          // const hwMap: Map<string, HomeworkInfo> = new Map()
+          const hwMap = homework.current
+
+          const updatedSectionRefs = new Map()
+          for (const id in dbHomework) {
+            const hw = dbHomework[id]
+            hw.id = id
+            if (hw.deletedAt) {
+              continue
+            }
+
+            const localHw = hwMap.get(id)
+            if (!localHw) {
+              hwMap.set(id, hw)
             } else {
-              newSectionRefs.set(homeworkId, sectionRefs.get(homeworkId))
+              if (
+                !localHw.updatedAt ||
+                (hw.updatedAt &&
+                  new Date(localHw.updatedAt).getTime() < new Date(hw.updatedAt).getTime())
+              ) {
+                localHw.content = hw.content
+                localHw.editContent = hw.editContent
+                localHw.status = hw.status
+                localHw.updatedAt = hw.updatedAt
+                localHw.deletedAt = hw.deletedAt
+                localHw.title = hw.title
+              }
+            }
+
+            if (!sectionRefs.has(id)) {
+              updatedSectionRefs.set(id, React.createRef())
+            } else {
+              updatedSectionRefs.set(id, sectionRefs.get(id))
             }
           }
-          // sort descending
-          homeworkItems.sort(
-            (h1, h2) =>
-              new Date(h2.createdAt ?? 0).getTime() - new Date(h1.createdAt ?? 0).getTime()
-          )
-          setHomework(homeworkItems)
-          setSectionRefs(newSectionRefs)
-          // React.createRef()
+          setHomeworkChanged(homeworkChanged + 1)
+          setSectionRefs(updatedSectionRefs)
         } else {
-          setHomework([])
+          console.log('no homework found on the database. clearing map')
+          homework.current = new Map()
+          setHomeworkChanged(homeworkChanged + 1)
         }
       },
       (error) => {
         console.error(
-          `Could not retrieve homework for teacher ${teacherId} and student ${studentId}: ${error}`
+          `Clearing map: could not retrieve homework for teacher ${teacherId} and student ${studentId}: ${error}`
         )
-        setHomework([])
+        setHomeworkChanged(homeworkChanged + 1)
       }
     )
+
+    const saveAtInterval = setInterval(() => {
+      const draftsToSave = homeworkDraftsToSave.current
+      homeworkDraftsToSave.current = new Set()
+
+      for (const id of draftsToSave) {
+        const hw = homework.current.get(id)
+        if (hw && hw.status !== HomeworkStatus.PUBLISHED && draftsToSave.has(hw.id)) {
+          void saveHomeworkDraft(hw)
+        }
+      }
+    }, 3000)
+
+    return () => {
+      clearInterval(saveAtInterval)
+      homeworkUnsubscriberRef.current?.()
+    }
   }, [user, teacherId, studentId])
 
-  const saveHomework = async () => {
-    console.log(`saving homework ${JSON.stringify(homeworkDraft.current)}...`)
-    const hw = homeworkDraft.current
+  const saveHomeworkDraft = async (hw: HomeworkInfo) => {
+    hw.updatedAt = new Date().toISOString()
+    await set(
+      ref(database, `homework/teachers/${teacherId}/students/${studentId}/${hw.id}`),
+      removeUndefinedKeys(hw)
+    )
+  }
+
+  function convertToPlain(str: string) {
+    // Create a new div element
+    const tempDivElement = document.createElement('div')
+
+    // Set the HTML content with the given value
+    tempDivElement.innerHTML = str
+
+    // Retrieve the text property of the element
+    return tempDivElement.textContent ?? tempDivElement.innerText ?? ''
+  }
+
+  const publishHomework = async (hw: HomeworkInfo) => {
     const content = hw.editContent ?? ''
     hw.updatedAt = new Date().toISOString()
     hw.content = content
-
+    hw.editContent = ''
     const titleRegex = /^<h1>(.*?)<\/h1>/
     const titleMatch = content.match(titleRegex)
     if (titleMatch) {
-      hw.title = titleMatch[1]
+      hw.title = convertToPlain(titleMatch[1])
       hw.content = content.replace(titleRegex, '')
     } else {
       hw.title = 'Untitled'
     }
 
     hw.status = HomeworkStatus.PUBLISHED
-
-    await set(ref(database, `homework/teachers/${teacherId}/students/${studentId}/${hw.id}`), hw)
-    console.log('done')
+    await set(
+      ref(database, `homework/teachers/${teacherId}/students/${studentId}/${hw.id}`),
+      removeUndefinedKeys(hw)
+    )
   }
+
+  const createNewHomework = async () => {
+    const hw = generateHomeworkTemplate()
+    homework.current.set(hw.id, hw)
+    setHomeworkChanged(homeworkChanged + 1)
+    await saveHomeworkDraft(hw)
+  }
+
+  const deleteHomework = async (hw: HomeworkInfo) => {
+    hw.updatedAt = new Date().toISOString()
+    hw.deletedAt = new Date().toISOString()
+    homework.current.delete(hw.id)
+    setHomeworkChanged(homeworkChanged + 1)
+    await set(
+      ref(database, `deleted/homework/teachers/${teacherId}/students/${studentId}/${hw.id}`),
+      removeUndefinedKeys(hw)
+    )
+    await remove(ref(database, `homework/teachers/${teacherId}/students/${studentId}/${hw.id}`))
+  }
+
+  const turnToDraft = async (hw: HomeworkInfo) => {
+    hw.updatedAt = new Date().toISOString()
+    const content = hw.content ?? ''
+    const title = `<h1>${hw.title ?? ''}</h1>`
+    hw.editContent = title + content
+    hw.content = ''
+    hw.title = ''
+    hw.status = HomeworkStatus.EDITING
+    setHomeworkChanged(homeworkChanged + 1)
+    await set(
+      ref(database, `homework/teachers/${teacherId}/students/${studentId}/${hw.id}`),
+      removeUndefinedKeys(hw)
+    )
+  }
+
+  // sort descending
+  const hwList = Array.from(homework.current.values())
+  hwList.sort(
+    (h1, h2) => new Date(h2.createdAt ?? 0).getTime() - new Date(h1.createdAt ?? 0).getTime()
+  )
 
   const toc = (
     <Box sx={{ position: 'relative' }}>
@@ -244,15 +348,14 @@ export default function Homework({}: HomeworkProps) {
         <Typography variant="overline" sx={{ pl: 2 }}>
           <b>Contents</b>
         </Typography>
-        {homework.map((h: HomeworkInfo, i) => (
+        {hwList.map((hw: HomeworkInfo, i) => (
           <ListItemButton
-            key={`item-${h.id}`}
-            sx={{ py: 0, minHeight: 32, color: 'rgba(255,255,255,.8)' }}
-            onClick={() => scrollToElement(sectionRefs.get(h?.id ?? '')?.current, 64)}
-            data-cy={`nav-item`}>
+            key={`item-${hw.id}`}
+            sx={{ py: 0, minHeight: 32 }}
+            onClick={() => scrollToElement(sectionRefs.get(hw?.id ?? '')?.current, 64)}>
             <ListItemText
-              primary={h.title}
-              secondary={dateStringToPrettyDate(h.createdAt)}
+              primary={hw.title}
+              secondary={dateStringToPrettyDate(hw.createdAt)}
               primaryTypographyProps={{ fontWeight: 'medium' }}
             />
           </ListItemButton>
@@ -262,46 +365,69 @@ export default function Homework({}: HomeworkProps) {
   )
 
   return (
-    <Container maxWidth="md" sx={{ pt: 3 }}>
-      <Toolbar />
-      <Grid2 container spacing={2}>
-        <Grid2 xs={12} display={{ xs: 'block', sm: 'none' }}>
-          {toc}
-        </Grid2>
-        <Grid2 xs={12} sm={9} md={10}>
-          <Grid2 xs={12}>
-            <EditorCard
-              value={homeworkDraft.current.editContent}
-              onValueChange={(v) => {
-                console.log(v)
-                homeworkDraft.current.editContent = v
-              }}
-              onSave={() => {
-                void saveHomework()
-              }}
-            />
+    <>
+      <Container maxWidth="md" sx={{ pt: 3 }}>
+        <Toolbar />
+        <Grid2 container spacing={2}>
+          <Grid2 xs={12} display={{ xs: 'block', sm: 'none' }}>
+            {toc}
           </Grid2>
-          {homework.map((h: HomeworkInfo, i) => (
-            <Grid2
-              xs={12}
-              key={`hw-${i}`}
-              id={`section-${i}`}
-              data-cy={`section-item`}
-              ref={sectionRefs.get(h?.id ?? '')}>
-              <HomeworkCard homework={h} key={`hw-${i}`} />
-            </Grid2>
-          ))}
+          <Grid2 xs={12} sm={9} md={10}>
+            {hwList.map((hw: HomeworkInfo, i) => (
+              <Grid2
+                xs={12}
+                key={`hw-${hw.id}-${hw.createdAt}`}
+                id={`section-${i}`}
+                data-cy={`section-item`}
+                ref={sectionRefs.get(hw?.id ?? '')}>
+                {hw.status === HomeworkStatus.PUBLISHED && (
+                  <HomeworkCard
+                    homework={hw}
+                    onDelete={() => {
+                      void deleteHomework(hw)
+                    }}
+                    onEdit={() => {
+                      void turnToDraft(hw)
+                    }}
+                  />
+                )}
+                {hw.status !== HomeworkStatus.PUBLISHED && (
+                  <EditorCard
+                    value={hw.editContent}
+                    onValueChange={(v) => {
+                      hw.editContent = v
+                      homeworkDraftsToSave.current.add(hw.id)
+                    }}
+                    onPublish={() => {
+                      void publishHomework(hw)
+                    }}
+                    onSave={() => {
+                      void saveHomeworkDraft(hw)
+                    }}
+                    onDiscard={() => {
+                      void deleteHomework(hw)
+                    }}
+                  />
+                )}
+              </Grid2>
+            ))}
+          </Grid2>
+          <Grid2
+            xs={12}
+            sm={3}
+            md={2}
+            rowSpacing={0}
+            sx={{ padding: 0 }}
+            display={{ xs: 'none', sm: 'block' }}>
+            {toc}
+          </Grid2>
         </Grid2>
-        <Grid2
-          xs={12}
-          sm={3}
-          md={2}
-          rowSpacing={0}
-          sx={{ padding: 0 }}
-          display={{ xs: 'none', sm: 'block' }}>
-          {toc}
-        </Grid2>
-      </Grid2>
-    </Container>
+      </Container>
+      <FabCreate
+        onClick={() => {
+          void createNewHomework()
+        }}
+      />
+    </>
   )
 }

@@ -1,14 +1,10 @@
-import { Card, CardActions, CardProps, IconButton, useTheme } from '@mui/material'
+import { Button, Card, CardActions, CardProps, useTheme } from '@mui/material'
 import { DeltaStatic, Sources } from 'quill'
 import ReactQuill, { UnprivilegedEditor } from 'react-quill'
-import FavoriteIcon from '@mui/icons-material/Favorite'
-import ShareIcon from '@mui/icons-material/Share'
-import SaveIcon from '@mui/icons-material/Save'
-import Grid2 from '@mui/material/Unstable_Grid2/Grid2'
 
 const EDITOR_MODULES = {
   toolbar: [
-    [{ header: [1, 2, 3, 4, 5, 6] }, { font: [] as string[] }],
+    [{ header: [false, 1, 2, 3, 4] }, { font: [] as string[] }],
     ['bold', 'italic', 'underline', 'strike', 'blockquote'],
     [{ color: [] as string[] }, { background: [] as string[] }],
     [{ align: [false, 'center', 'right', 'justify'] }],
@@ -26,16 +22,25 @@ interface EditorCardProps extends CardProps {
     source: Sources,
     editor: UnprivilegedEditor
   ): void
+  onPublish?(): void
+  onDiscard?(): void
   onSave?(): void
 }
 
-export default function EditorCard({ value, onValueChange, onSave, ...props }: EditorCardProps) {
-  const theme = useTheme()
+export default function EditorCard({
+  value,
+  onValueChange,
+  onPublish,
+  onSave,
+  onDiscard,
+  ...props
+}: EditorCardProps) {
   return (
     <Card
       sx={{
         overflow: 'visible' // allow tooltips to span over the card
-      }}>
+      }}
+      {...props}>
       <ReactQuill
         theme="snow"
         value={value}
@@ -50,15 +55,16 @@ export default function EditorCard({ value, onValueChange, onSave, ...props }: E
         }}
       />
 
-      <CardActions disableSpacing sx={{ justifyContent: 'flex-end' }}>
-        <IconButton
-          aria-label="publish homework draft"
-          onClick={(e) => {
-            e.preventDefault()
-            onSave?.()
-          }}>
-          <SaveIcon />
-        </IconButton>
+      <CardActions sx={{ justifyContent: 'flex-end' }}>
+        <Button size="small" onClick={() => onDiscard?.()}>
+          Trash
+        </Button>
+        <Button size="small" onClick={() => onSave?.()}>
+          Save draft
+        </Button>
+        <Button size="small" onClick={() => onPublish?.()}>
+          Publish
+        </Button>
       </CardActions>
     </Card>
   )
