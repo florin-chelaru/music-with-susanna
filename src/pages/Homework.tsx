@@ -4,12 +4,18 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import {
   Box,
+  Button,
   Card,
   CardActions,
   CardContent,
   CardHeader,
   Collapse,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   IconButton,
   ListItemButton,
   ListItemIcon,
@@ -42,116 +48,119 @@ interface HomeworkCardProps {
   homework: HomeworkInfo
   onEdit?(): void
   onDelete?(): void
+  defaultExpanded?: boolean
 }
 
-const HomeworkCard = React.memo(({ homework, onEdit, onDelete }: HomeworkCardProps) => {
-  const [expanded, setExpanded] = React.useState(false)
-  const handleExpandClick = () => {
-    setExpanded(!expanded)
-  }
-  const maxTextLength = 150
-  const needsExpansion = (homework.content?.length ?? 0) > maxTextLength
+const HomeworkCard = React.memo(
+  ({ homework, onEdit, onDelete, defaultExpanded = false }: HomeworkCardProps) => {
+    const [expanded, setExpanded] = React.useState(defaultExpanded)
+    const handleExpandClick = () => {
+      setExpanded(!expanded)
+    }
+    const maxTextLength = 150
+    const needsExpansion = (homework.content?.length ?? 0) > maxTextLength
 
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
-  const open = Boolean(anchorEl)
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget)
-  }
-  const handleClose = () => {
-    setAnchorEl(null)
-  }
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
+    const open = Boolean(anchorEl)
+    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+      setAnchorEl(event.currentTarget)
+    }
+    const handleClose = () => {
+      setAnchorEl(null)
+    }
 
-  return (
-    <>
-      <Card>
-        <CardHeader
-          title={homework.title}
-          subheader={dateStringToPrettyDate(homework.createdAt)}
-          action={
-            <IconButton aria-label="settings" onClick={handleClick}>
-              <MoreVertIcon />
-            </IconButton>
-          }
-          sx={{ pb: 0 }}
-        />
-        <Collapse in={expanded} timeout="auto" collapsedSize={100}>
-          <CardContent sx={{ paddingTop: 0 }}>
-            <div
-              className="ql-editor"
-              dangerouslySetInnerHTML={{ __html: homework.content ?? '' }}
-            />
-          </CardContent>
-        </Collapse>
-        {needsExpansion && (
-          <CardActions disableSpacing>
-            <ExpandMoreButton
-              expand={expanded}
-              onClick={handleExpandClick}
-              aria-expanded={expanded}
-              aria-label="show more">
-              <ExpandMoreIcon />
-            </ExpandMoreButton>
-          </CardActions>
-        )}
-      </Card>
-      <Menu
-        anchorEl={anchorEl}
-        id="account-menu"
-        open={open}
-        onClose={handleClose}
-        onClick={handleClose}
-        PaperProps={{
-          elevation: 0,
-          sx: {
-            overflow: 'visible',
-            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-            mt: 1.5,
-            '& .MuiAvatar-root': {
-              width: 32,
-              height: 32,
-              ml: -0.5,
-              mr: 1
-            },
-            '&:before': {
-              content: '""',
-              display: 'block',
-              position: 'absolute',
-              top: 0,
-              right: 14,
-              width: 10,
-              height: 10,
-              bgcolor: 'background.paper',
-              transform: 'translateY(-50%) rotate(45deg)',
-              zIndex: 0
+    return (
+      <>
+        <Card>
+          <CardHeader
+            title={homework.title}
+            subheader={dateStringToPrettyDate(homework.createdAt)}
+            action={
+              <IconButton aria-label="settings" onClick={handleClick}>
+                <MoreVertIcon />
+              </IconButton>
             }
-          }
-        }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}>
-        <MenuItem
-          onClick={() => {
-            handleClose()
-            onEdit?.()
-          }}>
-          <ListItemIcon>
-            <EditIcon fontSize="small" />
-          </ListItemIcon>
-          Edit
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleClose()
-            onDelete?.()
-          }}>
-          <ListItemIcon>
-            <DeleteForeverIcon fontSize="small" />
-          </ListItemIcon>
-          Trash
-        </MenuItem>
-      </Menu>
-    </>
-  )
-})
+            sx={{ pb: 0 }}
+          />
+          <Collapse in={expanded} timeout="auto" collapsedSize={100}>
+            <CardContent sx={{ paddingTop: 0 }}>
+              <div
+                className="ql-editor"
+                dangerouslySetInnerHTML={{ __html: homework.content ?? '' }}
+              />
+            </CardContent>
+          </Collapse>
+          {needsExpansion && (
+            <CardActions disableSpacing>
+              <ExpandMoreButton
+                expand={expanded}
+                onClick={handleExpandClick}
+                aria-expanded={expanded}
+                aria-label="show more">
+                <ExpandMoreIcon />
+              </ExpandMoreButton>
+            </CardActions>
+          )}
+        </Card>
+        <Menu
+          anchorEl={anchorEl}
+          id="account-menu"
+          open={open}
+          onClose={handleClose}
+          onClick={handleClose}
+          PaperProps={{
+            elevation: 0,
+            sx: {
+              overflow: 'visible',
+              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+              mt: 1.5,
+              '& .MuiAvatar-root': {
+                width: 32,
+                height: 32,
+                ml: -0.5,
+                mr: 1
+              },
+              '&:before': {
+                content: '""',
+                display: 'block',
+                position: 'absolute',
+                top: 0,
+                right: 14,
+                width: 10,
+                height: 10,
+                bgcolor: 'background.paper',
+                transform: 'translateY(-50%) rotate(45deg)',
+                zIndex: 0
+              }
+            }
+          }}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}>
+          <MenuItem
+            onClick={() => {
+              handleClose()
+              onEdit?.()
+            }}>
+            <ListItemIcon>
+              <EditIcon fontSize="small" />
+            </ListItemIcon>
+            Edit
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleClose()
+              onDelete?.()
+            }}>
+            <ListItemIcon>
+              <DeleteForeverIcon fontSize="small" />
+            </ListItemIcon>
+            Trash
+          </MenuItem>
+        </Menu>
+      </>
+    )
+  }
+)
 
 export interface HomeworkProps {}
 
@@ -162,6 +171,12 @@ export default function Homework({}: HomeworkProps) {
   const [homeworkChanged, setHomeworkChanged] = useState<number>(0)
   const { user, dispatch } = useUser()
   const navigate = useNavigate()
+  const [openDialog, setOpenDialog] = useState<boolean>(false)
+  const [dialogTitle, setDialogTitle] = useState<string>('')
+  const [dialogContent, setDialogContent] = useState<string>('')
+  const [dialogYesButtonText, setDialogYesButtonText] = useState<string>('Yes')
+  const [dialogNoButtonText, setDialogNoButtonText] = useState<string>('No')
+  const dialogYesActionRef = useRef<() => void>(() => {})
 
   const homeworkUnsubscriberRef = useRef<Unsubscribe>()
   const [sectionRefs, setSectionRefs] = useState<Map<string, React.RefObject<HTMLDivElement>>>(
@@ -364,6 +379,30 @@ export default function Homework({}: HomeworkProps) {
     </Box>
   )
 
+  const dialog = (
+    <Dialog
+      open={openDialog}
+      onClose={() => setOpenDialog(false)}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description">
+      <DialogTitle id="alert-dialog-title">{dialogTitle}</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">{dialogContent}</DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setOpenDialog(false)}>{dialogNoButtonText}</Button>
+        <Button
+          onClick={() => {
+            setOpenDialog(false)
+            dialogYesActionRef.current()
+          }}
+          autoFocus>
+          {dialogYesButtonText}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+
   return (
     <>
       <Container maxWidth="md" sx={{ pt: 3 }}>
@@ -385,11 +424,17 @@ export default function Homework({}: HomeworkProps) {
                       <HomeworkCard
                         homework={hw}
                         onDelete={() => {
-                          void deleteHomework(hw)
+                          setDialogTitle('Are you sure?')
+                          setDialogContent('Are you sure you want to delete the homework?')
+                          dialogYesActionRef.current = () => {
+                            void deleteHomework(hw)
+                          }
+                          setOpenDialog(true)
                         }}
                         onEdit={() => {
                           void turnToDraft(hw)
                         }}
+                        defaultExpanded={!i}
                       />
                     )}
                     {hw.status !== HomeworkStatus.PUBLISHED && (
@@ -406,7 +451,12 @@ export default function Homework({}: HomeworkProps) {
                           void saveHomeworkDraft(hw)
                         }}
                         onDiscard={() => {
-                          void deleteHomework(hw)
+                          setDialogTitle('Are you sure?')
+                          setDialogContent('Are you sure you want to delete the homework?')
+                          dialogYesActionRef.current = () => {
+                            void deleteHomework(hw)
+                          }
+                          setOpenDialog(true)
                         }}
                       />
                     )}
@@ -431,6 +481,7 @@ export default function Homework({}: HomeworkProps) {
           void createNewHomework()
         }}
       />
+      {dialog}
     </>
   )
 }
