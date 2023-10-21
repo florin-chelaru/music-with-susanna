@@ -2,7 +2,6 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever'
 import EditIcon from '@mui/icons-material/Edit'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import {
   Box,
   Card,
@@ -22,11 +21,13 @@ import {
   useTheme
 } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import { Unsubscribe, onValue, ref, set, remove } from 'firebase/database'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { Unsubscribe, onValue, ref, remove, set } from 'firebase/database'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { TransitionGroup } from 'react-transition-group'
 import EditorCard from '../Components/EditorCard'
 import ExpandMoreButton from '../Components/ExpandMoreButton'
+import FabCreate from '../Components/FabCreate'
 import { database } from '../store/Firebase'
 import { useUser } from '../store/UserProvider'
 import HomeworkInfo, {
@@ -36,7 +37,6 @@ import HomeworkInfo, {
 } from '../util/HomeworkInfo'
 import { dateStringToPrettyDate } from '../util/date'
 import { scrollToElement } from '../util/window'
-import FabCreate from '../Components/FabCreate'
 
 interface HomeworkCardProps {
   homework: HomeworkInfo
@@ -373,44 +373,47 @@ export default function Homework({}: HomeworkProps) {
             {toc}
           </Grid2>
           <Grid2 xs={12} sm={9} md={10}>
-            {hwList.map((hw: HomeworkInfo, i) => (
-              <Grid2
-                xs={12}
-                key={`hw-${hw.id}-${hw.createdAt}`}
-                id={`section-${i}`}
-                data-cy={`section-item`}
-                ref={sectionRefs.get(hw?.id ?? '')}>
-                {hw.status === HomeworkStatus.PUBLISHED && (
-                  <HomeworkCard
-                    homework={hw}
-                    onDelete={() => {
-                      void deleteHomework(hw)
-                    }}
-                    onEdit={() => {
-                      void turnToDraft(hw)
-                    }}
-                  />
-                )}
-                {hw.status !== HomeworkStatus.PUBLISHED && (
-                  <EditorCard
-                    value={hw.editContent}
-                    onValueChange={(v) => {
-                      hw.editContent = v
-                      homeworkDraftsToSave.current.add(hw.id)
-                    }}
-                    onPublish={() => {
-                      void publishHomework(hw)
-                    }}
-                    onSave={() => {
-                      void saveHomeworkDraft(hw)
-                    }}
-                    onDiscard={() => {
-                      void deleteHomework(hw)
-                    }}
-                  />
-                )}
-              </Grid2>
-            ))}
+            <TransitionGroup>
+              {hwList.map((hw: HomeworkInfo, i) => (
+                <Collapse key={`hw-${hw.id}-${hw.createdAt}`}>
+                  <Grid2
+                    xs={12}
+                    id={`section-${i}`}
+                    data-cy={`section-item`}
+                    ref={sectionRefs.get(hw?.id ?? '')}>
+                    {hw.status === HomeworkStatus.PUBLISHED && (
+                      <HomeworkCard
+                        homework={hw}
+                        onDelete={() => {
+                          void deleteHomework(hw)
+                        }}
+                        onEdit={() => {
+                          void turnToDraft(hw)
+                        }}
+                      />
+                    )}
+                    {hw.status !== HomeworkStatus.PUBLISHED && (
+                      <EditorCard
+                        value={hw.editContent}
+                        onValueChange={(v) => {
+                          hw.editContent = v
+                          homeworkDraftsToSave.current.add(hw.id)
+                        }}
+                        onPublish={() => {
+                          void publishHomework(hw)
+                        }}
+                        onSave={() => {
+                          void saveHomeworkDraft(hw)
+                        }}
+                        onDiscard={() => {
+                          void deleteHomework(hw)
+                        }}
+                      />
+                    )}
+                  </Grid2>
+                </Collapse>
+              ))}
+            </TransitionGroup>
           </Grid2>
           <Grid2
             xs={12}
