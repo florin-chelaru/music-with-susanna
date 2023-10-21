@@ -83,7 +83,7 @@ const HomeworkCard = React.memo(
             sx={{ pb: 0 }}
           />
           <Collapse in={expanded} timeout="auto" collapsedSize={100}>
-            <CardContent sx={{ paddingTop: 0 }}>
+            <CardContent sx={{ paddingTop: 0 }} className="ql-snow">
               <div
                 className="ql-editor"
                 dangerouslySetInnerHTML={{ __html: homework.content ?? '' }}
