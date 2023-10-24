@@ -34,6 +34,7 @@
     "@typescript-eslint/no-empty-interface": "off",
     "no-empty-pattern": "off",
     "react/jsx-uses-react": "off",
-    "react/react-in-jsx-scope": "off"
+    "react/react-in-jsx-scope": "off",
+    "@typescript-eslint/promise-function-async": "off"
   }
 }

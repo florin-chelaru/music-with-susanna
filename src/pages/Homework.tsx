@@ -253,7 +253,6 @@ export default function Homework({}: HomeworkProps) {
     const saveAtInterval = setInterval(() => {
       const draftsToSave = homeworkDraftsToSave.current
       homeworkDraftsToSave.current = new Set()
-
       for (const id of draftsToSave) {
         const hw = homework.current.get(id)
         if (hw && hw.status !== HomeworkStatus.PUBLISHED && draftsToSave.has(hw.id)) {
@@ -405,7 +404,7 @@ export default function Homework({}: HomeworkProps) {
 
   return (
     <>
-      <Container maxWidth="md" sx={{ pt: 3 }}>
+      <Container maxWidth="lg" sx={{ pt: 3 }}>
         <Toolbar />
         <Grid2 container spacing={2}>
           <Grid2 xs={12} display={{ xs: 'block', sm: 'none' }}>
@@ -443,6 +442,7 @@ export default function Homework({}: HomeworkProps) {
                         onValueChange={(v) => {
                           hw.editContent = v
                           homeworkDraftsToSave.current.add(hw.id)
+                          setHomeworkChanged(homeworkChanged + 1)
                         }}
                         onPublish={() => {
                           void publishHomework(hw)
