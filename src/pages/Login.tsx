@@ -126,17 +126,13 @@ export default function Login({}: LoginProps) {
 
   useEffect(() => {
     if (user.loading) {
-      console.log('user loading')
       return
     }
     if (user.uid) {
-      console.log('user logged in')
       if (user.role === UserRole.TEACHER) {
-        console.log('user is teacher, redirecting to /students')
         navigate('/students')
         scrollToTop()
       } else {
-        console.log(`user is not teacher: ${JSON.stringify(user)}; redirecting to /homework`)
         navigate(`/homework/-/${user.uid}`)
         scrollToTop()
       }

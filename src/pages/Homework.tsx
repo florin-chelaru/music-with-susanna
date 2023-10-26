@@ -1,7 +1,7 @@
 import { Collapse, Container, DialogContent, DialogContentText, Toolbar } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import { DataSnapshot, Unsubscribe, get, onValue, ref, remove, set } from 'firebase/database'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { TransitionGroup } from 'react-transition-group'
 import EditorCard from '../Components/EditorCard'
@@ -10,21 +10,58 @@ import HomeworkCard from '../Components/HomeworkCard'
 import MultiActionDialog from '../Components/MultiActionDialog'
 import TableOfContents, { TocEntry } from '../TableOfContents'
 import { database } from '../store/Firebase'
+import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { useUser } from '../store/UserProvider'
 import HomeworkInfo, {
   HomeworkStatus,
   generateHomeworkTemplate,
   removeUndefinedKeys
 } from '../util/HomeworkInfo'
+import { SupportedLocale } from '../util/SupportedLocale'
+import { UserRole } from '../util/User'
 import { dateStringToPrettyDate } from '../util/date'
 import { convertHtmlStringToPlain } from '../util/string'
-import { UserRole } from '../util/User'
 import { scrollToTop } from '../util/window'
-import { result } from 'lodash'
+
+interface HomeworkTexts {
+  homeworkTemplateTitle: string
+  homeworkTemplateBody: string
+  areYouSure: string
+  areYouSureDescription: string
+  yes: string
+  no: string
+}
+
+const EN_US: HomeworkTexts = {
+  homeworkTemplateTitle: 'Title',
+  homeworkTemplateBody: 'Write your notes here...',
+  areYouSure: 'Are you sure?',
+  areYouSureDescription: 'Are you sure you want to delete the homework?',
+  yes: 'Yes',
+  no: 'No'
+}
+
+const RO_RO: HomeworkTexts = {
+  homeworkTemplateTitle: 'Titlu',
+  homeworkTemplateBody: 'Introdu aici notițele...',
+  areYouSure: 'Sigur?',
+  areYouSureDescription: 'Sigur vrei să ștergi tema?',
+  yes: 'Da',
+  no: 'Nu'
+}
+
+const TEXTS = new Map<SupportedLocale, LocalizedData>([
+  [SupportedLocale.EN_US, EN_US],
+  [SupportedLocale.RO_RO, RO_RO]
+])
 
 export interface HomeworkProps {}
 
 export default function Homework({}: HomeworkProps) {
+  const localeManager = useContext<LocaleHandler>(LocaleContext)
+  useMemo(() => localeManager.registerComponentStrings(Homework.name, TEXTS), [])
+  const componentStrings = localeManager.componentStrings(Homework.name) as HomeworkTexts
+
   const { teacherId, studentId } = useParams()
   const { user } = useUser()
   const homework = useRef<Map<string, HomeworkInfo>>(new Map())
@@ -53,12 +90,15 @@ export default function Homework({}: HomeworkProps) {
 
   const createNewHomework = useMemo(
     () => async () => {
-      const hw = generateHomeworkTemplate()
+      const hw = generateHomeworkTemplate(
+        componentStrings.homeworkTemplateTitle,
+        componentStrings.homeworkTemplateBody
+      )
       homework.current.set(hw.id, hw)
       setHomeworkChanged(++homeworkChangedRef.current)
       await saveHomeworkDraft(hw)
     },
-    []
+    [componentStrings]
   )
 
   const deleteHomework = useMemo(
@@ -296,7 +336,11 @@ export default function Homework({}: HomeworkProps) {
           key: `entry-${hw.id}`,
           ref: sectionRefs.current.get(hw.id) as React.RefObject<HTMLDivElement | null>,
           primaryLabel: hw.title,
-          secondaryLabel: dateStringToPrettyDate(hw.createdAt)
+          secondaryLabel: localeManager.formatLongDate(hw.createdAt, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })
         }
       })}
     />
@@ -387,11 +431,11 @@ export default function Homework({}: HomeworkProps) {
         open={openDialog}
         onClose={() => setOpenDialog(false)}
         aria-describedby="alert-dialog-description"
-        title="Are you sure?"
+        title={componentStrings.areYouSure}
         actions={[
-          { label: 'No', onClick: () => setOpenDialog(false) },
+          { label: componentStrings.no, onClick: () => setOpenDialog(false) },
           {
-            label: 'Yes',
+            label: componentStrings.yes,
             onClick: () => {
               setOpenDialog(false)
               dialogYesActionRef.current?.()
@@ -400,7 +444,7 @@ export default function Homework({}: HomeworkProps) {
         ]}>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Are you sure you want to delete the homework?
+            {componentStrings.areYouSureDescription}
           </DialogContentText>
         </DialogContent>
       </MultiActionDialog>

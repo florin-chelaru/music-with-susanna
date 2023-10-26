@@ -21,7 +21,7 @@ export default function UserPopover({}: UserPopoverProps) {
   const anchorRef = useRef(null)
   const [open, setOpen] = useState(false)
 
-  const localeManager = useContext<LocaleHandler>(LocaleContext)
+  const strings = useContext<LocaleHandler>(LocaleContext).globalStringList
 
   const handleOpen = () => {
     setOpen(true)
@@ -81,7 +81,7 @@ export default function UserPopover({}: UserPopoverProps) {
               <ListItemIcon>
                 <LoginIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText>Login</ListItemText>
+              <ListItemText>{strings.login}</ListItemText>
             </MenuItem>
           )}
           {!!user.uid && (
@@ -96,7 +96,7 @@ export default function UserPopover({}: UserPopoverProps) {
                   <ListItemIcon>
                     <PersonIcon fontSize="small" />
                   </ListItemIcon>
-                  <ListItemText>Students</ListItemText>
+                  <ListItemText>{strings.students}</ListItemText>
                 </MenuItem>
               )}
               <MenuItem
@@ -107,7 +107,7 @@ export default function UserPopover({}: UserPopoverProps) {
                 <ListItemIcon>
                   <LogoutIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>Logout</ListItemText>
+                <ListItemText>{strings.logout}</ListItemText>
               </MenuItem>
             </>
           )}

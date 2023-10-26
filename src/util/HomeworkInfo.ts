@@ -24,10 +24,10 @@ export function removeUndefinedKeys(hw: HomeworkInfo): HomeworkInfo {
   return hw
 }
 
-export function generateHomeworkTemplate(): HomeworkInfo {
+export function generateHomeworkTemplate(title: string, body: string): HomeworkInfo {
   return {
     id: uuidv4(),
-    editContent: '<h1>Title</h1><p>Write your notes here...</p>',
+    editContent: `<h1>${title}</h1><p>${body}</p>`,
     createdAt: new Date().toISOString(),
     status: HomeworkStatus.EDITING
   }

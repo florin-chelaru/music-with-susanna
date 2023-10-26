@@ -13,10 +13,31 @@ import {
   Menu,
   MenuItem
 } from '@mui/material'
-import React from 'react'
+import React, { useContext, useMemo } from 'react'
 import ExpandMoreButton from '../Components/ExpandMoreButton'
+import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import HomeworkInfo from '../util/HomeworkInfo'
-import { dateStringToPrettyDate } from '../util/date'
+import { SupportedLocale } from '../util/SupportedLocale'
+
+interface HomeworkCardTexts {
+  edit: string
+  trash: string
+}
+
+const EN_US: HomeworkCardTexts = {
+  edit: 'Edit',
+  trash: 'Trash'
+}
+
+const RO_RO: HomeworkCardTexts = {
+  edit: 'Editează',
+  trash: 'La gunoi'
+}
+
+const TEXTS = new Map<SupportedLocale, LocalizedData>([
+  [SupportedLocale.EN_US, EN_US],
+  [SupportedLocale.RO_RO, RO_RO]
+])
 
 interface HomeworkCardProps {
   homework: HomeworkInfo
@@ -28,6 +49,10 @@ interface HomeworkCardProps {
 
 const HomeworkCard = React.memo(
   ({ homework, onEdit, onDelete, defaultExpanded = false, readonly }: HomeworkCardProps) => {
+    const localeManager = useContext<LocaleHandler>(LocaleContext)
+    useMemo(() => localeManager.registerComponentStrings(HomeworkCard.name, TEXTS), [])
+    const componentStrings = localeManager.componentStrings(HomeworkCard.name) as HomeworkCardTexts
+
     const [expanded, setExpanded] = React.useState(defaultExpanded)
     const handleExpandClick = () => {
       setExpanded(!expanded)
@@ -49,7 +74,11 @@ const HomeworkCard = React.memo(
         <Card>
           <CardHeader
             title={homework.title}
-            subheader={dateStringToPrettyDate(homework.createdAt)}
+            subheader={localeManager.formatLongDate(homework.createdAt, {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
             action={
               !readonly && (
                 <IconButton aria-label="settings" onClick={handleClick}>
@@ -86,6 +115,7 @@ const HomeworkCard = React.memo(
             open={open}
             onClose={handleClose}
             onClick={handleClose}
+            // This is used for the little triangle attached to the menu
             PaperProps={{
               elevation: 0,
               sx: {
@@ -122,7 +152,7 @@ const HomeworkCard = React.memo(
               <ListItemIcon>
                 <EditIcon fontSize="small" />
               </ListItemIcon>
-              Edit
+              {componentStrings.edit}
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -132,7 +162,7 @@ const HomeworkCard = React.memo(
               <ListItemIcon>
                 <DeleteForeverIcon fontSize="small" />
               </ListItemIcon>
-              Trash
+              {componentStrings.trash}
             </MenuItem>
           </Menu>
         )}

@@ -19,27 +19,22 @@ import { SupportedLocale } from '../util/SupportedLocale'
 import { User, UserRole } from '../util/User'
 import { scrollToTop } from '../util/window'
 
-interface StudentsPageTexts {}
+interface StudentsPageTexts {
+  homework: string
+}
 
-const EN_US: StudentsPageTexts = {}
+const EN_US: StudentsPageTexts = {
+  homework: 'Homework'
+}
 
-const RO_RO: StudentsPageTexts = {}
+const RO_RO: StudentsPageTexts = {
+  homework: 'Teme pe acasă'
+}
 
 const STUDENTS_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData>([
   [SupportedLocale.EN_US, EN_US],
   [SupportedLocale.RO_RO, RO_RO]
 ])
-
-const EDITOR_MODULES = {
-  toolbar: [
-    [{ header: [1, 2, false] }, { font: [] as string[] }],
-    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-    [{ color: [] as string[] }, { background: [] as string[] }],
-    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
-    ['link', 'image', 'video'],
-    ['clean']
-  ]
-}
 
 export interface StudentsPageProps {}
 
@@ -48,7 +43,7 @@ export default function StudentsPage({}: StudentsPageProps) {
   useMemo(() => localeManager.registerComponentStrings(StudentsPage.name, STUDENTS_PAGE_TEXTS), [])
   const componentStrings = localeManager.componentStrings(StudentsPage.name) as StudentsPageTexts
 
-  const { user, dispatch } = useUser()
+  const { user } = useUser()
   const navigate = useNavigate()
 
   const studentsUnsubscriberRef = useRef<Unsubscribe>()
@@ -147,7 +142,7 @@ export default function StudentsPage({}: StudentsPageProps) {
                     scrollToTop()
                   }}>
                   <Typography variant="body1" gutterBottom component="h2">
-                    Homework
+                    {componentStrings.homework}
                   </Typography>
                 </Link>
               </AccordionDetails>

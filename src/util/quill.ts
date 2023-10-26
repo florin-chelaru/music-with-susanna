@@ -38,12 +38,10 @@ class AudioBlot extends BlockEmbed {
     a.setAttribute('href', value.url)
     a.appendChild(document.createTextNode('download audio'))
     node.appendChild(a)
-    console.log(node.outerHTML)
     return node
   }
 
   static value(node: any) {
-    console.log(`value called; ${node.outerHTML}`)
     return {
       url: node.getAttribute('src')
     }
@@ -81,8 +79,6 @@ export function handleFileUpload({
   progressHandler,
   cancelToken
 }: FileUploadParams): Promise<void> {
-  console.log('upload file')
-
   let promiseResolve: () => void = () => {}
   let promiseReject: (reason?: any) => void = () => {}
 
@@ -106,19 +102,15 @@ export function handleFileUpload({
 
   input.onchange = async () => {
     if (shouldCancel) {
-      console.log('cancelled upload')
       promiseReject('cancelled')
       return
     }
 
     const file: any = input?.files?.[0]
     if (file == null) {
-      console.log('no file to upload')
       promiseReject('no file')
       return
     }
-
-    console.log(file)
 
     const { name, extension } = extractFileNameAndExtension(file.name)
 
@@ -142,18 +134,14 @@ export function handleFileUpload({
       'state_changed',
       (snapshot) => {
         if (shouldCancel) {
-          console.log('cancelling')
           return
         }
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-        console.log(`Upload is ${progress}% done`)
         progressHandler?.({ fileName: file.name, progress })
         switch (snapshot.state) {
           case 'paused':
-            console.log('Upload is paused')
             break
           case 'running':
-            console.log('Upload is running')
             break
         }
       },
@@ -175,7 +163,6 @@ export function handleFileUpload({
             const range = quill.selection
 
             if (range?.index != null) {
-              console.log(`inserting at ${range.index}`)
               if (file.type.startsWith('image')) {
                 quill.editor?.insertEmbed(range.index, 'image', downloadUrl)
               } else if (file.type.startsWith('audio') || file.type.startsWith('video')) {
@@ -188,7 +175,6 @@ export function handleFileUpload({
                 })
               }
             }
-            console.log(downloadUrl)
             promiseResolve()
           })
           .catch((error) => {
