@@ -51,8 +51,32 @@ class AudioBlot extends BlockEmbed {
 AudioBlot.blotName = 'audio'
 AudioBlot.tagName = 'audio'
 
+const ParchmentEmbed = ReactQuill.Quill.import('blots/block/embed')
+class ImageWithSize extends ParchmentEmbed {
+  static create(value: any) {
+    const node = super.create(value)
+    if (typeof value === 'string') {
+      node.setAttribute('src', value)
+    } else if (typeof value === 'object') {
+      node.setAttribute('src', value.src)
+      node.setAttribute('width', value.width)
+    }
+    return node
+  }
+
+  static value(domNode: any) {
+    return {
+      src: domNode.getAttribute('src'),
+      width: domNode.getAttribute('width')
+    }
+  }
+}
+ImageWithSize.blotName = 'imageWithSize'
+ImageWithSize.tagName = 'img'
+
 ReactQuill.Quill.register(AudioBlot)
 ReactQuill.Quill.register(PdfBlot)
+ReactQuill.Quill.register(ImageWithSize, true)
 ReactQuill.Quill.register('modules/imageResize', ImageResize)
 
 const ALLOWED_UPLOAD_FILE_TYPES = ['image/*', 'audio/*', 'video/*', 'application/pdf']
@@ -216,7 +240,8 @@ export const QUILL_FORMATS = [
   'video',
   // Custom
   'audio',
-  'pdf'
+  'pdf',
+  'imageWithSize'
 ]
 
 export const QUILL_MODULES = {
