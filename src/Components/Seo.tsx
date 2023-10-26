@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from 'react'
-import { Helmet } from 'react-helmet'
+import { Helmet } from 'react-helmet-async'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
 

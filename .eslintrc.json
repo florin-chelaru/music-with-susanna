@@ -9,8 +9,7 @@
     "standard-with-typescript",
     "plugin:prettier/recommended"
   ],
-  "overrides": [
-  ],
+  "overrides": [],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {
@@ -18,13 +17,9 @@
     },
     "ecmaVersion": "latest",
     "sourceType": "module",
-    "project": [
-      "tsconfig.json"
-    ]
+    "project": ["tsconfig.json"]
   },
-  "plugins": [
-    "react"
-  ],
+  "plugins": ["react"],
   "rules": {
     "no-unused-vars": "off",
     "spaced-comment": "off",
@@ -37,6 +32,9 @@
     "@typescript-eslint/method-signature-style": "off",
     "@typescript-eslint/restrict-template-expressions": "off",
     "@typescript-eslint/no-empty-interface": "off",
-    "no-empty-pattern": "off"
+    "no-empty-pattern": "off",
+    "react/jsx-uses-react": "off",
+    "react/react-in-jsx-scope": "off",
+    "@typescript-eslint/promise-function-async": "off"
   }
 }

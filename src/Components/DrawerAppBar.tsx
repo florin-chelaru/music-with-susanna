@@ -15,21 +15,16 @@ import LanguagePopover from './LanguagePopover'
 import { ListItemIcon } from '@mui/material'
 import LocaleInfo from '../util/LocaleInfo'
 import LanguageListItem from './LanguageListItem'
-import { GlobalLocalizedData, LocaleContext, LocaleHandler } from '../store/LocaleProvider'
+import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import { SUPPORTED_LOCALES } from '../store/LocaleSettings'
 import { Link as DomLink, useLocation } from 'react-router-dom'
+import UserPopover from './UserPopover'
+import { RouteInfo } from '../data/RouteInfo'
 
 const drawerWidth = 240
 
-export interface NavItemInfo {
-  key: string
-  label: (strings: GlobalLocalizedData) => string
-  icon: React.ReactNode
-  path: string
-}
-
 export interface DrawerAppBarProps {
-  navItems: NavItemInfo[]
+  navItems: RouteInfo[]
 }
 
 export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
@@ -44,20 +39,23 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
 
   const location = useLocation()
   const pageTitle =
-    navItems.find((item) => item.path === location.pathname && item.path !== '/')?.label(strings) ??
-    strings.musicWithMsJohnson
+    navItems
+      .find((item) => location.pathname.startsWith(item.path) && item.path !== '/')
+      ?.label(strings) ?? strings.musicWithMsJohnson
 
   const onLocaleChange = (l: LocaleInfo) => localeManager.changeLocale(l.locale)
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <List>
-        {navItems.map((item) => (
-          <ListItemButton key={`listitem-${item.key}`} component={DomLink} to={item.path}>
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.label(strings)} />
-          </ListItemButton>
-        ))}
+        {navItems
+          .filter((item) => !item.hiddenFromAppBar)
+          .map((item) => (
+            <ListItemButton key={`listitem-${item.key}`} component={DomLink} to={item.path}>
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.label(strings)} />
+            </ListItemButton>
+          ))}
         <LanguageListItem languages={SUPPORTED_LOCALES} onChange={onLocaleChange} />
       </List>
     </Box>
@@ -82,16 +80,22 @@ export default function DrawerAppBar({ navItems }: DrawerAppBarProps) {
             {pageTitle}
           </Typography>
           <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-            {navItems.map((item) => (
-              <Button
-                key={`button-${item.key}`}
-                sx={{ color: '#fff' }}
-                component={DomLink}
-                to={item.path}>
-                {item.label(strings)}
-              </Button>
-            ))}
+            {navItems
+              .filter((item) => !item.hiddenFromAppBar)
+              .map((item) => (
+                <Button
+                  key={`button-${item.key}`}
+                  sx={{ color: '#fff' }}
+                  component={DomLink}
+                  to={item.path}>
+                  {item.label(strings)}
+                </Button>
+              ))}
             <LanguagePopover languages={SUPPORTED_LOCALES} onChange={onLocaleChange} />
+            <UserPopover />
+          </Box>
+          <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+            <UserPopover />
           </Box>
         </Toolbar>
       </AppBar>
