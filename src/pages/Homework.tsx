@@ -82,7 +82,6 @@ export default function Homework({}: HomeworkProps) {
         ref(database, `homework/teachers/${teacherId}/drafts/students/${studentId}/${hw.id}`),
         removeUndefinedKeys(hw)
       )
-      console.log(`saved draft for homework id ${hw.id}`)
     },
     [teacherId, studentId]
   )

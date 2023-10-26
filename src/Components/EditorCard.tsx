@@ -11,7 +11,9 @@ import _ from 'lodash'
 import { DeltaStatic, Sources } from 'quill'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import ReactQuill, { UnprivilegedEditor } from 'react-quill'
+import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { useUser } from '../store/UserProvider'
+import { SupportedLocale } from '../util/SupportedLocale'
 import {
   CancelToken,
   FileUploadProgress,
@@ -20,8 +22,6 @@ import {
   handleFileUpload
 } from '../util/quill'
 import MultiActionDialog from './MultiActionDialog'
-import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
-import { SupportedLocale } from '../util/SupportedLocale'
 
 interface EditorCardTexts {
   trash: string
