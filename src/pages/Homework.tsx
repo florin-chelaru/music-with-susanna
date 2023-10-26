@@ -19,7 +19,6 @@ import HomeworkInfo, {
 } from '../util/HomeworkInfo'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { UserRole } from '../util/User'
-import { dateStringToPrettyDate } from '../util/date'
 import { convertHtmlStringToPlain } from '../util/string'
 import { scrollToTop } from '../util/window'
 
