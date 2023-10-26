@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Avatar,
@@ -7,6 +7,8 @@ import {
   Card,
   CardContent,
   Container,
+  DialogContent,
+  DialogContentText,
   Link,
   Stack,
   TextField,
@@ -15,7 +17,12 @@ import {
 } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import { auth } from '../store/Firebase'
-import { signInWithEmailAndPassword, signOut, UserCredential } from 'firebase/auth'
+import {
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut,
+  UserCredential
+} from 'firebase/auth'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
@@ -23,6 +30,8 @@ import { useUser } from '../store/UserProvider'
 import { useNavigate } from 'react-router-dom'
 import { scrollToTop } from '../util/window'
 import { UserRole } from '../util/User'
+import MultiActionDialog from '../Components/MultiActionDialog'
+import { isValidEmail } from '../util/string'
 
 interface LoginTexts {
   signInTitle: string
@@ -35,6 +44,15 @@ interface LoginTexts {
   authErrorInvalidCredentials: string
   authErrorEmptyCredentials: string
   signOut: string
+
+  recoverPasswordDialogTitle: string
+  recoverPasswordDialogDescription: string
+  cancel: string
+  send: string
+
+  close: string
+  alertDialogTitle: string
+  alertDialogDescription: string
 }
 
 const EN_US: LoginTexts = {
@@ -47,7 +65,16 @@ const EN_US: LoginTexts = {
   authErrorInvalidEmail: 'Invalid email address',
   authErrorInvalidCredentials: 'Invalid username or password',
   authErrorEmptyCredentials: 'Empty email or password',
-  signOut: 'Sign out'
+  signOut: 'Sign out',
+
+  recoverPasswordDialogTitle: 'Recover password',
+  recoverPasswordDialogDescription: 'Fill in your email address to recover your password',
+  cancel: 'Cancel',
+  send: 'Send',
+
+  close: 'Close',
+  alertDialogTitle: 'Error',
+  alertDialogDescription: 'The password recovery email could not be sent'
 }
 
 const RO_RO: LoginTexts = {
@@ -61,7 +88,16 @@ const RO_RO: LoginTexts = {
   authErrorInvalidEmail: 'Adresă de email incorectă',
   authErrorInvalidCredentials: 'Emailul sau parola incorecte',
   authErrorEmptyCredentials: 'Emailul sau parola necompletate',
-  signOut: 'Ieși din cont'
+  signOut: 'Ieși din cont',
+
+  recoverPasswordDialogTitle: 'Recuperează parola',
+  recoverPasswordDialogDescription: 'Completează adresa de email pentru a recupera parola',
+  cancel: 'Renunță',
+  send: 'Trimite',
+
+  close: 'Închide',
+  alertDialogTitle: 'Eroare',
+  alertDialogDescription: 'Emailul de recuperare a parolei nu a putut fi trimis'
 }
 
 const LOGIN_TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -98,9 +134,19 @@ export default function Login({}: LoginProps) {
   useMemo(() => localeManager.registerComponentStrings(Login.name, LOGIN_TEXTS), [])
   const componentStrings = localeManager.componentStrings(Login.name) as LoginTexts
 
-  const { user, dispatch } = useUser()
+  const { user } = useUser()
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
+
+  const [passwordRecoveryDialogOpen, setDialogOpen] = useState(false)
+  const handlePasswordRecoveryDialogClose = () => {
+    setDialogOpen(false)
+    setInvalidRecoveryEmail(false)
+  }
+  const recoveryEmailInputRef = useRef<HTMLInputElement | null>(null)
+  const [invalidRecoveryEmail, setInvalidRecoveryEmail] = useState<boolean>(false)
+
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false)
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -121,6 +167,24 @@ export default function Login({}: LoginProps) {
       })
       .catch((error) => {
         setError(error.code)
+      })
+  }
+
+  const handleSendPasswordRecoveryEmail = () => {
+    const email = recoveryEmailInputRef.current?.value ?? ''
+    if (!isValidEmail(email)) {
+      setInvalidRecoveryEmail(true)
+      return
+    }
+
+    sendPasswordResetEmail(auth, email)
+      .then(() => {
+        handlePasswordRecoveryDialogClose()
+      })
+      .catch((error) => {
+        console.error(error)
+        handlePasswordRecoveryDialogClose()
+        setAlertDialogOpen(true)
       })
   }
 
@@ -194,7 +258,12 @@ export default function Login({}: LoginProps) {
         </Button>
         <Grid2 container>
           <Grid2 xs>
-            <Link href="#" variant="body2">
+            <Link
+              href="#"
+              variant="body2"
+              onClick={() => {
+                setDialogOpen(true)
+              }}>
               {componentStrings.forgotPassword}
             </Link>
           </Grid2>
@@ -204,20 +273,72 @@ export default function Login({}: LoginProps) {
   )
 
   return (
-    <Container maxWidth="md" sx={{ pt: 3 }}>
-      <Toolbar />
-      <Grid2 container spacing={2}>
-        <Grid2 xs={12} xsOffset={0} sm={8} smOffset={2} md={8} mdOffset={2}>
-          <Card
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center'
-            }}>
-            <CardContent>{signInForm}</CardContent>
-          </Card>
+    <>
+      <Container maxWidth="md" sx={{ pt: 3 }}>
+        <Toolbar />
+        <Grid2 container spacing={2}>
+          <Grid2 xs={12} xsOffset={0} sm={8} smOffset={2} md={8} mdOffset={2}>
+            <Card
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+              }}>
+              <CardContent>{signInForm}</CardContent>
+            </Card>
+          </Grid2>
         </Grid2>
-      </Grid2>
-    </Container>
+      </Container>
+      <MultiActionDialog
+        open={passwordRecoveryDialogOpen}
+        onClose={handlePasswordRecoveryDialogClose}
+        title={componentStrings.recoverPasswordDialogTitle}
+        aria-describedby="recover-email-dialog-description"
+        actions={[
+          {
+            label: componentStrings.cancel,
+            onClick: handlePasswordRecoveryDialogClose
+          },
+          {
+            label: componentStrings.send,
+            onClick: handleSendPasswordRecoveryEmail
+          }
+        ]}>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {componentStrings.recoverPasswordDialogDescription}
+          </DialogContentText>
+          <TextField
+            error={invalidRecoveryEmail}
+            InputProps={{ inputRef: recoveryEmailInputRef }}
+            margin="normal"
+            required
+            fullWidth
+            id="email"
+            label={componentStrings.emailAddress}
+            name="email"
+            autoComplete="email"
+            autoFocus
+          />
+        </DialogContent>
+      </MultiActionDialog>
+      <MultiActionDialog
+        open={alertDialogOpen}
+        onClose={() => setAlertDialogOpen(false)}
+        title={componentStrings.alertDialogTitle}
+        aria-describedby="alert-dialog-description"
+        actions={[
+          {
+            label: componentStrings.close,
+            onClick: () => setAlertDialogOpen(false)
+          }
+        ]}>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {componentStrings.alertDialogDescription}
+          </DialogContentText>
+        </DialogContent>
+      </MultiActionDialog>
+    </>
   )
 }

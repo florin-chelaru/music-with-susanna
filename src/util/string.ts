@@ -41,3 +41,7 @@ export function convertHtmlStringToPlain(str: string) {
   // Retrieve the text property of the element
   return tempDivElement.textContent ?? tempDivElement.innerText ?? ''
 }
+
+export function isValidEmail(email: string) {
+  return /\S+@\S+\.\S+/.test(email)
+}
