@@ -179,8 +179,7 @@ export function handleFileUpload({
               if (file.type.startsWith('image')) {
                 quill.editor?.insertEmbed(range.index, 'image', downloadUrl)
               } else if (file.type.startsWith('audio') || file.type.startsWith('video')) {
-                // quill.editor?.insertEmbed(range.index, 'audio', {
-                quill.editor?.insertEmbed(6, 'audio', {
+                quill.editor?.insertEmbed(range.index, 'audio', {
                   url: downloadUrl
                 })
               } else if (file.type === 'application/pdf') {

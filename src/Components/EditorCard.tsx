@@ -3,16 +3,13 @@ import {
   Card,
   CardActions,
   CardProps,
-  Dialog,
-  DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle,
   LinearProgress
 } from '@mui/material'
 import _ from 'lodash'
 import { DeltaStatic, Sources } from 'quill'
-import { MutableRefObject, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ReactQuill, { UnprivilegedEditor } from 'react-quill'
 import { useUser } from '../store/UserProvider'
 import {
@@ -22,6 +19,7 @@ import {
   QUILL_MODULES,
   handleFileUpload
 } from '../util/quill'
+import MultiActionDialog from './MultiActionDialog'
 
 interface EditorCardProps extends CardProps {
   value?: string
@@ -50,7 +48,6 @@ export default function EditorCard({
   const dialogCloseAction = useRef<(() => void) | null>(null)
   const handleDialogClose = () => {
     setDialogOpen(false)
-    console.log(dialogCloseAction.current)
     dialogCloseAction.current?.()
   }
   const [uploadProgress, setUploadProgress] = useState<number>(0)
@@ -130,25 +127,26 @@ export default function EditorCard({
           </Button>
         </CardActions>
       </Card>
-      <Dialog
+      <MultiActionDialog
         open={dialogOpen}
         onClose={handleDialogClose}
         sx={{ minWidth: 300 }}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description">
-        <DialogTitle id="alert-dialog-title">Uploading...</DialogTitle>
+        title="Uploading..."
+        aria-describedby="alert-dialog-description"
+        actions={[
+          {
+            label: 'Cancel',
+            onClick: handleDialogClose,
+            autoFocus: true
+          }
+        ]}>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
             Uploading file {uploadFileName} to the server.
           </DialogContentText>
           <LinearProgress variant="determinate" value={uploadProgress} />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose} autoFocus>
-            Cancel
-          </Button>
-        </DialogActions>
-      </Dialog>
+      </MultiActionDialog>
     </>
   )
 }

@@ -9,7 +9,7 @@ export interface DialogAction {
 export interface MultiActionDialogProps extends DialogProps {
   title?: string
   children?: JSX.Element | JSX.Element[]
-  actions?: []
+  actions?: DialogAction[]
 }
 
 export default function MultiActionDialog({
@@ -20,13 +20,16 @@ export default function MultiActionDialog({
 }: MultiActionDialogProps) {
   actions = actions ?? []
   return (
-    <Dialog aria-labelledby="yes-no-dialog-title" {...props}>
-      {title && <DialogTitle id="yes-no-dialog-title">{title}</DialogTitle>}
+    <Dialog aria-labelledby="multi-action-dialog-title" {...props}>
+      {title && <DialogTitle id="multi-action-dialog-title">{title}</DialogTitle>}
       {children}
       <DialogActions>
-        {(actions ?? []).map((action: DialogAction) => {
+        {(actions ?? []).map((action: DialogAction, i) => {
           return (
-            <Button onClick={() => action.onClick?.()} autoFocus={!!action.autoFocus}>
+            <Button
+              key={`action-${i}`}
+              onClick={() => action.onClick?.()}
+              autoFocus={!!action.autoFocus}>
               {action.label}
             </Button>
           )

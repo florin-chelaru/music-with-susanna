@@ -22,6 +22,7 @@ import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProv
 import { useUser } from '../store/UserProvider'
 import { useNavigate } from 'react-router-dom'
 import { scrollToTop } from '../util/window'
+import { UserRole } from '../util/User'
 
 interface LoginTexts {
   signInTitle: string
@@ -117,8 +118,6 @@ export default function Login({}: LoginProps) {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential: UserCredential) => {
         setError(null)
-        navigate('/students')
-        scrollToTop()
       })
       .catch((error) => {
         setError(error.code)
@@ -126,8 +125,21 @@ export default function Login({}: LoginProps) {
   }
 
   useEffect(() => {
+    if (user.loading) {
+      console.log('user loading')
+      return
+    }
     if (user.uid) {
-      navigate('/students')
+      console.log('user logged in')
+      if (user.role === UserRole.TEACHER) {
+        console.log('user is teacher, redirecting to /students')
+        navigate('/students')
+        scrollToTop()
+      } else {
+        console.log(`user is not teacher: ${JSON.stringify(user)}; redirecting to /homework`)
+        navigate(`/homework/-/${user.uid}`)
+        scrollToTop()
+      }
     }
   }, [user])
 

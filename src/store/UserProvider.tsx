@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react'
-import { auth, database } from './Firebase'
 import { onAuthStateChanged } from 'firebase/auth'
-import { Unsubscribe, onValue, ref } from 'firebase/database'
-import { User, EMPTY_USER, UserRole, LOADING_USER } from '../util/User'
+import { Unsubscribe, get, ref } from 'firebase/database'
+import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react'
+import { EMPTY_USER, LOADING_USER, User, UserRole } from '../util/User'
+import { auth, database } from './Firebase'
 
 export enum UserActionType {
   SIGN_IN = 'sign_in',
@@ -50,8 +50,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (!user?.uid) {
       dispatch({ type: UserActionType.UPDATE_USER, payload: new User({ loading: true }) })
     }
-    onAuthStateChanged(auth, (user) => {
-      if (!user?.uid) {
+    onAuthStateChanged(auth, (authUser) => {
+      if (!authUser?.uid) {
         dispatch({ type: UserActionType.SIGN_OUT })
         return
       }
@@ -59,43 +59,31 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       dispatch({
         type: UserActionType.UPDATE_USER,
         payload: new User({
-          uid: user.uid,
-          email: user.email ?? undefined,
-          loading: false
+          uid: authUser.uid,
+          email: authUser.email ?? undefined,
+          loading: true
         })
       })
+
+      get(ref(database, `users/${authUser.uid}`))
+        .then((snapshot) => {
+          const { name, role } = snapshot.val()
+          if (user.name !== name || user.role !== role) {
+            dispatch({
+              type: UserActionType.UPDATE_USER,
+              payload: new User({
+                name,
+                role: role as UserRole,
+                loading: false
+              })
+            })
+          }
+        })
+        .catch((error) => {
+          console.error(`could not get metadata for user ${authUser.uid}: ${error}`)
+        })
     })
   }, [])
-
-  useEffect(() => {
-    if (user.loading) {
-      return
-    }
-    if (userNameUnsubscriberRef.current) {
-      userNameUnsubscriberRef.current()
-    }
-    if (!user.uid) {
-      return
-    }
-    userNameUnsubscriberRef.current = onValue(
-      ref(database, `users/${user.uid}`),
-      (snapshot) => {
-        const { name, role } = snapshot.val()
-        if (user.name !== name || user.role !== role) {
-          dispatch({
-            type: UserActionType.UPDATE_USER,
-            payload: new User({
-              name,
-              role: role as UserRole
-            })
-          })
-        }
-      },
-      (error) => {
-        console.error(error.message)
-      }
-    )
-  }, [user])
 
   return <UserContext.Provider value={{ user, dispatch }}>{children}</UserContext.Provider>
 }

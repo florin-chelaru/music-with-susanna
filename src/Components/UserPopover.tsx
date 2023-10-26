@@ -13,6 +13,7 @@ import { scrollToTop } from '../util/window'
 import { useUser } from '../store/UserProvider'
 import { auth } from '../store/Firebase'
 import { signOut } from 'firebase/auth'
+import { UserRole } from '../util/User'
 
 interface UserPopoverProps {}
 
@@ -85,22 +86,22 @@ export default function UserPopover({}: UserPopoverProps) {
           )}
           {!!user.uid && (
             <>
+              {user.role === UserRole.TEACHER && (
+                <MenuItem
+                  onClick={() => {
+                    handleClose()
+                    navigate('/students')
+                    scrollToTop()
+                  }}>
+                  <ListItemIcon>
+                    <PersonIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Students</ListItemText>
+                </MenuItem>
+              )}
               <MenuItem
                 onClick={() => {
                   handleClose()
-                  navigate('/students')
-                  scrollToTop()
-                }}>
-                <ListItemIcon>
-                  <PersonIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText>Dashboard</ListItemText>
-              </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  handleClose()
-                  // navigate('/login')
-                  // scrollToTop()
                   void signOut(auth)
                 }}>
                 <ListItemIcon>

@@ -30,3 +30,14 @@ export function extractFileNameAndExtension(fullPath: string): { name: string; e
 
   return { name: fileNameWithExtension, extension: '' }
 }
+
+export function convertHtmlStringToPlain(str: string) {
+  // Create a new div element
+  const tempDivElement = document.createElement('div')
+
+  // Set the HTML content with the given value
+  tempDivElement.innerHTML = str
+
+  // Retrieve the text property of the element
+  return tempDivElement.textContent ?? tempDivElement.innerText ?? ''
+}

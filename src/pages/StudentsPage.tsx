@@ -16,7 +16,7 @@ import { database } from '../store/Firebase'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { useUser } from '../store/UserProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
-import { User } from '../util/User'
+import { User, UserRole } from '../util/User'
 import { scrollToTop } from '../util/window'
 
 interface StudentsPageTexts {}
@@ -69,16 +69,23 @@ export default function StudentsPage({}: StudentsPageProps) {
   const [students, setStudents] = useState<User[]>([])
 
   useEffect(() => {
-    if (user.loading) {
-      return
-    }
     if (studentsUnsubscriberRef.current) {
       studentsUnsubscriberRef.current()
+    }
+
+    if (user.loading) {
+      return
     }
     if (!user.uid) {
       navigate('/login')
       return
     }
+
+    if (user.role !== UserRole.TEACHER) {
+      navigate('/')
+      return
+    }
+
     studentsUnsubscriberRef.current = onValue(
       ref(database, `teachers/${user.uid}/students`),
       async (snapshot) => {
