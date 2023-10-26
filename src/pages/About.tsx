@@ -63,8 +63,8 @@ export default function About({}: AboutProps) {
           {strings.contact}
         </Button>
       </Grid2>
-      <Grid2 xs={12}>
-        <Masonry columns={{ xs: 1, md: 2 }} spacing={2}>
+      <Grid2 xs={12} spacing={2}>
+        <Masonry columns={{ xs: 1, md: 2 }} defaultSpacing={2} spacing={2}>
           {componentStrings.resume.sections.map((section, i) => (
             <Box key={`section-${i}`}>
               <Typography variant="button" paragraph>

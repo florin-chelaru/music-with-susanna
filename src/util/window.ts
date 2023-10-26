@@ -3,9 +3,12 @@
  * @param element
  * @param offset
  */
-export function scrollToElement(element: HTMLDivElement, offset: number = 56) {
+export function scrollToElement(element?: HTMLDivElement | null, offset: number = 56) {
   // Using setTimeout to call scrollIntoView asynchronously, after the sidebar has closed
   setTimeout(() => {
+    if (!element) {
+      return
+    }
     const targetPosition = element.getBoundingClientRect().top + scrollY - offset
     scrollTo({ top: targetPosition })
   }, 0)

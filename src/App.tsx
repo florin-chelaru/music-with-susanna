@@ -1,107 +1,71 @@
-import React, { useEffect } from 'react'
-import './App.css'
-import DrawerAppBar, { NavItemInfo } from './Components/DrawerAppBar'
-import LocaleProvider from './store/LocaleProvider'
-import Home from './pages/Home'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import CustomThemeProvider from './theme/CustomThemeProvider'
-import HomeIcon from '@mui/icons-material/Home'
-import InfoIcon from '@mui/icons-material/Info'
-import ContactMailIcon from '@mui/icons-material/ContactMail'
-import YouTubeIcon from '@mui/icons-material/YouTube'
-import FacebookIcon from '@mui/icons-material/Facebook'
-import SchoolIcon from '@mui/icons-material/School'
-import AttributionIcon from '@mui/icons-material/Attribution'
+import { useEffect } from 'react'
+import { HelmetProvider } from 'react-helmet-async'
+import 'react-quill/dist/quill.snow.css'
 import { Route, Routes, useLocation } from 'react-router-dom'
-import Lessons from './pages/Lessons'
+import './App.css'
+import DrawerAppBar from './Components/DrawerAppBar'
+import LocalizedCookieConsent from './Components/LocalizedCookieConsent'
+import ScrollTop from './Components/ScrollTop'
+import Seo from './Components/Seo'
+import { ROUTES, RouteInfo } from './data/RouteInfo'
 import About from './pages/About'
 import Contact from './pages/Contact'
-import VideoChannel from './pages/VideoChannel'
-import SelectedVideoProvider from './store/SelectedVideoProvider'
-import LatestNews from './pages/LatestNews'
-import ScrollTop from './Components/ScrollTop'
 import Credits from './pages/Credits'
-import Seo from './Components/Seo'
-import LocalizedCookieConsent from './Components/LocalizedCookieConsent'
-import { gaSendPageView } from './util/google-analytics'
+import Home from './pages/Home'
+import Homework from './pages/Homework'
+import LatestNews from './pages/LatestNews'
+import Lessons from './pages/Lessons'
+import Login from './pages/Login'
+import StudentsPage from './pages/StudentsPage'
+import VideoChannel from './pages/VideoChannel'
 import AnnouncementProvider from './store/AnnouncementProvider'
+import LocaleProvider from './store/LocaleProvider'
+import SelectedVideoProvider from './store/SelectedVideoProvider'
+import { UserProvider } from './store/UserProvider'
+import CustomThemeProvider from './theme/CustomThemeProvider'
+import { gaSendPageView } from './util/google-analytics'
 
 function App() {
-  const navItems: NavItemInfo[] = [
-    {
-      key: 'home',
-      label: (strings) => strings.home,
-      icon: <HomeIcon />,
-      path: '/'
-    },
-    {
-      key: 'lessons',
-      label: (strings) => strings.lessons,
-      icon: <SchoolIcon />,
-      path: '/lessons'
-    },
-    {
-      key: 'about',
-      label: (strings) => strings.about,
-      icon: <InfoIcon />,
-      path: '/about'
-    },
-    {
-      key: 'videos',
-      label: (strings) => strings.channel,
-      icon: <YouTubeIcon />,
-      path: '/videos'
-    },
-    {
-      key: 'news',
-      label: (strings) => strings.news,
-      icon: <FacebookIcon />,
-      path: '/news'
-    },
-    {
-      key: 'contact',
-      label: (strings) => strings.contact,
-      icon: <ContactMailIcon />,
-      path: '/contact'
-    },
-    {
-      key: 'credits',
-      label: (strings) => strings.credits,
-      icon: <AttributionIcon />,
-      path: '/credits'
-    }
-  ]
+  const navItems: RouteInfo[] = ROUTES
 
   // Track route changes and send to Google Analytics
   const location = useLocation()
   useEffect(() => gaSendPageView(), [location])
 
   return (
-    <CustomThemeProvider>
-      <SelectedVideoProvider>
-        <LocaleProvider>
-          <AnnouncementProvider>
-            <Seo />
-            <LocalizedCookieConsent />
-            <DrawerAppBar navItems={navItems} />
-            <Grid2 container>
-              <Grid2 xs={12}>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/lessons" element={<Lessons />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/videos" element={<VideoChannel />} />
-                  <Route path="/news" element={<LatestNews />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/credits" element={<Credits />} />
-                </Routes>
-              </Grid2>
-            </Grid2>
-            <ScrollTop />
-          </AnnouncementProvider>
-        </LocaleProvider>
-      </SelectedVideoProvider>
-    </CustomThemeProvider>
+    <HelmetProvider>
+      <CustomThemeProvider>
+        <SelectedVideoProvider>
+          <LocaleProvider>
+            <UserProvider>
+              <AnnouncementProvider>
+                <Seo />
+                <LocalizedCookieConsent />
+                <DrawerAppBar navItems={navItems} />
+                <Grid2 container>
+                  <Grid2 xs={12}>
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/lessons" element={<Lessons />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/videos" element={<VideoChannel />} />
+                      <Route path="/news" element={<LatestNews />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/credits" element={<Credits />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/students" element={<StudentsPage />} />
+                      <Route path="/homework/:teacherId/:studentId" element={<Homework />} />
+                    </Routes>
+                  </Grid2>
+                </Grid2>
+                <ScrollTop />
+              </AnnouncementProvider>
+            </UserProvider>
+          </LocaleProvider>
+        </SelectedVideoProvider>
+      </CustomThemeProvider>
+    </HelmetProvider>
   )
 }
 
