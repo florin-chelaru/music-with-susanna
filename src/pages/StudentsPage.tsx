@@ -129,7 +129,7 @@ export default function StudentsPage({}: StudentsPageProps) {
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls="panel1a-content"
                 id="panel1a-header">
-                <Typography>{student.firstName}</Typography>
+                <Typography>{student.name}</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Link

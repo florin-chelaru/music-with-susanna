@@ -3,6 +3,7 @@ import { extractFileNameAndExtension, generateRandomAlphanumericString } from '.
 import { User } from './User'
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage'
 import { storage } from '../store/Firebase'
+import { ImageResize } from 'quill-image-resize-module-ts'
 
 const BlockEmbed = ReactQuill.Quill.import('blots/block/embed')
 class PdfBlot extends BlockEmbed {
@@ -52,6 +53,7 @@ AudioBlot.tagName = 'audio'
 
 ReactQuill.Quill.register(AudioBlot)
 ReactQuill.Quill.register(PdfBlot)
+ReactQuill.Quill.register('modules/imageResize', ImageResize)
 
 const ALLOWED_UPLOAD_FILE_TYPES = ['image/*', 'audio/*', 'video/*', 'application/pdf']
 
@@ -228,5 +230,13 @@ export const QUILL_MODULES = {
       ['link', 'image', 'video'],
       ['clean']
     ]
+  },
+  clipboard: {
+    // toggle to add extra line breaks when pasting HTML:
+    matchVisual: false
+  },
+  imageResize: {
+    parchment: Quill.import('parchment'),
+    modules: ['Resize', 'DisplaySize']
   }
 }
