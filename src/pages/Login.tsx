@@ -197,7 +197,7 @@ export default function Login({}: LoginProps) {
         navigate('/students')
         scrollToTop()
       } else {
-        navigate(`/homework/-/${user.uid}`)
+        navigate(`/subjects`)
         scrollToTop()
       }
     }
