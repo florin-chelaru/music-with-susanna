@@ -99,6 +99,19 @@ export default function UserPopover({}: UserPopoverProps) {
                   <ListItemText>{strings.students}</ListItemText>
                 </MenuItem>
               )}
+              {user.role === UserRole.STUDENT && (
+                <MenuItem
+                  onClick={() => {
+                    handleClose()
+                    navigate('/subjects')
+                    scrollToTop()
+                  }}>
+                  <ListItemIcon>
+                    <PersonIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>{strings.subjects}</ListItemText>
+                </MenuItem>
+              )}
               <MenuItem
                 onClick={() => {
                   handleClose()

@@ -82,6 +82,13 @@ export const ROUTES: RouteInfo[] = [
     hiddenFromAppBar: true
   },
   {
+    key: 'subjects',
+    label: (strings) => strings.subjects,
+    icon: <PersonIcon />, // TODO
+    path: '/subjects',
+    hiddenFromAppBar: true
+  },
+  {
     key: 'homework',
     label: (strings) => strings.homework,
     icon: <PersonIcon />, // TODO
