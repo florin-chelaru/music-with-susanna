@@ -33,6 +33,7 @@ export const EN_US: GlobalLocalizedData = {
   readMore: 'Read more',
   signUp: 'Sign up',
   students: 'Students',
+  subjects: 'Subjects',
   testimonials: 'Testimonials',
   youtubeChildrensChannel: "Children's YouTube Channel"
 }
@@ -55,6 +56,7 @@ export const RO_RO: GlobalLocalizedData = {
   readMore: 'Citește mai mult',
   signUp: 'Înscrie-te',
   students: 'Elevi',
+  subjects: 'Materii',
   testimonials: 'Testimoniale',
   youtubeChildrensChannel: 'Canalul YouTube pentru Copii'
 }

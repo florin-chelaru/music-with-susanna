@@ -10,6 +10,7 @@ export class User {
   loading?: boolean
   role?: UserRole
   name?: string
+  subject?: string
 
   get firstName(): string | undefined {
     if (!this.name) {
@@ -40,6 +41,7 @@ export class User {
       this.loading = other?.loading ?? this.loading
       this.role = other?.role ?? this.role
       this.name = other?.name ?? this.name
+      this.subject = other?.subject ?? this.subject
     }
   }
 }
