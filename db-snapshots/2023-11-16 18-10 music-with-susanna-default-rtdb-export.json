@@ -1,0 +1,207 @@
+{
+  "deleted": {
+    "homework": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+          "students": {
+            "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+              "356717f5-6e98-4d66-8dd9-46639bfeca40": {
+                "createdAt": "2023-10-26T17:50:35.878Z",
+                "deletedAt": "2023-10-26T17:50:42.387Z",
+                "editContent": "<h1>Titlu</h1><p>Introdu aici notițele...</p>",
+                "id": "356717f5-6e98-4d66-8dd9-46639bfeca40",
+                "status": "editing",
+                "updatedAt": "2023-10-26T17:50:42.387Z"
+              }
+            }
+          }
+        },
+        "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": {
+          "students": {
+            "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
+              "8b2792dd-1826-4083-b764-3ffae2c980e2": {
+                "createdAt": "2023-11-16T13:44:10.418Z",
+                "deletedAt": "2023-11-16T13:44:28.819Z",
+                "editContent": "<h1>Title</h1><p>Write your notes here...</p>",
+                "id": "8b2792dd-1826-4083-b764-3ffae2c980e2",
+                "status": "editing",
+                "updatedAt": "2023-11-16T13:44:28.819Z"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "homework": {
+    "teachers": {
+      "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+        "drafts": {
+          "students": {
+            "GlTYDS9f56TwfiNcRpVlMr5cykw1": {
+              "9ad9b7bd-0184-4824-9069-9a5643e97071": {
+                "createdAt": "2023-10-26T15:55:15.134Z",
+                "editContent": "<h1>Title</h1><p>Write your notes here...</p>",
+                "id": "9ad9b7bd-0184-4824-9069-9a5643e97071",
+                "status": "editing",
+                "updatedAt": "2023-10-26T15:55:17.291Z"
+              }
+            }
+          }
+        },
+        "students": {
+          "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+            "0b9b8571-75dd-4241-ab5e-c52cdebf1138": {
+              "content": "<p><br></p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F16983420847513448964790573530706_kBVTmjgyFU.jpg?alt=media&amp;token=5a8c61ce-454b-4224-9e67-8fef488e196b\" width=\"219\"><p><br></p>",
+              "createdAt": "2023-10-26T17:41:22.307Z",
+              "editContent": "",
+              "id": "0b9b8571-75dd-4241-ab5e-c52cdebf1138",
+              "status": "published",
+              "title": "Papi",
+              "updatedAt": "2023-10-28T15:02:57.303Z"
+            },
+            "76873f7e-a1fe-4a12-a27a-5fedbd71808e": {
+              "content": "<p><br></p><p><br></p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FMannlicher_M1904_jaZ2B5sXOQ.png?alt=media&amp;token=4dc0b231-661e-4d7a-9787-ece250932c03\" width=\"221\" style=\"cursor: nwse-resize;\"><p><br></p><p><br></p><p><br></p><p>Nothing more to say about</p><p>Nothing more to say about that!</p><p><br></p><p>foo bar</p><p><br></p><p>Nu-i așa că e o scumpină?🤗❤️</p>",
+              "createdAt": "2023-10-26T16:08:30.476Z",
+              "editContent": "",
+              "id": "76873f7e-a1fe-4a12-a27a-5fedbd71808e",
+              "status": "published",
+              "title": "Paprika the lovely cat",
+              "updatedAt": "2023-10-28T15:03:07.072Z"
+            },
+            "bdf51d65-b67f-4c4c-889a-6eff271ab42b": {
+              "content": "<p>Write your notes here...</p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2Fevelyn-small_uCOhH0FXNC.webp?alt=media&amp;token=4775f3cc-d77f-4de1-ac0f-fb124ba4ccb6\" width=\"563\"><p><br></p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2Fnatalia-large_Zd8tdMJGfx.jpeg?alt=media&amp;token=4c26279e-9f78-4a55-b7d8-fd62319370be\" width=\"504\" style=\"cursor: nesw-resize;\"><p><br></p>",
+              "createdAt": "2023-10-26T22:40:17.075Z",
+              "editContent": "",
+              "id": "bdf51d65-b67f-4c4c-889a-6eff271ab42b",
+              "status": "published",
+              "title": "Other title",
+              "updatedAt": "2023-10-28T15:02:45.732Z"
+            },
+            "bf497c27-44d0-46ae-9107-ecceadf2ef99": {
+              "content": "<p>Introdu aici notițele...</p>",
+              "createdAt": "2023-11-16T14:20:09.558Z",
+              "editContent": "",
+              "id": "bf497c27-44d0-46ae-9107-ecceadf2ef99",
+              "status": "published",
+              "title": "Titlu",
+              "updatedAt": "2023-11-16T14:20:17.380Z"
+            }
+          },
+          "GlTYDS9f56TwfiNcRpVlMr5cykw1": {
+            "89a96277-aa8c-46fa-88f2-85e878d59640": {
+              "content": "<p>Write your notes here...</p>",
+              "createdAt": "2023-10-26T15:54:59.340Z",
+              "editContent": "",
+              "id": "89a96277-aa8c-46fa-88f2-85e878d59640",
+              "status": "published",
+              "title": "Title",
+              "updatedAt": "2023-10-26T15:55:01.088Z"
+            }
+          },
+          "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
+            "b141d161-60ce-4e9e-9964-a326281c9140": {
+              "content": "<h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">I Can Read Music Lesson 23 Pitch &amp; Rhythm</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 Pitch </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 Rhythm </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 Pitch </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 Rhythm </span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;</span></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Gama Re Major ȘI Arpeggio Re Major: dublu în jumătatea superioară</span></h2><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Gama La Major ȘI Arpeggio La Major: lung</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Twinkle Tema (recăpitulare)- focus: plop all fingers down!</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Song of the Wind (recăpitulare)- focus: plop all fingers down!</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">O Come Little Children- focus: linea 4- lipici pe primul deget pe si galben</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Autumn Vivaldi- linea 1 &amp; 2 (with music) linea 1 FORTE and linea 2 piano</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">May Song practice spot: La Do# Mi La (all fingers down!) (stai o leacă ritmul)</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4&nbsp;</span></p><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/PnWwO2wlTB8?showinfo=0\"></iframe><p><br></p><p><br></p>",
+              "createdAt": "2023-11-16T12:58:48.988Z",
+              "editContent": "",
+              "id": "b141d161-60ce-4e9e-9964-a326281c9140",
+              "status": "published",
+              "title": "Tudor Tema Nov 16:",
+              "updatedAt": "2023-11-16T14:11:52.015Z"
+            }
+          }
+        }
+      },
+      "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": {
+        "students": {
+          "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+            "05fb3a9b-d3eb-4bba-baf0-7ef9b9aa15dc": {
+              "content": "<p>Write your notes here...</p>",
+              "createdAt": "2023-11-16T13:43:50.372Z",
+              "editContent": "",
+              "id": "05fb3a9b-d3eb-4bba-baf0-7ef9b9aa15dc",
+              "status": "published",
+              "title": "First Computer Science Homework",
+              "updatedAt": "2023-11-16T13:44:00.138Z"
+            }
+          },
+          "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
+            "741c229b-9b6c-4104-8019-95c5f58bace5": {
+              "content": "<p>Ce am făcut azi:</p><ul><li>Am făcut cunoștință cu un nou roboțel: Charlie.</li><li>Am învățat despre procente:</li><li class=\"ql-indent-1\">100%: viteză maximă</li><li class=\"ql-indent-1\">50%: viteză la jumătate</li><li class=\"ql-indent-1\">25%: un sfert din viteza maximă</li><li class=\"ql-indent-1\">0%: oprit</li><li>Am combinat secvențe repeat într-un dans complex.</li><li class=\"ql-indent-1\">Roboțelul face o piruetă stânga-dreapta de două ori (într-un repeat)</li><li class=\"ql-indent-1\">Roboțelul mișcă mâinile de două ori (într-un alt repeat)</li><li class=\"ql-indent-1\">Acțiunile anterioare sunt repetate de 3 ori (adăugate într-un repeat tată)</li><li>Am construit un \"ochi\" pentru Charlie care îi permite să recunoască culori (un senzor de culoare).</li><li>Am văzut un program pre-existent care îi permite lui Charlie să facă diverse acțiuni în funcție de culoarea văzută:</li><li class=\"ql-indent-1\">Verde — piruetă</li><li class=\"ql-indent-1\">Roșu — vine spre mine</li><li class=\"ql-indent-1\">Galben — fuge de mine și strigă</li><li class=\"ql-indent-1\">Albastru — rămâne pe data viitoare...</li><li>Data viitoare vom construi chiar noi un astfel de program, și vom recapitula \"if-then-else\" ca să creăm acest program.</li></ul><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/TfkTHl7uTqI?showinfo=0\"></iframe><p><br></p>",
+              "createdAt": "2023-11-16T13:56:56.597Z",
+              "editContent": "",
+              "id": "741c229b-9b6c-4104-8019-95c5f58bace5",
+              "status": "published",
+              "title": "Recapitulare: repeat",
+              "updatedAt": "2023-11-16T14:05:41.138Z"
+            }
+          }
+        }
+      }
+    }
+  },
+  "students": {
+    "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": "",
+        "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": ""
+      }
+    },
+    "GlTYDS9f56TwfiNcRpVlMr5cykw1": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": "",
+        "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": ""
+      }
+    },
+    "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": "",
+        "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": ""
+      }
+    },
+    "student-id-001": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": ""
+      }
+    }
+  },
+  "teachers": {
+    "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+      "students": {
+        "CrJ0nlfZOrY4ac9USwzQzaURyWx2": "",
+        "GlTYDS9f56TwfiNcRpVlMr5cykw1": "",
+        "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": ""
+      }
+    },
+    "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": {
+      "students": {
+        "CrJ0nlfZOrY4ac9USwzQzaURyWx2": "",
+        "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": ""
+      }
+    }
+  },
+  "users": {
+    "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+      "email": "susannaalicej@gmail.com",
+      "name": "Susanna Johnson-Chelaru",
+      "role": "teacher",
+      "subject": "violin"
+    },
+    "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+      "email": "florin.chelaru@gmail.com",
+      "name": "Florin Chelaru",
+      "role": "student"
+    },
+    "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": {
+      "email": "florinchelaru@gmail.com",
+      "name": "Florin Chelaru",
+      "role": "teacher",
+      "subject": "computerScience"
+    },
+    "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
+      "email": "ursache.andreea@gmail.com",
+      "name": "Tudor Teleche",
+      "role": "student"
+    }
+  }
+}
