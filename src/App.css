@@ -15,3 +15,11 @@
   height: 500px;
   max-height: 100%;
 }
+
+.ql-editor {
+  padding: 0;
+}
+
+.ql-container .ql-editor {
+  padding: 12px 15px;
+}
