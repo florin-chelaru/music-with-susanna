@@ -1,8 +1,9 @@
-import React from 'react'
-import { Box, Zoom, Fab, FabProps } from '@mui/material'
-import { KeyboardArrowUp } from '@mui/icons-material'
-import useScrollTrigger from '@mui/material/useScrollTrigger'
 import AddIcon from '@mui/icons-material/Add'
+import { Box, Fab, FabProps, Zoom } from '@mui/material'
+import useScrollTrigger from '@mui/material/useScrollTrigger'
+import { useContext } from 'react'
+import { FabPosition, FabPositionContext } from '../store/FabPositionProvider'
+import { useUser } from '../store/UserProvider'
 
 interface FabCreateProps extends FabProps {}
 
@@ -13,15 +14,18 @@ const FabCreate = (props: FabCreateProps) => {
     threshold: 100
   })
 
+  const { user } = useUser()
+
+  const fabPosition = useContext<FabPosition>(FabPositionContext).get(FabCreate.name, user)
+
   return (
     <Zoom in={!trigger}>
       <Box
         role="presentation"
         sx={{
           position: 'fixed',
-          bottom: 32,
-          right: 32,
-          zIndex: 1
+          zIndex: 1,
+          ...fabPosition
         }}>
         <Fab color="secondary" aria-label="create new" {...props}>
           <AddIcon />

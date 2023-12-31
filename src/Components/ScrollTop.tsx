@@ -1,7 +1,9 @@
-import React from 'react'
-import { Box, Zoom, Fab } from '@mui/material'
 import { KeyboardArrowUp } from '@mui/icons-material'
+import { Box, Fab, Zoom } from '@mui/material'
 import useScrollTrigger from '@mui/material/useScrollTrigger'
+import React, { useContext } from 'react'
+import { FabPosition, FabPositionContext } from '../store/FabPositionProvider'
+import { useUser } from '../store/UserProvider'
 
 const ScrollTop = () => {
   const trigger = useScrollTrigger({
@@ -14,15 +16,18 @@ const ScrollTop = () => {
     scrollTo({ top: 0 })
   }, [])
 
+  const { user } = useUser()
+
+  const fabPosition = useContext<FabPosition>(FabPositionContext).get(ScrollTop.name, user)
+
   return (
     <Zoom in={trigger}>
       <Box
         role="presentation"
         sx={{
           position: 'fixed',
-          bottom: 32,
-          right: 32,
-          zIndex: 1
+          zIndex: 1,
+          ...fabPosition
         }}>
         <Fab onClick={scrollToTop} color="primary" size="small" aria-label="scroll back to top">
           <KeyboardArrowUp />
