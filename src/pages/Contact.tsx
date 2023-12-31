@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Container } from '@mui/material'
 import Toolbar from '@mui/material/Toolbar'
 import Grid2 from '@mui/material/Unstable_Grid2'
@@ -7,6 +7,11 @@ import ContactCard from '../Components/ContactCard'
 export interface ContactProps {}
 
 export default function Contact({}: ContactProps) {
+  useEffect(() => {
+    // @ts-ignore
+    window.BrevoConversations('openChat', true)
+  }, [])
+
   return (
     <Container maxWidth="md" sx={{ pt: 3 }}>
       <Toolbar />

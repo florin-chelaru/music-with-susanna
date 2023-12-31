@@ -21,15 +21,7 @@ const EN_US: ContactTexts = {
   title: 'CONTACT ME',
   content: (
     <>
-      Please send me a message or call me on{' '}
-      <Link
-        rel="noreferrer"
-        target="_blank"
-        href="https://wa.me/40724261320?text=Hello%2C%20I%20would%20like%20to%20find%20out%20more%20about%20the%20violin%2Fviola%20lessons.%20My%20name%20is"
-        sx={{ textDecoration: 'none' }}>
-        WhatsApp
-      </Link>
-      {', or '}
+      Please send me a message in the chat window, or{' '}
       <Link
         rel="noreferrer"
         target="_blank"
@@ -51,16 +43,8 @@ const RO_RO: ContactTexts = {
   title: 'CONTACTEAZĂ-MĂ',
   content: (
     <>
-      Dacă vrei să programezi o lecție de probă sau să întrebi ceva, îmi poți trimite un mesaj sau
-      poți suna pe{' '}
-      <Link
-        rel="noreferrer"
-        target="_blank"
-        href="https://wa.me/40724261320?text=Bun%C4%83%20ziua%2C%20a%C8%99%20vrea%20s%C4%83%20aflu%20detalii%20despre%20lec%C8%9Biile%20de%20vioar%C4%83%2Fviol%C4%83.%20Numele%20meu%20este%20"
-        sx={{ textDecoration: 'none' }}>
-        WhatsApp
-      </Link>
-      . Sau îmi poți scrie un email la{' '}
+      Dacă vrei să programezi o lecție de probă sau să întrebi ceva, îmi poți trimite un mesaj în
+      fereastra de chat. Sau îmi poți scrie un email la{' '}
       <Link
         rel="noreferrer"
         target="_blank"
