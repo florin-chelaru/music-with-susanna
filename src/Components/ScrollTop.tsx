@@ -5,7 +5,7 @@ import React, { useContext } from 'react'
 import { FabPosition, FabPositionContext } from '../store/FabPositionProvider'
 import { useUser } from '../store/UserProvider'
 
-const ScrollTop = () => {
+export default function ScrollTop() {
   const trigger = useScrollTrigger({
     target: window,
     disableHysteresis: true,
@@ -36,5 +36,3 @@ const ScrollTop = () => {
     </Zoom>
   )
 }
-
-export default ScrollTop
