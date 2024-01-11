@@ -7,7 +7,7 @@ import { useUser } from '../store/UserProvider'
 
 interface FabCreateProps extends FabProps {}
 
-const FabCreate = (props: FabCreateProps) => {
+export default function FabCreate(props: FabCreateProps) {
   const trigger = useScrollTrigger({
     target: window,
     disableHysteresis: true,
@@ -34,5 +34,3 @@ const FabCreate = (props: FabCreateProps) => {
     </Zoom>
   )
 }
-
-export default FabCreate

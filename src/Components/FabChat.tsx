@@ -10,7 +10,7 @@ interface FabChatProps extends FabProps {}
 
 const pathsWithoutChat = ['/students']
 
-const FabChat = (props: FabChatProps) => {
+export default function FabChat(props: FabChatProps) {
   const location = useLocation()
   const { user } = useUser()
 
@@ -39,5 +39,3 @@ const FabChat = (props: FabChatProps) => {
     </Zoom>
   )
 }
-
-export default FabChat
