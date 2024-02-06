@@ -7,11 +7,6 @@ import ContactCard from '../Components/ContactCard'
 export interface ContactProps {}
 
 export default function Contact({}: ContactProps) {
-  useEffect(() => {
-    // @ts-ignore
-    window.BrevoConversations('openChat', true)
-  }, [])
-
   return (
     <Container maxWidth="md" sx={{ pt: 3 }}>
       <Toolbar />

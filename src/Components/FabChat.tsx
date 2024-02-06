@@ -26,8 +26,6 @@ export default function FabChat(props: FabChatProps) {
         role="presentation"
         sx={{
           position: 'fixed',
-          // bottom: 32,
-          // right: 32,
           zIndex: 1,
           display: hide ? 'none' : 'block',
           ...fabPosition
