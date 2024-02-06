@@ -5,7 +5,6 @@ import 'react-quill/dist/quill.snow.css'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import './App.css'
 import DrawerAppBar from './Components/DrawerAppBar'
-import FabChat from './Components/FabChat'
 import LocalizedCookieConsent from './Components/LocalizedCookieConsent'
 import ScrollTop from './Components/ScrollTop'
 import Seo from './Components/Seo'
@@ -65,11 +64,6 @@ function App() {
                     </Grid2>
                   </Grid2>
                   <ScrollTop />
-                  <FabChat
-                    className="custom-chat-button"
-                    // @ts-ignore
-                    onClick={() => BrevoConversations('openChat', true)}
-                  />
                 </FabPositionProvider>
               </AnnouncementProvider>
             </UserProvider>
