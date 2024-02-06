@@ -1,0 +1,761 @@
+{
+  "deleted": {
+    "homework": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+          "students": {
+            "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+              "356717f5-6e98-4d66-8dd9-46639bfeca40": {
+                "createdAt": "2023-10-26T17:50:35.878Z",
+                "deletedAt": "2023-10-26T17:50:42.387Z",
+                "editContent": "<h1>Titlu</h1><p>Introdu aici notițele...</p>",
+                "id": "356717f5-6e98-4d66-8dd9-46639bfeca40",
+                "status": "editing",
+                "updatedAt": "2023-10-26T17:50:42.387Z"
+              },
+              "bf497c27-44d0-46ae-9107-ecceadf2ef99": {
+                "content": "",
+                "createdAt": "2023-11-16T14:20:09.558Z",
+                "deletedAt": "2023-11-25T15:36:20.161Z",
+                "editContent": "<h1>Titlu</h1><p>Introdu aici notițele...</p>",
+                "id": "bf497c27-44d0-46ae-9107-ecceadf2ef99",
+                "status": "editing",
+                "title": "",
+                "updatedAt": "2023-11-25T15:36:20.161Z"
+              }
+            },
+            "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
+              "f3776075-e9fc-4b8b-af97-0bdd528a5256": {
+                "createdAt": "2024-01-18T13:12:11.434Z",
+                "deletedAt": "2024-01-18T13:12:18.464Z",
+                "editContent": "<h1>Titlu</h1><p>Introdu aici notițele...</p>",
+                "id": "f3776075-e9fc-4b8b-af97-0bdd528a5256",
+                "status": "editing",
+                "updatedAt": "2024-01-18T13:12:18.464Z"
+              }
+            },
+            "Vtym55Irg2TdSLnKZpxqIP9vtVt2": {
+              "80075fea-9c22-433c-aeed-bc95e070c296": {
+                "createdAt": "2023-12-09T09:44:12.322Z",
+                "deletedAt": "2023-12-09T09:44:24.273Z",
+                "editContent": "<h1>Titlu</h1><p>Introdu aici notițele...</p>",
+                "id": "80075fea-9c22-433c-aeed-bc95e070c296",
+                "status": "editing",
+                "updatedAt": "2023-12-09T09:44:24.273Z"
+              }
+            }
+          }
+        },
+        "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": {
+          "students": {
+            "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+              "a18b48a4-0c83-49d8-9ea9-c99db3557f21": {
+                "content": "<p>Introdu aici notițele...</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://studio.code.org/projects/spritelab/Vc7fXLcYXKXZrvRuiEn6MDGDpKREl3ZsEicruqZlZMs/embed\"></iframe><p><br></p>",
+                "createdAt": "2023-11-26T00:15:22.463Z",
+                "deletedAt": "2024-01-11T15:46:02.502Z",
+                "editContent": "",
+                "id": "a18b48a4-0c83-49d8-9ea9-c99db3557f21",
+                "status": "published",
+                "title": "Titlu",
+                "updatedAt": "2024-01-11T15:46:02.502Z"
+              },
+              "e49b1533-8a4b-4485-adcc-abe1775f49f8": {
+                "content": "<iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://calendar.google.com/calendar/appointments/schedules/AcZssZ2A49opN2Z4NLQT5yYezwGH_bytR5K-akJPRGmbvxQu9gpR71_AaelvwDbleT3k80ibwbZImfbF?gv=true\"></iframe><h1>Titlu</h1><p>Introdu aici notițele...</p>",
+                "createdAt": "2023-12-30T01:13:09.606Z",
+                "deletedAt": "2024-01-11T15:45:43.600Z",
+                "editContent": "",
+                "id": "e49b1533-8a4b-4485-adcc-abe1775f49f8",
+                "status": "published",
+                "title": "Untitled",
+                "updatedAt": "2024-01-11T15:45:43.600Z"
+              }
+            },
+            "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
+              "8b2792dd-1826-4083-b764-3ffae2c980e2": {
+                "createdAt": "2023-11-16T13:44:10.418Z",
+                "deletedAt": "2023-11-16T13:44:28.819Z",
+                "editContent": "<h1>Title</h1><p>Write your notes here...</p>",
+                "id": "8b2792dd-1826-4083-b764-3ffae2c980e2",
+                "status": "editing",
+                "updatedAt": "2023-11-16T13:44:28.819Z"
+              },
+              "c962884e-3d4f-4a3c-9190-842b0d97284f": {
+                "content": "",
+                "createdAt": "2023-11-29T23:19:41.785Z",
+                "deletedAt": "2023-11-30T13:21:02.356Z",
+                "editContent": "<h1>Concepte noi: Sprites (Spiriduși)</h1><h2>Materiale de curs</h2><ul><li><a href=\"https://studio.code.org/s/coursef-2023\" rel=\"noopener noreferrer\" target=\"_blank\">Sprite Lab</a></li><li><a href=\"https://docs.google.com/presentation/d/1xZxFMLB1qqUcs-nsW03Uh85kk_qGBnpitYn5qig-UVA/edit?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Slides</a></li></ul><p><br></p><h2>Introducing Sprites Lab. What is a sprite.</h2><p><a href=\"https://studio.code.org/s/coursef-2023/lessons/2\" rel=\"noopener noreferrer\" target=\"_blank\">Lesson plan</a></p><p><br></p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FRCheQ0PFIGg9ePXlsSCLJBJmCrG3%2Ffiles%2F640px-Tinker_Bell_KHBBS_gCAdWjkZcR.webp?alt=media&amp;token=9be4cf51-f624-4aa4-9732-f1964ac68c2e\" width=\"203\"><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FRCheQ0PFIGg9ePXlsSCLJBJmCrG3%2Ffiles%2FTinker_bell2-removebg-preview_IdcAM63W5V.webp?alt=media&amp;token=0539aeea-a702-496a-acc1-114281bb1643\" width=\"null\"><p><br></p><p><br></p><h3>Introducing sprites</h3><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/yd-9xZ275dM?showinfo=0\"></iframe><p><br></p><h3>What is a sprite</h3><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/presentation/d/e/2PACX-1vQJU9d0bY3jHqSX5yM2NvQ8hPDBpvgYTcRkAI88gm4ztKjF7_WzUzA-MGEQP89t5hlw7wf9P3sekO-b/embed?start=false&amp;loop=false&amp;delayms=3000#slide=id.g1025c1b7fb3_0_110\"></iframe><p><br></p><h3>Sample apps</h3><ul><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/2/levels/2/sublevel/1\" rel=\"noopener noreferrer\" target=\"_blank\">Virtual pet</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/2/levels/2/sublevel/2\" rel=\"noopener noreferrer\" target=\"_blank\">Collector game</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/2/levels/2\" rel=\"noopener noreferrer\" target=\"_blank\">Others</a></li></ul><p><br></p><h2>Making sprites</h2><p><a href=\"https://studio.code.org/s/coursef-2023/lessons/3\" rel=\"noopener noreferrer\" target=\"_blank\">Lesson plan</a></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/presentation/d/e/2PACX-1vQJU9d0bY3jHqSX5yM2NvQ8hPDBpvgYTcRkAI88gm4ztKjF7_WzUzA-MGEQP89t5hlw7wf9P3sekO-b/embed?start=false&amp;loop=false&amp;delayms=3000#slide=id.g1025c1b7fb3_0_283\"></iframe><p><br></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">Reflect:</strong><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">&nbsp;What is the same or different about our instructions and </span><a href=\"https://studio.code.org/projects/spritelab/i1-YKJAmtlLMi54FJRIVNnWR_yLy-xRpmUAKcIAlaa0/embed_app_and_code\" rel=\"noopener noreferrer\" target=\"_blank\" style=\"color: rgb(0, 173, 188); background-color: transparent;\">this code</a><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">?</span></p><p><br></p><h3>How to create a sprite</h3><p><br></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">Vocabulary</strong></p><ul><li>Algorithm - A list of steps to complete a task.</li><li>Behavior - An action in Sprite Lab that a sprite performs continuously until it’s told to stop.</li><li>Program - An algorithm that has been coded into something that can be run by a machine.</li><li>Sprite - A graphic on the screen with a location, size, and appearance.</li></ul><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/wbTJpx3driA?showinfo=0\"></iframe><p><br></p><h3>Prediction</h3><ul><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/1?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">What will the plane do?</a></li></ul><p><br></p><h3>Activities</h3><ul><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/3?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Making our first sprite</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/4?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Positioning sprites</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/5?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Choose costumes</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/6?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Sprite properties</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/7?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Behaviors</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/8?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Practice</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/9?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Free play</a></li></ul><p><br></p><h2>Sprites in action. Events</h2><p><a href=\"https://studio.code.org/s/coursef-2023/lessons/4\" rel=\"noopener noreferrer\" target=\"_blank\">Lesson plan</a></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/_RxDeRPwJ-g?showinfo=0\"></iframe><p><br></p><h3>What are events</h3><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/presentation/d/e/2PACX-1vQJU9d0bY3jHqSX5yM2NvQ8hPDBpvgYTcRkAI88gm4ztKjF7_WzUzA-MGEQP89t5hlw7wf9P3sekO-b/embed?start=false&amp;loop=false&amp;delayms=3000#slide=id.g1025c1b7fb3_0_582\"></iframe><h3><br></h3><h3>Activities</h3><ul><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/1?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Prediction</a></li><li><a href=\"https://videos.code.org/levelbuilder/video-1-sprites-in-action_v2_small_20mb-mp4-mp4.mp4\" rel=\"noopener noreferrer\" target=\"_blank\">Video</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/3?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Make a sprite</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/4?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Time events</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/5?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Keyboard events</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/6?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Switching behaviors</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/8?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Events practice</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/9?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Events free play</a></li></ul><p><br></p><p><a href=\"https://studio.code.org/teacher_dashboard/sections/4879220/login_info\" rel=\"noopener noreferrer\" target=\"_blank\">Code.org Login Info</a></p><p><br></p><p>Section name:&nbsp;<strong>Lecții de Informatică cu Tudor</strong></p><p>1.) Go to&nbsp;<a href=\"https://studio.code.org/sections/NBWTJJ\" rel=\"noopener noreferrer\" target=\"_blank\" style=\"color: rgb(150, 96, 191); background-color: transparent;\"><strong>https://studio.code.org/sections/NBWTJJ</strong></a>&nbsp;or to&nbsp;<a href=\"https://studio.code.org/join\" rel=\"noopener noreferrer\" target=\"_blank\" style=\"color: rgb(150, 96, 191); background-color: transparent;\"><strong>https://studio.code.org/join</strong></a>&nbsp;and type in your 6-letter section code:&nbsp;<strong>NBWTJJ</strong></p><p>2.) Choose your name:&nbsp;<strong>Tudor</strong></p><p><span style=\"color: rgb(105, 105, 105);\">3.) Choose your secret picture:</span></p><img src=\"https://code.org/images/password_images/alien_thumb@2x.png\" width=\"null\"><p><br></p><p><br></p><p>4.) Click the sign in button.</p>",
+                "id": "c962884e-3d4f-4a3c-9190-842b0d97284f",
+                "status": "editing",
+                "title": "",
+                "updatedAt": "2023-11-30T13:21:02.356Z"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "homework": {
+    "teachers": {
+      "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+        "drafts": {
+          "students": {
+            "Vtym55Irg2TdSLnKZpxqIP9vtVt2": {
+              "f2f339fa-ffa3-4f4b-aff0-1c9adfe870b8": {
+                "createdAt": "2023-12-09T09:40:43.476Z",
+                "editContent": "<h1>Titlu</h1><p>Introdu aici notițele...</p>",
+                "id": "f2f339fa-ffa3-4f4b-aff0-1c9adfe870b8",
+                "status": "editing",
+                "updatedAt": "2023-12-09T09:40:43.476Z"
+              }
+            }
+          }
+        },
+        "students": {
+          "6kGbjPdHmTcVufRJpULR9r3yjm32": {
+            "33c183bd-b14a-4164-b93f-33e248ec0cdb": {
+              "content": "<p>Încercăm să avem o vioară de masă- adică o vioară plată. Și punem vioară <strong>pe umăr-</strong> nu vrem o vioară barbă (adică în fată- mai este de o parte!).</p><p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FScreen%20Shot%202024-01-13%20at%2012.46.49%20PM_06USkhBhFp.png?alt=media&amp;token=64b02853-c4f9-4055-9163-6e599570b767\"></p><h2><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FScreen%20Shot%202024-01-13%20at%2012.46.36%20PM_WL7LMPxkWm.png?alt=media&amp;token=e45ce4c9-4277-4dcd-ac8f-c1289746e2f8\"></h2><h2>Twinkle Surfing:</h2><p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FScreen%20Shot%202024-01-06%20at%2011.49.49%20AM_xyWx5qCAF1.png?alt=media&amp;token=20083566-f3be-4146-87e3-d00c0b5d2d68\"></p><h2>Twinkle Scuba:</h2><p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FScreen%20Shot%202024-01-13%20at%2012.25.30%20PM_8O9hHLo1gj.png?alt=media&amp;token=b60f8c8d-4f8a-4de2-a43d-1fe72e0995e5\"></p>",
+              "createdAt": "2024-01-13T10:24:35.843Z",
+              "editContent": "",
+              "id": "33c183bd-b14a-4164-b93f-33e248ec0cdb",
+              "status": "published",
+              "title": "Twinkle Surfing & Scuba",
+              "updatedAt": "2024-01-13T10:49:14.724Z"
+            },
+            "53e2a458-c5dd-476f-b60a-2aec6310070e": {
+              "content": "<p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FScreen%20Shot%202024-01-27%20at%2012.28.07%20PM_vppi4nZ7aJ.png?alt=media&amp;token=a4449781-979e-4440-a410-0b6ac34803fd\"></p>",
+              "createdAt": "2024-01-27T10:28:26.718Z",
+              "editContent": "",
+              "id": "53e2a458-c5dd-476f-b60a-2aec6310070e",
+              "status": "published",
+              "title": "Twinkle Întreg",
+              "updatedAt": "2024-01-27T10:29:07.963Z"
+            },
+            "7da48f6c-a5af-4b85-afdc-b47b285909bf": {
+              "content": "<p>1. Monkey Song- degetele aproapre la coardă- cântă cu voce mai întâi și după la vioară</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FSeeALittleMonkey%201_8FO7xEzBHN.mp3?alt=media&amp;token=55a7b09a-3bc0-467e-9e61-6cb1b7067bd2\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FSeeALittleMonkey%201_8FO7xEzBHN.mp3?alt=media&amp;token=55a7b09a-3bc0-467e-9e61-6cb1b7067bd2\">download audio</a></audio><p><br></p><img src=\"https://lh7-us.googleusercontent.com/Pj5yRZMFLXIzr4dpdViZsyDNCGmeodSmjTepYWvheTKsxRNiE4QB7U3VTiN0iFhRO1TOy-NKUzjQ_eR_DP2KnYmlPfRIJ00xGBDdNJMsOA5i9f8SouWVfM2c-Mar6E91HtgNI_77CfToB2Y2s0W11V4\" width=\"null\"><p><br></p><p>2. UFO Song (Twinkle Plop)- cu bârlogul vulpii deschis! Degetele puternic și pe stickere!!</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F08%20UFO%20Exercise%20starting%20on%20E_HIIqjecuVG.mp3?alt=media&amp;token=0970ab08-1699-4a9f-8ede-ed43bf88dcf5\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F08%20UFO%20Exercise%20starting%20on%20E_HIIqjecuVG.mp3?alt=media&amp;token=0970ab08-1699-4a9f-8ede-ed43bf88dcf5\">download audio</a></audio><p><br></p><img src=\"https://lh7-us.googleusercontent.com/KzVhTJBVUpkuSPchvVdJoRIx28fg85Tuc1_82HZnnn_kqXseu1kngdmlbSVcwDP26nPSOgtjFPtVSEKRZUE46A-LNjN8nkRuhg5fVkKRf96qL0AHFVmo_bo6AVq9oZI4EjfVKq1BAQGjBCzHe9y7Sbs\" width=\"null\"><p>3. Paganini- fără vecinii zgomotoși</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F56%20Paganini!_1k92rOO6Ww.mp3?alt=media&amp;token=316457b9-5af4-4a56-a175-a35a8f71b5be\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F56%20Paganini!_1k92rOO6Ww.mp3?alt=media&amp;token=316457b9-5af4-4a56-a175-a35a8f71b5be\">download audio</a></audio><p><br></p><img src=\"https://lh7-us.googleusercontent.com/qfue1rrSe0GuFh56xYrTjupqLJn71pN19qnJo3VHn79bXaKPWBkZOirBKSQ-DMghQE_3xzrHcHHVlc2J2wQCKfPg5Z9qgjIxF1aNVybqgQIUT1WKomXQchslAc7lFjPDML3xFb_RTf4fARO1YjnTzSQ\" width=\"null\"><p>4. Twinkle Surf &amp; Scuba Dance- încearcă să cânți <strong>la</strong> și <strong>mi </strong>cu voce și după la vioară!</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/NU23GiABzbw?showinfo=0\"></iframe><p><br></p><p>5. Fourth Finger Workout- în poziție înaltă (deasupra pisica)</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F37%20Chinese%20Festival_56AEFw3y1J.mp3?alt=media&amp;token=3ca51782-4b50-4b71-b60e-21716df54c4b\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F37%20Chinese%20Festival_56AEFw3y1J.mp3?alt=media&amp;token=3ca51782-4b50-4b71-b60e-21716df54c4b\">download audio</a></audio><p><br></p><img src=\"https://lh7-us.googleusercontent.com/KB71nm4b6bIqPvKeQ2WHbHksw2_pLHRnGQU3ooC8qC0c3JDE4RsRCg_v21K65RzawYZIK7focA1XJZ47MntJCwFktPBiJSFlDsemlBQv6zNzHyHKWwo_9ZPwxSxP208BG74zv4bhQOhOeR_QVdmarVE\" width=\"null\"><p>6. Gama La Major- fi atent degetele pe coarda mi</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F28%20The%20A%20Major%20Scale%20With%20Rests_xJIOb5hEPU.mp3?alt=media&amp;token=a6c85240-4013-4836-a2ee-dde0a46606b0\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F28%20The%20A%20Major%20Scale%20With%20Rests_xJIOb5hEPU.mp3?alt=media&amp;token=a6c85240-4013-4836-a2ee-dde0a46606b0\">download audio</a></audio><p><br></p><img src=\"https://lh7-us.googleusercontent.com/VAtJrk07dIHDt-C3bVrqYgUUlNIa_aQf8es50L7C7aXpr87tVmHD78QIeSq8h1mgqda6-aap-05eKz0ouMBa4KZqzOHmnkYabU5oj5vq1O_qpBgodt8UND57hbbW6cmcIlTj25p2Wn3pQhhOizPG6nE\" width=\"null\"><p><br></p><p>7. See the Pretty Flowers- folosim tot părul arcușului</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FSee%20the%20pretty%20flowers_RzAxzleVvN.WAV?alt=media&amp;token=06234340-15d9-4d8d-9924-b9baa036eb14\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FSee%20the%20pretty%20flowers_RzAxzleVvN.WAV?alt=media&amp;token=06234340-15d9-4d8d-9924-b9baa036eb14\">download audio</a></audio><p><br></p><img src=\"https://lh7-us.googleusercontent.com/iF8JSMLQEQinByJ53VB9Vjl8z_QNVta6jr8R7kPYJEBEXJvbckZjrRHooY-V3K3KNQdp3zL3evrKATYQ2cmfJnVH3cdXp_TG9j_k-HoMLpvBw_8G80TcyFURnEz-2cT7W8qRpL550mQ49bWsGNUzw8c\" width=\"null\"><h3>8. Ritmul pe 3 Degete</h3><p>Pizzicato și cu arcuș. Degetele PUTERNICE pentru sunetul PUTERNIC!</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F06%20Rhythm%20With%20Three%20Fingers%20(Bowed)_8t0pqqvVIG.mp3?alt=media&amp;token=e9b5e5ad-8c83-4b2f-a772-67a7a6ca1479\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F06%20Rhythm%20With%20Three%20Fingers%20(Bowed)_8t0pqqvVIG.mp3?alt=media&amp;token=e9b5e5ad-8c83-4b2f-a772-67a7a6ca1479\">download audio</a></audio><p><br></p><img src=\"https://lh7-us.googleusercontent.com/IVtnRYOgxPFS7keQBLXygcv9e91vdPLMDYT0GoTmz7OsxVbAbUVkqieOryqoqaoiVmIOwGTuZcOygNSDdH4GmFoLBJHW9EJvCD_ZpjrGwMXe6j6Uejnj5pe6nC7LkOj3xXaX2Q2uZxA1T78ZSClpZeI\" width=\"null\"><p>9. Twinkle Surfing</p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FScreen%20Shot%202023-12-09%20at%201.19.22%20PM_AkvFqAdchR.png?alt=media&amp;token=dea4241c-f156-4b47-ba90-5c22b8e2116c\" width=\"null\"><p><br></p>",
+              "createdAt": "2023-12-02T10:40:15.733Z",
+              "editContent": "",
+              "id": "7da48f6c-a5af-4b85-afdc-b47b285909bf",
+              "status": "published",
+              "title": "Pre-Twinkle: resursa cântecului",
+              "updatedAt": "2023-12-09T11:23:23.336Z"
+            },
+            "ab46e91a-1300-42a4-af1c-f24463016e9d": {
+              "content": "<h3><strong>1. Ritmul pe 3 Degete</strong></h3><p>Pizzicato și cu arcuș. Degetele PUTERNICE pentru sunetul PUTERNIC!</p><img src=\"https://lh7-us.googleusercontent.com/IVtnRYOgxPFS7keQBLXygcv9e91vdPLMDYT0GoTmz7OsxVbAbUVkqieOryqoqaoiVmIOwGTuZcOygNSDdH4GmFoLBJHW9EJvCD_ZpjrGwMXe6j6Uejnj5pe6nC7LkOj3xXaX2Q2uZxA1T78ZSClpZeI\" width=\"415\"><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F06%20Rhythm%20With%20Three%20Fingers%20(Bowed)_8ftWvC0330.mp3?alt=media&amp;token=e24034aa-2fa3-4b8d-8e40-62aae796a641\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F06%20Rhythm%20With%20Three%20Fingers%20(Bowed)_8ftWvC0330.mp3?alt=media&amp;token=e24034aa-2fa3-4b8d-8e40-62aae796a641\">download audio</a></audio><h3><br></h3><h3><strong>2. UFO Song (Twinkle Plop)&nbsp;</strong></h3><p>Pune toate degete același timp- fi atent ca sunt pe stickere ȘI puternic ȘI încheiatură drept</p><img src=\"https://lh7-us.googleusercontent.com/KzVhTJBVUpkuSPchvVdJoRIx28fg85Tuc1_82HZnnn_kqXseu1kngdmlbSVcwDP26nPSOgtjFPtVSEKRZUE46A-LNjN8nkRuhg5fVkKRf96qL0AHFVmo_bo6AVq9oZI4EjfVKq1BAQGjBCzHe9y7Sbs\" width=\"422\"><p><br></p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F08%20UFO%20Exercise%20starting%20on%20E_tSBrqxOQnF.mp3?alt=media&amp;token=2b71a850-9533-47fe-8fa7-2248fc007ee3\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F08%20UFO%20Exercise%20starting%20on%20E_tSBrqxOQnF.mp3?alt=media&amp;token=2b71a850-9533-47fe-8fa7-2248fc007ee3\">download audio</a></audio><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/P4Fjrq8ChiA?showinfo=0\"></iframe><p><br></p><h3><strong>3. Gama La Major</strong></h3><p>Încheiatură drept, degetele puternic</p><img src=\"https://lh7-us.googleusercontent.com/VAtJrk07dIHDt-C3bVrqYgUUlNIa_aQf8es50L7C7aXpr87tVmHD78QIeSq8h1mgqda6-aap-05eKz0ouMBa4KZqzOHmnkYabU5oj5vq1O_qpBgodt8UND57hbbW6cmcIlTj25p2Wn3pQhhOizPG6nE\" width=\"579\"><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F28%20The%20A%20Major%20Scale%20With%20Rests_jH7UkQRGIY.mp3?alt=media&amp;token=9bb9b004-af5a-4a7e-99b6-7fff58b5eac6\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F28%20The%20A%20Major%20Scale%20With%20Rests_jH7UkQRGIY.mp3?alt=media&amp;token=9bb9b004-af5a-4a7e-99b6-7fff58b5eac6\">download audio</a></audio><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/UebVUzJfP3M?showinfo=0\"></iframe><p><br></p><h3><strong>4. Fourth Finger Workout</strong></h3><p>Încearcă să aiba încheiatura drept</p><img src=\"https://lh7-us.googleusercontent.com/KB71nm4b6bIqPvKeQ2WHbHksw2_pLHRnGQU3ooC8qC0c3JDE4RsRCg_v21K65RzawYZIK7focA1XJZ47MntJCwFktPBiJSFlDsemlBQv6zNzHyHKWwo_9ZPwxSxP208BG74zv4bhQOhOeR_QVdmarVE\" width=\"444\"><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F37%20Chinese%20Festival_lra9H4lzKj.mp3?alt=media&amp;token=e69f219e-e703-4119-90a5-75c5309bc72b\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F37%20Chinese%20Festival_lra9H4lzKj.mp3?alt=media&amp;token=e69f219e-e703-4119-90a5-75c5309bc72b\">download audio</a></audio><p><br></p><h3><strong>5. See the Pretty Flowers</strong></h3><p>Ține vioară bine cu capul!</p><img src=\"https://lh7-us.googleusercontent.com/iF8JSMLQEQinByJ53VB9Vjl8z_QNVta6jr8R7kPYJEBEXJvbckZjrRHooY-V3K3KNQdp3zL3evrKATYQ2cmfJnVH3cdXp_TG9j_k-HoMLpvBw_8G80TcyFURnEz-2cT7W8qRpL550mQ49bWsGNUzw8c\" width=\"460\"><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FSee%20the%20pretty%20flowers_NwWczOQ820.WAV?alt=media&amp;token=35ca7355-9a76-4164-a63a-c2a6d6f3c839\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FSee%20the%20pretty%20flowers_NwWczOQ820.WAV?alt=media&amp;token=35ca7355-9a76-4164-a63a-c2a6d6f3c839\">download audio</a></audio><p><br></p><h3><strong>6. Monkey Song</strong></h3><p>Pizz și cu arcuș- degetele puternice! Fără vecinii zgomotoși!</p><img src=\"https://lh7-us.googleusercontent.com/Pj5yRZMFLXIzr4dpdViZsyDNCGmeodSmjTepYWvheTKsxRNiE4QB7U3VTiN0iFhRO1TOy-NKUzjQ_eR_DP2KnYmlPfRIJ00xGBDdNJMsOA5i9f8SouWVfM2c-Mar6E91HtgNI_77CfToB2Y2s0W11V4\" width=\"470\"><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FSeeALittleMonkey%201_zeJUI4WkiF.mp3?alt=media&amp;token=69a2ba49-9ad9-4dd7-bca6-b288a6582853\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FSeeALittleMonkey%201_zeJUI4WkiF.mp3?alt=media&amp;token=69a2ba49-9ad9-4dd7-bca6-b288a6582853\">download audio</a></audio><p><br></p><h3><strong>7. Paganini!</strong></h3><p>Fără vecinii zgomotoși!</p><img src=\"https://lh7-us.googleusercontent.com/qfue1rrSe0GuFh56xYrTjupqLJn71pN19qnJo3VHn79bXaKPWBkZOirBKSQ-DMghQE_3xzrHcHHVlc2J2wQCKfPg5Z9qgjIxF1aNVybqgQIUT1WKomXQchslAc7lFjPDML3xFb_RTf4fARO1YjnTzSQ\" width=\"498\"><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F56%20Paganini!_XLQol2EV8Q.mp3?alt=media&amp;token=23d2e6ac-22ff-4dfc-b9e4-e5b60ee2ee84\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F56%20Paganini!_XLQol2EV8Q.mp3?alt=media&amp;token=23d2e6ac-22ff-4dfc-b9e4-e5b60ee2ee84\">download audio</a></audio><p><br></p>",
+              "createdAt": "2023-11-25T10:57:05.949Z",
+              "editContent": "",
+              "id": "ab46e91a-1300-42a4-af1c-f24463016e9d",
+              "status": "published",
+              "title": "Tema Nov 25",
+              "updatedAt": "2023-11-25T11:22:37.480Z"
+            },
+            "df91bc38-bb4a-4e0b-bec2-4587a6233b5b": {
+              "content": "<p>Același note doar ritmul a schimbat! </p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F07%20Twinkle%20Down%20Grasshopper%20Twinkle%20SlowedTenPercent_XWbjwUMpEy.mp3?alt=media&amp;token=14740a61-ad12-46ce-a80f-563472348de1\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F07%20Twinkle%20Down%20Grasshopper%20Twinkle%20SlowedTenPercent_XWbjwUMpEy.mp3?alt=media&amp;token=14740a61-ad12-46ce-a80f-563472348de1\">download audio</a></audio><p><br></p>",
+              "createdAt": "2024-02-03T12:52:37.419Z",
+              "editContent": "",
+              "id": "df91bc38-bb4a-4e0b-bec2-4587a6233b5b",
+              "status": "published",
+              "title": "Twinkle Cinci Purici",
+              "updatedAt": "2024-02-03T12:53:51.757Z"
+            },
+            "f59996fc-f979-4a08-849e-eb4465d19ddb": {
+              "content": "<p><strong>1. Gama La Major</strong></p><p><strong>2. Ritmul pe 3 degete</strong></p><p>3. Monkey Song</p><p>4. Paganini</p><p><strong>5. UFO Twinkle Plop</strong>- degetele pregătit deasupră stickere!</p><p>6. See the Pretty Flowers</p><p>7. Twinkle Surf and Scuba Dance!</p><p>8. <strong>Twinkle Surfing- Cânta cu voce și încearcă la vioară</strong></p><p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FScreen%20Shot%202023-12-09%20at%201.19.22%20PM_O8UHDLNXOR.png?alt=media&amp;token=f6a2ba45-971d-4a34-806a-96a7481d11ed\"></p>",
+              "createdAt": "2023-12-09T11:06:34.030Z",
+              "editContent": "",
+              "id": "f59996fc-f979-4a08-849e-eb4465d19ddb",
+              "status": "published",
+              "title": "Tema Dec 9- în neagră piesele de înfocare",
+              "updatedAt": "2023-12-09T11:23:34.275Z"
+            }
+          },
+          "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+            "0b9b8571-75dd-4241-ab5e-c52cdebf1138": {
+              "content": "<p><br></p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F16983420847513448964790573530706_kBVTmjgyFU.jpg?alt=media&amp;token=5a8c61ce-454b-4224-9e67-8fef488e196b\" width=\"219\"><p><br></p>",
+              "createdAt": "2023-10-26T17:41:22.307Z",
+              "editContent": "",
+              "id": "0b9b8571-75dd-4241-ab5e-c52cdebf1138",
+              "status": "published",
+              "title": "Papi",
+              "updatedAt": "2023-10-28T15:02:57.303Z"
+            },
+            "0c5b33ea-415c-4ee0-ba4c-d561944ed2f7": {
+              "content": "<iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://calendar.google.com/calendar/appointments/schedules/AcZssZ1cudhVVqwVsNuCyC98FWbKxU9LxT__M18SUb3L5Oukb5aZpQ6vTAdUFOp03KWECckZyc7vM4XM?gv=true\"></iframe><p><br></p>",
+              "createdAt": "2023-12-09T09:08:36.501Z",
+              "editContent": "",
+              "id": "0c5b33ea-415c-4ee0-ba4c-d561944ed2f7",
+              "status": "published",
+              "title": "Schedule test",
+              "updatedAt": "2023-12-09T09:34:33.668Z"
+            },
+            "64bfdc59-f90a-488e-8d19-549a60638a62": {
+              "content": "<p><a href=\"https://jamboard.google.com/d/1V1Iv-4wjnrxbMyV2DqTPhvDspi6zrezQfawMfbAoLMQ/edit?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Note-Reading Worksheet-</a> go through every page!</p><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/presentation/d/1HjzaMJrPGImPBubqu19JSenvnwkT1YkP_k8yNP-kCtE/edit?usp=sharing&amp;rm=minimal\"></iframe><p><br></p>",
+              "createdAt": "2023-11-24T15:35:54.840Z",
+              "editContent": "",
+              "id": "64bfdc59-f90a-488e-8d19-549a60638a62",
+              "status": "published",
+              "title": "Super hard homework for Florin",
+              "updatedAt": "2023-11-25T16:10:55.221Z"
+            },
+            "76873f7e-a1fe-4a12-a27a-5fedbd71808e": {
+              "content": "<p><br></p><p><br></p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FMannlicher_M1904_jaZ2B5sXOQ.png?alt=media&amp;token=4dc0b231-661e-4d7a-9787-ece250932c03\" width=\"221\" style=\"cursor: nwse-resize;\"><p><br></p><p><br></p><p><br></p><p>Nothing more to say about</p><p>Nothing more to say about that!</p><p><br></p><p>foo bar</p><p><br></p><p>Nu-i așa că e o scumpină?🤗❤️</p>",
+              "createdAt": "2023-10-26T16:08:30.476Z",
+              "editContent": "",
+              "id": "76873f7e-a1fe-4a12-a27a-5fedbd71808e",
+              "status": "published",
+              "title": "Paprika the lovely cat",
+              "updatedAt": "2023-10-28T15:03:07.072Z"
+            },
+            "809093a2-8f36-4290-af0e-d0ad071d1b60": {
+              "content": "<iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://calendar.google.com/calendar/embed?src=bridgebostonspecials%40gmail.com&amp;ctz=Europe%2FBucharest\"></iframe><p><br></p>",
+              "createdAt": "2023-12-09T09:49:08.379Z",
+              "editContent": "",
+              "id": "809093a2-8f36-4290-af0e-d0ad071d1b60",
+              "status": "published",
+              "title": "Calendar test",
+              "updatedAt": "2023-12-09T09:49:59.234Z"
+            },
+            "bdf51d65-b67f-4c4c-889a-6eff271ab42b": {
+              "content": "<p>Write your notes here...</p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2Fevelyn-small_uCOhH0FXNC.webp?alt=media&amp;token=4775f3cc-d77f-4de1-ac0f-fb124ba4ccb6\" width=\"563\"><p><br></p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2Fnatalia-large_Zd8tdMJGfx.jpeg?alt=media&amp;token=4c26279e-9f78-4a55-b7d8-fd62319370be\" width=\"504\" style=\"cursor: nesw-resize;\"><p><br></p>",
+              "createdAt": "2023-10-26T22:40:17.075Z",
+              "editContent": "",
+              "id": "bdf51d65-b67f-4c4c-889a-6eff271ab42b",
+              "status": "published",
+              "title": "Other title",
+              "updatedAt": "2023-10-28T15:02:45.732Z"
+            }
+          },
+          "LE4fJeEZgsdxBrLV9Zo5BTBr5wu1": {
+            "0479e1a8-a638-465a-88f5-2576b47f0e3e": {
+              "content": "<p>1. Cântecul corzilor cu triunghi x 3 ori</p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FScreen%20Shot%202023-11-17%20at%204.17.33%20PM_7NlPznnuZf.png?alt=media&amp;token=3856124c-9ea0-4331-9018-7c34d560e6e0\" width=\"278\"><p><br></p><p>2. 100 Pipers cu triunghi x 3 ori</p><img src=\"https://lh7-us.googleusercontent.com/fD0YjPXmEL5SJGWkXT9a01_WUa3YyL96a32q9kIz3OGmUZUq_WCF3yW02lynEmn9bSIZc1bc_mXFlLJLqHZ8aKE51Tt_PBZEW0xqdBaIJMPYDGMi95oQGr40hTPoD0yh8drwy48rmZAZIMrxnrB3x30\" width=\"280\"><p>3. Copycat Blues cu triunghi x 3 ori</p><img src=\"https://lh7-us.googleusercontent.com/NjIRpCob5dp3YGf-8gHRS-rONhoYikrU8JYRGiYuLEDWHUVBvYL0ZInggVODgH7obpCf3-hKbn_mLla_YU_jmxe2zExEBoppCzv2feEf4fEqDgr-C9EqRSht2GuvCbzbG_7UwTTDjlEKnx1ZNeKtDao\" width=\"170\"><p>4. Pune arcușul pe coardă mi la sticker FĂRĂ SUNET- și fă 'tap tap tap' cu fiecare deget</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/cQYYW_X79xo?showinfo=0\"></iframe><p><br></p><p><br></p><p>5. Mămăligă brânză pe coardă mi cu arcuș x 4 ori</p><img src=\"https://lh7-us.googleusercontent.com/WHajjyr4hTNBnUD0RP06ncZAl2r_eytaH9y15kBrGIa5ldtubDuMSl4Nx6LgLIEPizabTEubBeHGuvAi8F7691uc-FXncZca_hEkDfY71jpx7ElGNcjWnUgFiDU0f9Yu_VYaMtEK9eQKOkn4ydinfXA\" width=\"170\"><p><a href=\"https://drive.google.com/file/d/180NUZOl6GwWDyHMKZv94x0tf18kO4UJN/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Mămăligâ brânză pe coardă mi audio</a></p><p><br></p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F03%20Rhythm%20On%20E_eFeynucyxJ.mp3?alt=media&amp;token=4c3661b3-6b85-456b-b988-164c377df30b\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F03%20Rhythm%20On%20E_eFeynucyxJ.mp3?alt=media&amp;token=4c3661b3-6b85-456b-b988-164c377df30b\">download audio</a></audio><p><br></p><p><br></p><p>6. Concerto de mi- cânta cu voce și cânta la vioară cu arcuș (mămăligă brânză de 8 ori) x 4 ori</p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FScreen%20Shot%202023-11-17%20at%206.49.50%20PM_LYJgXmeJLb.png?alt=media&amp;token=653715fb-04dc-43b8-b0c5-3260c025eaaa\" width=\"236\"><p><br></p><p><a href=\"https://drive.google.com/file/d/1f_LcS3m49IjZzO5WT61MhAEbPPNjoAN8/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Concerto de mi audio</a></p><p><br></p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FMi%20Concerto%20Violin%20and%20Piano_wtvX2LsXlb.mp3?alt=media&amp;token=4cdcd2f5-d346-449c-9bc1-d7fed2ded9d8\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FMi%20Concerto%20Violin%20and%20Piano_wtvX2LsXlb.mp3?alt=media&amp;token=4cdcd2f5-d346-449c-9bc1-d7fed2ded9d8\">download audio</a></audio><p><br></p><p><br></p><p>7. Hoe-Down- cânta cu voce x 4 ori</p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FScreen%20Shot%202023-11-17%20at%206.51.53%20PM_BhvWVU8pNW.png?alt=media&amp;token=0285a8c2-7b33-4e7f-b255-c998d6424c9c\" width=\"null\"><p><br></p><p><a href=\"https://drive.google.com/file/d/1zOd4S7O37PjSkfgSKBQ78ZvViIuSTSPN/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Hoe-Down audio</a></p><p><br></p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FHoe%20Down_UeLzi1aK21.mp3?alt=media&amp;token=eb173172-88e9-43f3-80e9-b460c9befdb9\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FHoe%20Down_UeLzi1aK21.mp3?alt=media&amp;token=eb173172-88e9-43f3-80e9-b460c9befdb9\">download audio</a></audio><p><br></p>",
+              "createdAt": "2023-11-17T14:11:52.883Z",
+              "editContent": "",
+              "id": "0479e1a8-a638-465a-88f5-2576b47f0e3e",
+              "status": "published",
+              "title": "Tema Nov 17",
+              "updatedAt": "2023-11-23T19:57:06.128Z"
+            },
+            "dd646489-a26c-404d-9e34-e30e14e09718": {
+              "content": "<p>1. Ține vioară 1 minut în prima poziție SAU în poziție a două (prima zi fă una, altă zi fă altă)</p><img src=\"https://lh7-us.googleusercontent.com/9gtUAIdneOb_g6iqJPIvn5cSIKAB4Z68HkA6ZHuGKOeTrnXLB3rh98l5KQEZfaizwE9214FLiHBglyq1TTFOdIeVBWDNLfmH89lCbId2xgU7NQl187lRoTyS1hMHZsQAQmGUL0w8lNfCTgFNxax81NoVyw=s2048\" width=\"169px;\"><img src=\"https://lh7-us.googleusercontent.com/RHvd4kIVzWBJajRUEmv9D3N60YMjh9KzTbV7-7ANhh1O-Jy8nmnPa3bNoYMJFXXeD3UsFD8BO6uD9mx5MdVuE3QpVLhgaCt6GqutuMRkj_yZsjM8sXBr8BzgIAbq8yJCcQCxcGNKxjbWg0AvynfchdMXhw=s2048\" width=\"170\"><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/CH50zuS8DD0?showinfo=0\"></iframe><p><br></p><p>2. Cântecul corzilor pizzicato și după <strong>cu arcuș (arco!). </strong>Nu uita de cerc cu arcuș!</p><p><br></p><p>3. 100 Pipers pizzicato</p><img src=\"https://lh7-us.googleusercontent.com/vGVwuKlcbD9aZzExVmX916Y235MI3trE1qOvXmMgDNnndeSYcNWpq80vhGVXpRSmON8Tqh1JXbysQi75aRDlWXbxlQ2UNYFcTo_tE1g9F8GsvKpkwgsOqx0YwiQR9zeG8rnnpR01_xw2rHGFlxhbl1U\" width=\"331\"><p><br></p><p>4. Copycat Blues pizzicato</p><img src=\"https://lh7-us.googleusercontent.com/mTUKJfjM5ethVHMWZpRQ50r0JZGR8HcScXYbwt8jS8EzIGbMLE5TVu4OmHDiFAgamTJ2Hc56ZkA_ipwJbKN5_2Y9VPx-J_rn4YUQ1yJuPd2JvIENkSpFYoYfGT9Cymxsp82Ldki0WyJDXgp4gIhUDdw\" width=\"170\"><p><br></p><p>5. Ținerea arcușului cu <a href=\"https://g.co/kgs/4eAek3\" rel=\"noopener noreferrer\" target=\"_blank\">zărul (link la un zăr online) </a></p><img src=\"https://lh7-us.googleusercontent.com/uG1HgZu57GtYK8VDpDb849eGKJ1ThdRYmXJ-DSuQXn9IWBBfjqe53PdCLV8OVOMzwZqO6TDW43FcR5gj7V_BjMj15uHrFNE5hxcWiG0iGDExuqHYWOF-Dh7kVUSXjHLxe1uStrZCNBldoQxox8kGrc0\" width=\"141\"><p><br></p><p>6. Mămăligă brânză pe coardă mi - <strong>pune arcușul la sticker fără sunet- și muta la alte corzi fără a scoate un sunet!</strong></p><img src=\"https://lh7-us.googleusercontent.com/5v0CEsosxHXr-m5Y_G4uyz85jmIMcfrAeSk3qgb-2GngnhlWCoGzOeq9OL_x2dulSKQ9nBB55jqtCwHut1P4njUO0ZwVXc9qJg5nHy4sZZcDOeeFmxLH6jTuQ1sjTXBDqsTfgmYleNvyk7ho7kAKLjM\" width=\"272\"><p><strong>﻿</strong></p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F03%20Rhythm%20On%20E_EuhDmYoHMn.mp3?alt=media&amp;token=5831fb86-2d4d-41fb-b5eb-a24a12f64da5\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F03%20Rhythm%20On%20E_EuhDmYoHMn.mp3?alt=media&amp;token=5831fb86-2d4d-41fb-b5eb-a24a12f64da5\">download audio</a></audio><p>7. Concerto de mi</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FMi%20Concerto%20Violin%20and%20Piano_QkN3yNdwTo.mp3?alt=media&amp;token=16700894-38fd-49b3-a19f-34b4017258e2\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FMi%20Concerto%20Violin%20and%20Piano_QkN3yNdwTo.mp3?alt=media&amp;token=16700894-38fd-49b3-a19f-34b4017258e2\">download audio</a></audio><p>8. Hoe-Down pizzicato</p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FScreen%20Shot%202023-11-17%20at%206.51.53%20PM_P3P0BQ7Zqg.png?alt=media&amp;token=f81b70e6-eb95-4a43-844d-fcb8b3bb06c2\" width=\"null\"><p><br></p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FHoe%20Down_Wqi7OqUS9T.mp3?alt=media&amp;token=6a0ecbe3-1afa-47ef-bd14-73eb1851cb18\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FHoe%20Down_Wqi7OqUS9T.mp3?alt=media&amp;token=6a0ecbe3-1afa-47ef-bd14-73eb1851cb18\">download audio</a></audio><p><br></p>",
+              "createdAt": "2023-12-01T08:52:45.725Z",
+              "editContent": "",
+              "id": "dd646489-a26c-404d-9e34-e30e14e09718",
+              "status": "published",
+              "title": "Tema Dec 1",
+              "updatedAt": "2023-12-01T13:47:39.463Z"
+            }
+          },
+          "RvSl5ZrKLUZLBoqfWZQQxVXSez62": {
+            "0aa5021b-4a37-488a-9899-07d90588603c": {
+              "content": "<p>Gama Sol Major și Arpeggio Sol Major:</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/v5Z09IdWILM?showinfo=0\"></iframe><p><br></p><p>Ode to Joy: </p><p>-Pe memoria!</p><p>-Fă cu muzică</p><p>-Forte arcușe lungi</p><p>-Piano arcușe scurte </p><p>-Pregătit cu Fa#</p><p>-Fi atent primul sfârșit (fa# mi mi) și sfârșitul al doilea (mi re re)</p><p>-Tranziție repede la pizzicato și înapoi cu arcuș</p><p>-Pregatit cu la (degetul mic)</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/taHWVU_azTc?showinfo=0\"></iframe><p><br></p><p><br></p>",
+              "createdAt": "2023-11-23T16:50:41.071Z",
+              "editContent": "",
+              "id": "0aa5021b-4a37-488a-9899-07d90588603c",
+              "status": "published",
+              "title": "Nov 23, 2023 Notele de lecție",
+              "updatedAt": "2023-11-23T16:54:31.987Z"
+            },
+            "2227e1dd-9ea1-41b9-b22a-a7d5fe3f7ca7": {
+              "content": "<iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/xCgz1BJaE5w?showinfo=0\"></iframe><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FViolin2021-P-ListA-The_Climb_Up_Mount_Royal-M01_8SFzwcVaVu.mp3?alt=media&amp;token=cf6be6b2-cafd-4e21-b10b-dcc2034b5514\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FViolin2021-P-ListA-The_Climb_Up_Mount_Royal-M01_8SFzwcVaVu.mp3?alt=media&amp;token=cf6be6b2-cafd-4e21-b10b-dcc2034b5514\">download audio</a></audio><p><br></p>",
+              "createdAt": "2024-01-11T19:05:57.162Z",
+              "editContent": "",
+              "id": "2227e1dd-9ea1-41b9-b22a-a7d5fe3f7ca7",
+              "status": "published",
+              "title": "The Climb up Mount Royal",
+              "updatedAt": "2024-01-11T19:07:36.261Z"
+            },
+            "333a758c-55e0-4181-8ee4-ec5d1f2cef2a": {
+              "content": "<ol><li>Gama Sol Major &amp; Arpeggio Sol Major (cu degetul mic)</li><li>Gama Re Major &amp; Arpeggio Re Major (cu dublu)</li><li><strong>Gama La Major &amp; Arpeggio La Major (cu ritmul mămăligă brânză)</strong></li></ol><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/ZdP-Yq8XG-U?showinfo=0\"></iframe><p><strong><span class=\"ql-cursor\">﻿</span></strong></p><ol><li>Ode to Joy</li><li>In Ancient Times</li><li><strong>Jingle Bells</strong></li></ol><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/qCOMhFCZPFw?showinfo=0\"></iframe><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FJingle%20Bells%20Accompaniment%20FINAL_Iv9wVwpgiO.mp3?alt=media&amp;token=4b673932-8317-4a0f-a293-f1d8932ad9ce\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FJingle%20Bells%20Accompaniment%20FINAL_Iv9wVwpgiO.mp3?alt=media&amp;token=4b673932-8317-4a0f-a293-f1d8932ad9ce\">download audio</a></audio><p><br></p>",
+              "createdAt": "2023-12-14T14:57:41.184Z",
+              "editContent": "",
+              "id": "333a758c-55e0-4181-8ee4-ec5d1f2cef2a",
+              "status": "published",
+              "title": "Jingle Bells & Gama La Major",
+              "updatedAt": "2023-12-14T15:07:56.832Z"
+            },
+            "abd810c6-f458-48a8-af48-7583b0d4926b": {
+              "content": "<ol><li>Gama Sol Major &amp; Arpeggio</li><li>Gama Re Major &amp; Arpeggio</li><li>Gama La Major &amp; Arpeggio</li><li>Ode to Joy</li><li>In Ancient Times</li><li>Jingle Bells</li><li><strong>Berceuse</strong></li></ol><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FViolin2021-P-ListA-Berceuse-M01_aDBYvlflW1.mp3?alt=media&amp;token=ad51b396-3b24-4a33-872a-7da72071532d\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FViolin2021-P-ListA-Berceuse-M01_aDBYvlflW1.mp3?alt=media&amp;token=ad51b396-3b24-4a33-872a-7da72071532d\">download audio</a></audio><p><strong><span class=\"ql-cursor\">﻿</span></strong></p>",
+              "createdAt": "2023-12-21T15:23:42.797Z",
+              "editContent": "",
+              "id": "abd810c6-f458-48a8-af48-7583b0d4926b",
+              "status": "published",
+              "title": "Berceuse",
+              "updatedAt": "2023-12-21T16:02:56.565Z"
+            },
+            "d12cab04-9985-4e5d-a9b3-7b8c08e5dc90": {
+              "content": "<h3>Stamping Dance</h3><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F36%20Stamping%20dance_XmIrPtdvCl.mp3?alt=media&amp;token=3559b2db-c8aa-459e-b93c-1f341315e682\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F36%20Stamping%20dance_XmIrPtdvCl.mp3?alt=media&amp;token=3559b2db-c8aa-459e-b93c-1f341315e682\">download audio</a></audio><h3>Distant Bells</h3><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F37%20Distant%20bells_in6Hr8MYV3.mp3?alt=media&amp;token=6c657ecd-2a6b-4d9a-a7d7-c1509612443c\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F37%20Distant%20bells_in6Hr8MYV3.mp3?alt=media&amp;token=6c657ecd-2a6b-4d9a-a7d7-c1509612443c\">download audio</a></audio><p><br></p>",
+              "createdAt": "2024-01-25T15:19:40.951Z",
+              "editContent": "",
+              "id": "d12cab04-9985-4e5d-a9b3-7b8c08e5dc90",
+              "status": "published",
+              "title": "Stamping Dance & Distant Bells",
+              "updatedAt": "2024-01-25T15:21:19.294Z"
+            },
+            "fe7b424e-e502-435a-bd2f-c10fdef28fc0": {
+              "content": "<p>Gama Re Major:</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/fHViiONEpHQ?showinfo=0\"></iframe><p><br></p><p>In Ancient Times:</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FViolin2021-P-ListA-In_Ancient_Times-M01_538aGzzaPx.mp3?alt=media&amp;token=6fd64f5c-eca9-4ee0-bdf7-70a6124e822b\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FViolin2021-P-ListA-In_Ancient_Times-M01_538aGzzaPx.mp3?alt=media&amp;token=6fd64f5c-eca9-4ee0-bdf7-70a6124e822b\">download audio</a></audio><p><br></p>",
+              "createdAt": "2023-12-07T15:31:51.857Z",
+              "editContent": "",
+              "id": "fe7b424e-e502-435a-bd2f-c10fdef28fc0",
+              "status": "published",
+              "title": "In Ancient Times",
+              "updatedAt": "2023-12-07T15:44:08.834Z"
+            }
+          },
+          "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
+            "0aed2bdc-96c0-4b78-83c8-b1baa5e87ba8": {
+              "content": "<p>1. I Can Read Music Lesson 25 Pitch &amp; Rhythm</p><p>2. Gama La Major Mămăligă Brânză și lung dublu (fi atent locul dulce)</p><p><strong>3. Gama la minor</strong>- începe cu primul deget (galben) coarda sol</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/bpp2_uL7mpI?showinfo=0\"></iframe><p><br></p><p>4. Go Tell Aunt Rhody- locul dulce- nu mergi cu arcuș deasupră limbii!</p><p>5. O Come Little Children- linea 4 stop la sticker și începe sus! (fi atent și locul dulce)</p><p><a href=\"https://www.youtube.com/shorts/pNvC7FzDb-4\" rel=\"noopener noreferrer\" target=\"_blank\"><strong>Video of Tudor from lesson</strong></a> </p><p>6. May Song- linea 1 și linea 3</p><p><a href=\"https://youtube.com/shorts/UpDzcwuPVgU?feature=share\" rel=\"noopener noreferrer\" target=\"_blank\"><strong>Video of May Song</strong></a></p>",
+              "createdAt": "2023-11-30T15:02:25.648Z",
+              "editContent": "",
+              "id": "0aed2bdc-96c0-4b78-83c8-b1baa5e87ba8",
+              "status": "published",
+              "title": "Tudor Tema Nov 30",
+              "updatedAt": "2023-12-01T08:33:35.616Z"
+            },
+            "3b3be0e8-4a68-43f9-8991-0055dd8fe2e4": {
+              "content": "<ol><li>I Can Read Music Lesson 27 Pitch &amp; Rhythm</li><li>Jingle Bells</li></ol><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FJingle%20Bells%20Accompaniment%20FINAL_sEQykby9En.mp3?alt=media&amp;token=6819a0d8-b7a1-42ee-bd25-10a11378e0f9\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FJingle%20Bells%20Accompaniment%20FINAL_sEQykby9En.mp3?alt=media&amp;token=6819a0d8-b7a1-42ee-bd25-10a11378e0f9\">download audio</a></audio><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/i8CP5H5LjuU?showinfo=0\"></iframe><p><br></p>",
+              "createdAt": "2023-12-14T14:39:40.468Z",
+              "editContent": "",
+              "id": "3b3be0e8-4a68-43f9-8991-0055dd8fe2e4",
+              "status": "published",
+              "title": "Săptămână de colinda!",
+              "updatedAt": "2023-12-14T14:57:28.575Z"
+            },
+            "5112320e-10af-4328-b74b-6d7fcc8fec42": {
+              "content": "<ol><li>I Can Read Music Lesson 24 Pitch &amp; Rhythm</li><li>Gama Sol Major ȘI Arpeggio Sol Major: dublu în jumătatea superioară- sunetul puternic și pe locul dulce</li><li>Gama La Major ȘI Arpeggio La Major: lung dublu- locul dulce</li><li>Lightly Row- locul dulce și sunetul frumos</li><li>Go Tell Aunt Rhody- locul dulce și degetele pe stickere (fi atent!)</li><li>May Song- practice spot La Do# Mi La (all fingers down!) (stai o leacă ritmul)</li><li>O Come Little Children- focus: degetele nu sunt în africa (pregătit deasupră coarda la) primul deget pe sticker galben- nu prea sus, fără vecini zgomotoși ȘI ultimă linea începe cu sus (stop la sticker și sus!) <strong>SEE VIDEO</strong></li></ol><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/289YBhhuf3g?showinfo=0\"></iframe><p><br></p>",
+              "createdAt": "2023-11-23T10:56:21.220Z",
+              "editContent": "",
+              "id": "5112320e-10af-4328-b74b-6d7fcc8fec42",
+              "status": "published",
+              "title": "Tudor Tema Nov 23",
+              "updatedAt": "2023-11-23T11:15:55.241Z"
+            },
+            "b141d161-60ce-4e9e-9964-a326281c9140": {
+              "content": "<h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">I Can Read Music Lesson 23 Pitch &amp; Rhythm</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 Pitch </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 Rhythm </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 Pitch </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 Rhythm </span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;</span></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Gama Re Major ȘI Arpeggio Re Major: dublu în jumătatea superioară</span></h2><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Gama La Major ȘI Arpeggio La Major: lung</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Twinkle Tema (recăpitulare)- focus: plop all fingers down!</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Song of the Wind (recăpitulare)- focus: plop all fingers down!</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">O Come Little Children- focus: linea 4- lipici pe primul deget pe si galben</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Autumn Vivaldi- linea 1 &amp; 2 (with music) linea 1 FORTE and linea 2 piano</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">May Song practice spot: La Do# Mi La (all fingers down!) (stai o leacă ritmul)</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4&nbsp;</span></p><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/PnWwO2wlTB8?showinfo=0\"></iframe><p><br></p><p><br></p>",
+              "createdAt": "2023-11-16T12:58:48.988Z",
+              "editContent": "",
+              "id": "b141d161-60ce-4e9e-9964-a326281c9140",
+              "status": "published",
+              "title": "Tudor Tema Nov 16:",
+              "updatedAt": "2023-11-16T14:11:52.015Z"
+            },
+            "c12b9e8c-e831-4ceb-988a-f040d79aa679": {
+              "content": "<h2>Long Long Ago</h2><p>Practice spot- La-- la si do#-- do# re mi-- fa# mi do#--  (comes back in the music 3 times!)</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F63%20Long%2C%20Long%20Ago%20-%20In%20Performance%20Tempo_o6gG6SpMEn.mp3?alt=media&amp;token=b2fbb15d-b63d-48a4-ab69-4f89750adacc\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F63%20Long%2C%20Long%20Ago%20-%20In%20Performance%20Tempo_o6gG6SpMEn.mp3?alt=media&amp;token=b2fbb15d-b63d-48a4-ab69-4f89750adacc\">download audio</a></audio><h2>Citirea Muzicii Lecția 3</h2><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/presentation/d/1XrE-d9DlHKEG1YfTAB4deztLH75wr5gPEeTIOErdl8k/edit?usp=sharing&amp;rm=minimal\"></iframe><p><br></p>",
+              "createdAt": "2024-02-01T11:17:15.869Z",
+              "editContent": "",
+              "id": "c12b9e8c-e831-4ceb-988a-f040d79aa679",
+              "status": "published",
+              "title": "Long Long Ago Practice Spot & Citirea Muzicii Lecția 3",
+              "updatedAt": "2024-02-01T11:38:23.019Z"
+            },
+            "dcba32fb-3a50-46c7-8a16-506b88001e56": {
+              "content": "<h3>1. Gama Re Major- </h3><p>choose a rhythm (locul dulce)</p><h3>2. Gama La Major- </h3><p>choose a rhythm <strong>(locul dulce)</strong></p><h3><strong>3. I Can Read Music 29-</strong></h3><p>Do the homework slides below before you do this!</p><h3>4. Go Tell Aunt Rhody- </h3><p>locul dulce &amp; degetele pe stickere!</p><h3>5. O Come Little Children- </h3><p>locul dulce &amp; degetele pe stickere!</p><h3>6. May Song- </h3><p>practice spot cu zarul- Tudor knows the spot. Piesa întreagă cu locul dulce &amp; degetele pe stickere</p><h3>7. Citirea Muzicii Lecția 1: Fill in the answers for all RED questions</h3><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/presentation/d/1FStgUNUAvCIIkjLPPK6AoeJ89S32DHOrzJGy2e8iPPA/edit?rm=minimal\"></iframe><p><br></p><h3>8. Citirea Muzicii Lecția 2: Read through the slides</h3><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/presentation/d/1_hizzXFLQwTRzYe4x_2OZ7ur-Uke0UkxiSYYkjdki9U/edit?usp=sharing&amp;rm=minimal\"></iframe><p><br></p>",
+              "createdAt": "2024-01-25T11:19:16.902Z",
+              "editContent": "",
+              "id": "dcba32fb-3a50-46c7-8a16-506b88001e56",
+              "status": "published",
+              "title": "Citirea Muzicii & LOCUL DULCE",
+              "updatedAt": "2024-01-25T11:45:16.494Z"
+            },
+            "e68398f2-9d5e-43e4-9b1c-ecee14a18d30": {
+              "content": "<p><strong>Ce sunt dinamice?- Forte = tare, Mezzo-Forte = mediu, Piano = încet. </strong></p><p><strong>Cum să facem? Cu arcușul! Forte= arcușe întregi/lungi, Mezzo-Forte= jumătate de arcușul, Piano= arcușe mici</strong></p><p><br></p><p>1. I Can Read Music Lesson 26 Pitch &amp; Rhythm- cu postura bună</p><p>2. Gama La Major și Arpegio La Major- stai o leacă ritmul, dublu <strong>Forte</strong>, dublu <strong>piano</strong></p><p>3. Gama la minor <strong>și arpegio la minor-</strong> mămăligă brânză ritmul</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/HQlQSAIVmAU?showinfo=0\"></iframe><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/Jvfb2Zp-VZc?showinfo=0\"></iframe><p><br></p><p>4. Lightly Row- piano, mezzo forte, forte!</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/_HmVd33tEz4?showinfo=0\"></iframe><p><br></p><p>5. Go Tell Aunt Rhody- mezzo-forte, piano!</p><p>6. O Come Little Children- forte, piano!</p><p>7. May Song- linea 1 &amp; 3- forte!</p><p>8. May Song practice spot (<strong>lipici pe 1 și 2- pizzicato și după cu arcuș)</strong></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/mfVgDb6ih6s?showinfo=0\"></iframe><p><strong><span class=\"ql-cursor\">﻿</span></strong></p>",
+              "createdAt": "2023-12-06T15:45:30.245Z",
+              "editContent": "",
+              "id": "e68398f2-9d5e-43e4-9b1c-ecee14a18d30",
+              "status": "published",
+              "title": "Tudor Tema Dec 7- focus- dinamice!",
+              "updatedAt": "2023-12-07T12:00:07.309Z"
+            }
+          },
+          "Vtym55Irg2TdSLnKZpxqIP9vtVt2": {
+            "0056db07-a4cc-4a79-b24b-1a0481cc4314": {
+              "content": "<ol><li>Someone plucks, someone bows- cu <a href=\"https://drive.google.com/file/d/1dwjK_LlCbEJa39gcCTzhdXu-uSDqKQ7w/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">audio</a></li><li>Exerciții arcușului: </li></ol><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/4VdAB1nj6M8?showinfo=0\"></iframe><p><br></p><ol><li>Two in a boat- fi atent- ritmul correct! Notele sunt lungi (fiecare are doi timpi). <a href=\"https://drive.google.com/file/d/1HyilfRwbdkryP8lHR5KaLUUSFtnfwCIK/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Audio</a></li><li>London Bridge- pizzicato, și după cu arcuș. <a href=\"https://drive.google.com/file/d/1wM-kkuRAlS8Gax3lPWva9r8IXF06hFVv/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Audio</a></li><li>Fast Lane- pizzicato, și după cu arcuș. Fi atent că linea 3 începe cu <strong>la</strong>! <a href=\"https://drive.google.com/file/d/1jEEyypvF9SNoYIxcT77IFBcA3kVc1zjT/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Audio</a></li><li>In Flight- pizzicato, și după cu arcuș. Arcușe lungi (sticker pună alt sticker!). <a href=\"https://drive.google.com/file/d/1KLbZsfaevJAIaGA90wyeond60mJ1AP_4/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Audio</a></li></ol>",
+              "createdAt": "2023-11-18T09:48:45.882Z",
+              "editContent": "",
+              "id": "0056db07-a4cc-4a79-b24b-1a0481cc4314",
+              "status": "published",
+              "title": "Tema Nov 18",
+              "updatedAt": "2023-11-18T10:07:20.566Z"
+            },
+            "05a46ad7-311f-464f-aaf7-8a9b0eb0e38d": {
+              "content": "<h3>Tema</h3><p>Recăpitulare:</p><p>1. Fast Lane- pe memoria- cu degetul mic puternic- nu pizza!</p><p>2. Lift off!- fi atent cercuri- tot pe memoria</p><p>2. Katies Waltz- fără vecinii zgomotoși</p><p>3. Show Time!</p><p><br></p><p>Nou:</p><p>4. Ritmul pe 3 degete (pe coarda la)</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F06%20Rhythm%20With%20Three%20Fingers%20(Bowed)_KPFcfh78ql.mp3?alt=media&amp;token=18f82c29-7240-4cdc-ba92-c07455473952\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F06%20Rhythm%20With%20Three%20Fingers%20(Bowed)_KPFcfh78ql.mp3?alt=media&amp;token=18f82c29-7240-4cdc-ba92-c07455473952\">download audio</a></audio><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/fZdw0N03taw?showinfo=0\"></iframe><p><br></p>",
+              "createdAt": "2023-12-09T09:40:47.301Z",
+              "editContent": "",
+              "id": "05a46ad7-311f-464f-aaf7-8a9b0eb0e38d",
+              "status": "published",
+              "title": "Prima zi cu degetele pe coarda!",
+              "updatedAt": "2023-12-09T09:44:39.616Z"
+            },
+            "69e11647-d8fd-4ab2-b466-9a0cd044e9fe": {
+              "content": "<h2>Rhythm Fever</h2><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F49%20Rhythm%20fever%20-%20Practice%20tempo_MYf5hFcmnH.mp3?alt=media&amp;token=85604591-f927-4bc0-b0cf-daa8a0e25aea\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F49%20Rhythm%20fever%20-%20Practice%20tempo_MYf5hFcmnH.mp3?alt=media&amp;token=85604591-f927-4bc0-b0cf-daa8a0e25aea\">download audio</a></audio><h2>Citirea Muzicii Lecția 3</h2><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/presentation/d/1yaZzRF7rzHOhIjl6aXjW8Ixbfx2_drDRRgqCJP8ieWY/edit?usp=sharing&amp;rm=minimal\"></iframe><p><br></p>",
+              "createdAt": "2024-02-03T13:03:27.015Z",
+              "editContent": "",
+              "id": "69e11647-d8fd-4ab2-b466-9a0cd044e9fe",
+              "status": "published",
+              "title": "Rhythm Fever & Citirea Muzicii Lecția 3",
+              "updatedAt": "2024-02-03T13:12:13.289Z"
+            },
+            "bb868631-6da6-4bf8-883c-dba94b37fd15": {
+              "content": "<h2>Tema: 3 Zile de treabă minim și în fiecare zi cântă piesele de 2 ori minim (o dată fără muzică, o dată cu muzică)</h2><ol><li>Lift Off!- cu cercuri</li><li>Katies Waltz- fără vecinii zgomotoși</li><li>Copy Cat- încheiatura drept</li><li>Tap Dancer</li></ol><h3>Copy Cat</h3><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F11%20Copy%20cat_gUruJ1NQ1X.mp3?alt=media&amp;token=ae459d7b-f466-41c9-b9c0-da5988905288\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F11%20Copy%20cat_gUruJ1NQ1X.mp3?alt=media&amp;token=ae459d7b-f466-41c9-b9c0-da5988905288\">download audio</a></audio><h3>Tap Dancer</h3><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F12%20Tap%20dancer_BgfMCkuorG.mp3?alt=media&amp;token=29c8a601-53d4-4577-9448-536e67893b81\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F12%20Tap%20dancer_BgfMCkuorG.mp3?alt=media&amp;token=29c8a601-53d4-4577-9448-536e67893b81\">download audio</a></audio><p><br></p>",
+              "createdAt": "2024-01-13T10:19:41.390Z",
+              "editContent": "",
+              "id": "bb868631-6da6-4bf8-883c-dba94b37fd15",
+              "status": "published",
+              "title": "Copy Cat & Tap Dancer",
+              "updatedAt": "2024-01-13T10:23:57.194Z"
+            },
+            "c32ccfca-1299-45db-be18-0189da6a03f9": {
+              "content": "<p>1. Exerciții de citire a muzicii - trebuie făcute la laptop <a href=\"https://jamboard.google.com/d/1V1Iv-4wjnrxbMyV2DqTPhvDspi6zrezQfawMfbAoLMQ/edit?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">link aici</a></p><p>2. London Bridge - fii atent la degetul mic! Nu pizza!</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F06%206%20London%20Bridge_NvFDsBuYSZ.mp3?alt=media&amp;token=ac4d78e1-6ec4-4a2a-a1f3-b6b465189a41\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F06%206%20London%20Bridge_NvFDsBuYSZ.mp3?alt=media&amp;token=ac4d78e1-6ec4-4a2a-a1f3-b6b465189a41\">download audio</a></audio><p>3. Fast Lane- acum mai repede- fii atent la degetul mic și degetul mare la arcuș- nu vrem un deget mic de pizza!</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F07%207%20Fast%20Lane_iNo3lHZ7ms.mp3?alt=media&amp;token=b05b65fe-a2ea-43ef-983a-a0426ed3f8bb\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F07%207%20Fast%20Lane_iNo3lHZ7ms.mp3?alt=media&amp;token=b05b65fe-a2ea-43ef-983a-a0426ed3f8bb\">download audio</a></audio><p>4. In Flight- ține vioara nemișcată</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F08%208%20In%20flight_blaPkRYCwr.mp3?alt=media&amp;token=7e25629b-e01f-4e40-a642-dc8899c31de4\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F08%208%20In%20flight_blaPkRYCwr.mp3?alt=media&amp;token=7e25629b-e01f-4e40-a642-dc8899c31de4\">download audio</a></audio><p>5. Lift Off- fii atent la degetul mic</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F09%209%20Lift%20off!_V8a0sucLZG.mp3?alt=media&amp;token=be2b1d9f-c8fd-41b4-8417-b065dbd4cec4\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F09%209%20Lift%20off!_V8a0sucLZG.mp3?alt=media&amp;token=be2b1d9f-c8fd-41b4-8417-b065dbd4cec4\">download audio</a></audio><p><br></p><p>6. Katies Waltz- fără vecinii zgomotoși</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F10%2010%20Katie's%20waltz_aAVUcCzvoJ.mp3?alt=media&amp;token=9b5204f6-e823-4656-bf3f-e8c4855f59d4\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F10%2010%20Katie's%20waltz_aAVUcCzvoJ.mp3?alt=media&amp;token=9b5204f6-e823-4656-bf3f-e8c4855f59d4\">download audio</a></audio><p>7. Show time!- pizz și după cu arcuș</p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FScreen%20Shot%202023-12-02%20at%201.09.54%20PM_h77Flqn1bM.png?alt=media&amp;token=6c7d6b99-6b3b-40b1-a9d1-c9709929a265\" width=\"null\"><p><br></p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F01%20Show%20time!%20(performance)_1G3zjnQEpU.mp3?alt=media&amp;token=8a30e90c-334c-41f0-a4a7-003669d8c28f\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F01%20Show%20time!%20(performance)_1G3zjnQEpU.mp3?alt=media&amp;token=8a30e90c-334c-41f0-a4a7-003669d8c28f\">download audio</a></audio><p><br></p>",
+              "createdAt": "2023-12-02T10:39:47.262Z",
+              "editContent": "",
+              "id": "c32ccfca-1299-45db-be18-0189da6a03f9",
+              "status": "published",
+              "title": "Tema Dec 2",
+              "updatedAt": "2023-12-02T20:27:14.633Z"
+            },
+            "cc8a805e-6c90-4e0d-9971-58fd8ef8d195": {
+              "content": "<p>1. Rezolvă exercițiie de mai jos (treci prin toate paginile). Răspunde la întrebările cu <strong style=\"color: rgb(230, 0, 0);\">roșu</strong><strong>. </strong>Sunt aceleași lucruri pe care le-am făcut la lecție. Poți alege o pagină sau trece la următoarea pagină apăsând pe pictograma corespunzătoare din partea stângă.</p><p><br></p><p>Dacă tema nu se încarcă mai jos, o puteți accesa folosind acest link: <a href=\"https://docs.google.com/presentation/d/1FvrpWJioFPKemRe-H3baI3pFux0SXUkBEXopMtg2NRs/edit?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">https://docs.google.com/presentation/d/1FvrpWJioFPKemRe-H3baI3pFux0SXUkBEXopMtg2NRs/edit?usp=sharing</a></p><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/presentation/d/1FvrpWJioFPKemRe-H3baI3pFux0SXUkBEXopMtg2NRs/edit?usp=sharing&amp;rm=minimal\"></iframe><p><br></p><p><br></p><p>2. Two in a Boat</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F05%205%20Two%20in%20a%20boat_xzKNRjqHGt.mp3?alt=media&amp;token=f88f3112-819e-4171-9bfb-ad2e9cb7cd37\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F05%205%20Two%20in%20a%20boat_xzKNRjqHGt.mp3?alt=media&amp;token=f88f3112-819e-4171-9bfb-ad2e9cb7cd37\">download audio</a></audio><p><br></p><p>3. Fast Lane</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F48%2048%20Fast%20lane%20(PRACTICE)_Jdfp9SwANr.mp3?alt=media&amp;token=62fa2400-80c0-4fdf-88b8-f34bf6ad813d\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F48%2048%20Fast%20lane%20(PRACTICE)_Jdfp9SwANr.mp3?alt=media&amp;token=62fa2400-80c0-4fdf-88b8-f34bf6ad813d\">download audio</a></audio><p><br></p><p>4. In Flight</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F08%208%20In%20flight_Hh7aF75KGm.mp3?alt=media&amp;token=15feb10f-ab12-470d-ab39-386e50913d5b\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F08%208%20In%20flight_Hh7aF75KGm.mp3?alt=media&amp;token=15feb10f-ab12-470d-ab39-386e50913d5b\">download audio</a></audio><p><br></p><p>5. Lift off!- pizzicato, apoi arcuș. Fă un cerc mic cu arcuș în fiecare pauză și încearcă să aterizează fără ca arcușul să sară.</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F09%209%20Lift%20off!_2KwNvgoJgw.mp3?alt=media&amp;token=282fdf9e-a5be-406c-9116-db450a926ad3\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F09%209%20Lift%20off!_2KwNvgoJgw.mp3?alt=media&amp;token=282fdf9e-a5be-406c-9116-db450a926ad3\">download audio</a></audio><p><br></p><p>6. Katie's Waltz- pizzicato, apoi arcuș</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F10%2010%20Katie's%20waltz_16uc3a6HjR.mp3?alt=media&amp;token=2ce663b1-868b-4f23-9417-54df6ec4148d\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F10%2010%20Katie's%20waltz_16uc3a6HjR.mp3?alt=media&amp;token=2ce663b1-868b-4f23-9417-54df6ec4148d\">download audio</a></audio><p><br></p>",
+              "createdAt": "2023-11-25T11:31:25.968Z",
+              "editContent": "",
+              "id": "cc8a805e-6c90-4e0d-9971-58fd8ef8d195",
+              "status": "published",
+              "title": "Tema Nov 25",
+              "updatedAt": "2024-01-25T11:24:30.829Z"
+            }
+          },
+          "bdfQDUmpytfXMiyTDdhNvQvcp3L2": {
+            "88f94d29-6d7f-4eec-bfed-892b476ffb56": {
+              "content": "<ol><li>Gama Sol Major- upper half, lower half, stopped bows: 2, 3, 4, 6, 8. Legato: 2, 3, 4, 6, 8. Watch out for the fourth finger that it lands in the right spot!</li><li>Viva Vibrato #4-#10</li><li>Bourree I &amp; II first 7 lines. Notes: practice with metronome at 80 bpm- pizzicato and then with bow in smaller sections. Leave out the chords if you are getting off track and then add them back in. Pay attention to dynamics and watch your bow as much as you can. And listen to this recording/watch this video at every practice session: </li></ol><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/RPltsUP88fY?showinfo=0\"></iframe><p><br></p>",
+              "createdAt": "2023-11-17T17:30:22.544Z",
+              "editContent": "",
+              "id": "88f94d29-6d7f-4eec-bfed-892b476ffb56",
+              "status": "published",
+              "title": "Nov 17",
+              "updatedAt": "2023-11-17T17:43:54.593Z"
+            },
+            "d7cea4ba-dce3-4bbe-b80a-a835efa2042b": {
+              "content": "<p>Gama Sol Major and Gama La Major: </p><p>Gama la Major (A Major) is on the second page. We will use this pdf for scales from now on- the one we have been using is too weird (my bad!). Gama sol major (G Major) is on the first page. </p><object data=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FCDA_HS_-_TWO_OCTAVE_SCALES_VIOLIN%20(1)_0W3hijLd8o.pdf?alt=media&amp;token=2335146f-6e77-419d-b326-da7b452c6a5d\" type=\"application/pdf\" width=\"100%\" height=\"600px\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FCDA_HS_-_TWO_OCTAVE_SCALES_VIOLIN%20(1)_0W3hijLd8o.pdf?alt=media&amp;token=2335146f-6e77-419d-b326-da7b452c6a5d\">download pdf</a></object><p><br></p><p><br></p>",
+              "createdAt": "2023-12-08T15:26:31.788Z",
+              "editContent": "",
+              "id": "d7cea4ba-dce3-4bbe-b80a-a835efa2042b",
+              "status": "published",
+              "title": "Notes from Lesson",
+              "updatedAt": "2023-12-08T15:31:19.056Z"
+            }
+          },
+          "wNElZogYLKabFeiTrcKW75JfICh1": {
+            "03465fab-979c-4be8-923d-3b102e4fb4db": {
+              "content": "<p>Mazas:</p><p>Început- cântăm că cântăm cu voce- Cântă a casă și pe pian. Arcușul în \"locul dulce\" între călușul și limbă.</p><p>Sfârșitul- love every note! Începe fiecare cu atenție la arcuș- control și fă \"din adins\". Ultime două măsure- piano și arcușul pe ambele corzi ȘI primul deget pregatit și aproape- nu în Africa!</p><p>Gama Re Major</p><p>Gama Fa Major</p><p>Vibrato- 100+ cu metronom.</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/67RIXucUy_Q?showinfo=0\"></iframe><p><br></p>",
+              "createdAt": "2023-11-30T14:30:09.979Z",
+              "editContent": "",
+              "id": "03465fab-979c-4be8-923d-3b102e4fb4db",
+              "status": "published",
+              "title": "Nov 30, 2023 Notele",
+              "updatedAt": "2023-11-30T15:14:55.086Z"
+            },
+            "ba5f201e-2503-405d-b297-abeb1565a1d8": {
+              "content": "<p>Gama fa major și arpeggio fa major în poziția a treia:</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/YMYCk3RbJxk?showinfo=0\"></iframe><p>Viva Vibrato Week 1 (cu metronom):</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/wjUaZkd9y4c?showinfo=0\"></iframe><p><br></p>",
+              "createdAt": "2023-11-23T16:21:51.631Z",
+              "editContent": "",
+              "id": "ba5f201e-2503-405d-b297-abeb1565a1d8",
+              "status": "published",
+              "title": "Nov 23, 2023: Notele de lecție",
+              "updatedAt": "2023-11-23T16:26:30.664Z"
+            },
+            "f6bd54ef-c719-4411-abb0-25907f6bb8d0": {
+              "content": "<p>1. 5 de \"wa\" pe fiecare nota</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/2Ww-_zR5LvE?showinfo=0\"></iframe><p><br></p><p>2. 7 de \"wa\" pe fiecare nota</p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/NTkrCP6R3tw?showinfo=0\"></iframe><p><br></p>",
+              "createdAt": "2023-12-07T15:36:38.086Z",
+              "editContent": "",
+              "id": "f6bd54ef-c719-4411-abb0-25907f6bb8d0",
+              "status": "published",
+              "title": "Vibrato exercise cu gama re major",
+              "updatedAt": "2023-12-07T15:54:07.260Z"
+            }
+          },
+          "yuuVbai3qXZY89dOhYVLvHwJ9eW2": {
+            "3d453e16-616a-40de-8790-8516b420ee42": {
+              "content": "<h3>Tap Dancer</h3><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F12%20Tap%20dancer_zVz65EC2Xn.mp3?alt=media&amp;token=6aea9ef4-064f-4914-9b3e-1accb2a59683\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F12%20Tap%20dancer_zVz65EC2Xn.mp3?alt=media&amp;token=6aea9ef4-064f-4914-9b3e-1accb2a59683\">download audio</a></audio><h3>Rhythm Fever</h3><p>Mai încet:</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F13%20Rhythm%20fever_qoOexTDig6.mp3?alt=media&amp;token=19141b95-53a1-49af-a1a8-3f77ebe5ec70\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F13%20Rhythm%20fever_qoOexTDig6.mp3?alt=media&amp;token=19141b95-53a1-49af-a1a8-3f77ebe5ec70\">download audio</a></audio><p>Mai repede:</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F49%20Rhythm%20fever%20-%20Practice%20tempo_Sc8Z5LMeVy.mp3?alt=media&amp;token=230a0297-35b4-444e-8b5e-ee492e146926\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F49%20Rhythm%20fever%20-%20Practice%20tempo_Sc8Z5LMeVy.mp3?alt=media&amp;token=230a0297-35b4-444e-8b5e-ee492e146926\">download audio</a></audio><p><br></p>",
+              "createdAt": "2024-01-12T14:33:30.910Z",
+              "editContent": "",
+              "id": "3d453e16-616a-40de-8790-8516b420ee42",
+              "status": "published",
+              "title": "Tap Dancer & Rhythm Fever",
+              "updatedAt": "2024-01-12T14:36:20.125Z"
+            },
+            "52d24e05-7298-45fb-84d7-819c488e3c0e": {
+              "content": "<audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FJingle%20Bells%20Accompaniment%20FINAL_UZ4mb1qxiB.mp3?alt=media&amp;token=850e860f-9326-4ed1-bdae-3671c887966b\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2FJingle%20Bells%20Accompaniment%20FINAL_UZ4mb1qxiB.mp3?alt=media&amp;token=850e860f-9326-4ed1-bdae-3671c887966b\">download audio</a></audio><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/i8CP5H5LjuU?showinfo=0\"></iframe><p><br></p>",
+              "createdAt": "2023-12-15T14:23:54.108Z",
+              "editContent": "",
+              "id": "52d24e05-7298-45fb-84d7-819c488e3c0e",
+              "status": "published",
+              "title": "Jingle Bells",
+              "updatedAt": "2023-12-15T14:25:23.478Z"
+            },
+            "8459e7a6-a90f-4ed8-bc3e-bf7b6dbc7129": {
+              "content": "<h2>Here it Comes</h2><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F14%20Here%20it%20comes!_DjVsqpV8Hr.mp3?alt=media&amp;token=b5826907-40e8-41b0-b0be-b1c08f1fb5e0\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F14%20Here%20it%20comes!_DjVsqpV8Hr.mp3?alt=media&amp;token=b5826907-40e8-41b0-b0be-b1c08f1fb5e0\">download audio</a></audio><h2>So There!</h2><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F15%20So%20there!_PKsfqsbkAh.mp3?alt=media&amp;token=581fcabf-e84c-4bd7-9abc-52c8e5b59b6d\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F15%20So%20there!_PKsfqsbkAh.mp3?alt=media&amp;token=581fcabf-e84c-4bd7-9abc-52c8e5b59b6d\">download audio</a></audio><p><br></p>",
+              "createdAt": "2024-01-19T14:08:08.216Z",
+              "editContent": "",
+              "id": "8459e7a6-a90f-4ed8-bc3e-bf7b6dbc7129",
+              "status": "published",
+              "title": "Here it Comes & So There!",
+              "updatedAt": "2024-01-19T14:13:11.751Z"
+            },
+            "8cf44dd1-0970-453e-a035-fbbc1c1cf6d4": {
+              "content": "<ol><li>Two in a boat- fă cu audio! Fi atent să fi cu muzică în audio! Fiecare nota are doi timpi. <a href=\"https://drive.google.com/file/d/1HyilfRwbdkryP8lHR5KaLUUSFtnfwCIK/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Audio</a></li><li>Fast lane- la fel- fă cu audio. <a href=\"https://drive.google.com/file/d/1jEEyypvF9SNoYIxcT77IFBcA3kVc1zjT/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Audio (mai lent)</a></li><li>In flight- cu audio. Fiecare nota are 3 timpi. <a href=\"https://drive.google.com/file/d/1KLbZsfaevJAIaGA90wyeond60mJ1AP_4/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Audio</a></li><li>Lift off!- pizzicato, după cu arcuș. Un cerc mic cu arcuș în fiecare pauză.<a href=\"https://drive.google.com/file/d/14vBQeVWUWDpkrWqrk_kGglaJDD66Mt5T/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\"> Audio</a></li><li>Katies waltz- pizzicato, după cu arcuș. Fiecare măsură are 3 timpi. <a href=\"https://drive.google.com/file/d/1lRAJWCbGR2GerX6bBfo1dDVTQhEQAdem/view?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Audio</a></li></ol>",
+              "createdAt": "2023-11-17T17:03:48.079Z",
+              "editContent": "",
+              "id": "8cf44dd1-0970-453e-a035-fbbc1c1cf6d4",
+              "status": "published",
+              "title": "Tema Nov 17",
+              "updatedAt": "2023-11-17T17:28:48.567Z"
+            },
+            "a2d19ef0-2214-4c8d-b0a9-fcff62167362": {
+              "content": "<p><strong>London Bridge</strong>- arcușe lungi. Încearcă să mergi mai departe decât galben.</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F06%206%20London%20Bridge_GxprfP0e69.mp3?alt=media&amp;token=84bb2035-624d-437c-91d6-b34861463767\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F06%206%20London%20Bridge_GxprfP0e69.mp3?alt=media&amp;token=84bb2035-624d-437c-91d6-b34861463767\">download audio</a></audio><p><br></p><p><strong>Fast Lane</strong>- pe memoria! Fi atent linea 3 la nota sol! Încearcă cu ochi închiși.</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F48%2048%20Fast%20lane%20(PRACTICE)_k2i6FvJib5.mp3?alt=media&amp;token=46c579a8-7c7e-45f6-9016-49c69144c9f8\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F48%2048%20Fast%20lane%20(PRACTICE)_k2i6FvJib5.mp3?alt=media&amp;token=46c579a8-7c7e-45f6-9016-49c69144c9f8\">download audio</a></audio><p><br></p><p><strong>In Flight</strong>- nu prea încet- cu muzică. Continuă să te cânți cu acel sunet frumos pe care l-am auzit astăzi, dar nu cânți mai încet decât în muzică!</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F08%208%20In%20flight_p4lvflbQUy.mp3?alt=media&amp;token=18e0939c-1211-4539-ab3c-3fdb9462880a\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F08%208%20In%20flight_p4lvflbQUy.mp3?alt=media&amp;token=18e0939c-1211-4539-ab3c-3fdb9462880a\">download audio</a></audio><p><br></p><p><strong>Lift off!</strong>- fi atent cu ținerea arcușului că degetul mic este pe vârf. De fiecare dată când faci un cerc cu arcul, încearcă să aterizezi cu grijă fără ca arcușul să sară pe coardă.</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F09%209%20Lift%20off!_Mv21JAjsDJ.mp3?alt=media&amp;token=c3fe0da1-9256-4782-9733-2d36dafc4eda\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F09%209%20Lift%20off!_Mv21JAjsDJ.mp3?alt=media&amp;token=c3fe0da1-9256-4782-9733-2d36dafc4eda\">download audio</a></audio><p><br></p><p><strong>Katie's Waltz</strong>- arcușul poate și trebuie să merge mai departe decât galben când faci arcușul în direcție sus!</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F10%2010%20Katie's%20waltz_udjK77MqMP.mp3?alt=media&amp;token=e039fed4-075e-451c-a9a6-fa1317baaa54\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F10%2010%20Katie's%20waltz_udjK77MqMP.mp3?alt=media&amp;token=e039fed4-075e-451c-a9a6-fa1317baaa54\">download audio</a></audio><p><br></p><p><strong>Show Time!</strong>- fi atent pauzele de trei timpi- nu te grăbi!</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F01%20Show%20time!%20(performance)_o8i2HwH72d.mp3?alt=media&amp;token=67d8fe93-4f75-4720-a537-84dab3f90be4\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F01%20Show%20time!%20(performance)_o8i2HwH72d.mp3?alt=media&amp;token=67d8fe93-4f75-4720-a537-84dab3f90be4\">download audio</a></audio><p><br></p>",
+              "createdAt": "2023-11-24T14:14:35.258Z",
+              "editContent": "",
+              "id": "a2d19ef0-2214-4c8d-b0a9-fcff62167362",
+              "status": "published",
+              "title": "Tema Nov 24",
+              "updatedAt": "2023-11-24T14:30:11.531Z"
+            },
+            "e2f4d966-eb25-4f94-975b-c06fcc02d9ff": {
+              "content": "<h2>Gama La Major</h2><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/ZdP-Yq8XG-U?showinfo=0\"></iframe><p><br></p><h2>Rowing Boat</h2><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F16%20Rowing%20boat_oOtgdoySrl.mp3?alt=media&amp;token=08e0bd9b-2f3d-4a31-b7c9-704d1b3e09b2\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F16%20Rowing%20boat_oOtgdoySrl.mp3?alt=media&amp;token=08e0bd9b-2f3d-4a31-b7c9-704d1b3e09b2\">download audio</a></audio><h2>Ally Bally</h2><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F17%20Ally%20bally_u1Vb0gpjdp.mp3?alt=media&amp;token=8bcc2425-b01e-46bf-ad0c-c2f9a521d95f\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F17%20Ally%20bally_u1Vb0gpjdp.mp3?alt=media&amp;token=8bcc2425-b01e-46bf-ad0c-c2f9a521d95f\">download audio</a></audio><p><br></p>",
+              "createdAt": "2024-01-26T14:09:47.905Z",
+              "editContent": "",
+              "id": "e2f4d966-eb25-4f94-975b-c06fcc02d9ff",
+              "status": "published",
+              "title": "Gama La Major & Rowing Boat & Ally Bally",
+              "updatedAt": "2024-01-26T14:34:37.019Z"
+            },
+            "f0111ee9-2876-4872-a23d-1c670a6aaa18": {
+              "content": "<h3>Tema</h3><p>Recăpitulare:</p><p>1. Fast Lane- pe memoria</p><p>2. Katies Waltz- pe memoria</p><p>3. Show Time!</p><p><br></p><p>Nou:</p><p>4. Ritmul pe 3 degete (pe coarda la)</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F06%20Rhythm%20With%20Three%20Fingers%20(Bowed)_fZNnEUuD02.mp3?alt=media&amp;token=dcc2be47-c0d5-476f-b86f-3551db51fdf2\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F06%20Rhythm%20With%20Three%20Fingers%20(Bowed)_fZNnEUuD02.mp3?alt=media&amp;token=dcc2be47-c0d5-476f-b86f-3551db51fdf2\">download audio</a></audio><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/fZdw0N03taw?showinfo=0\"></iframe><p><br></p><p>5. Copycat- încheiatură drept!- încearcă să faci cântecul întreg</p><audio src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F11%2011%20Copy%20cat_WxLpXmxfzf.mp3?alt=media&amp;token=9096a795-4612-4918-8a5a-538bf881e591\" controls=\"\" style=\"width: 100%;\"><a href=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F11%2011%20Copy%20cat_WxLpXmxfzf.mp3?alt=media&amp;token=9096a795-4612-4918-8a5a-538bf881e591\">download audio</a></audio><p>Cânți cu fetița și bărbat! </p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/ZEcuVYAw59w?showinfo=0\"></iframe><p><br></p>",
+              "createdAt": "2023-12-08T12:25:53.903Z",
+              "editContent": "",
+              "id": "f0111ee9-2876-4872-a23d-1c670a6aaa18",
+              "status": "published",
+              "title": "Prima zi degetele pe coarda!",
+              "updatedAt": "2023-12-08T15:38:25.449Z"
+            }
+          }
+        }
+      },
+      "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": {
+        "drafts": {
+          "students": {
+            "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
+              "155fca04-380e-44ba-8b50-507ec5820e39": {
+                "content": "",
+                "createdAt": "2023-11-30T13:11:42.214Z",
+                "editContent": "<h1>Sprites in action. Events (Evenimente)</h1><p><a href=\"https://studio.code.org/s/coursef-2023/lessons/4\" rel=\"noopener noreferrer\" target=\"_blank\">Lesson plan</a></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/_RxDeRPwJ-g?showinfo=0\"></iframe><p><br></p><h3>What are events</h3><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/presentation/d/e/2PACX-1vQJU9d0bY3jHqSX5yM2NvQ8hPDBpvgYTcRkAI88gm4ztKjF7_WzUzA-MGEQP89t5hlw7wf9P3sekO-b/embed?start=false&amp;loop=false&amp;delayms=3000#slide=id.g1025c1b7fb3_0_582\"></iframe><h3><br></h3><p><br></p><p><strong>Exerciții</strong></p><p>1.) Go to&nbsp;<a href=\"https://studio.code.org/sections/NBWTJJ\" rel=\"noopener noreferrer\" target=\"_blank\" style=\"background-color: transparent; color: rgb(150, 96, 191);\"><strong>https://studio.code.org/sections/NBWTJJ</strong></a>&nbsp;or to&nbsp;<a href=\"https://studio.code.org/join\" rel=\"noopener noreferrer\" target=\"_blank\" style=\"background-color: transparent; color: rgb(150, 96, 191);\"><strong>https://studio.code.org/join</strong></a>&nbsp;and type in your 6-letter section code:&nbsp;<strong>NBWTJJ</strong></p><p>2.) Choose your name:&nbsp;<strong>Tudor</strong></p><p><span style=\"color: rgb(105, 105, 105);\">3.) Choose your secret picture:</span></p><img src=\"https://code.org/images/password_images/alien_thumb@2x.png\" width=\"null\"><h3><br></h3><h3>Activities</h3><ul><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/1?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Prediction</a></li><li><a href=\"https://videos.code.org/levelbuilder/video-1-sprites-in-action_v2_small_20mb-mp4-mp4.mp4\" rel=\"noopener noreferrer\" target=\"_blank\">Video</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/3?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Make a sprite</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/4?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Time events</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/5?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Keyboard events</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/6?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Switching behaviors</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/8?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Events practice</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/4/levels/9?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Events free play</a></li></ul>",
+                "id": "155fca04-380e-44ba-8b50-507ec5820e39",
+                "status": "editing",
+                "title": "",
+                "updatedAt": "2023-12-14T10:17:49.148Z"
+              }
+            }
+          }
+        },
+        "students": {
+          "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+            "05fb3a9b-d3eb-4bba-baf0-7ef9b9aa15dc": {
+              "content": "<h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">I Can Read Music Lesson 23 Pitch &amp; Rhythm</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 Pitch </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 Rhythm </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 Pitch </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 Rhythm </span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Gama Re Major ȘI Arpeggio Re Major: dublu în jumătatea superioară</span></h2><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Gama La Major ȘI Arpeggio La Major: lung</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Twinkle Tema (recăpitulare)- focus: plop all fingers down!</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Song of the Wind (recăpitulare)- focus: plop all fingers down!</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">O Come Little Children- focus: linea 4- lipici pe primul deget pe si galben</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">Autumn Vivaldi- linea 1 &amp; 2 (with music) linea 1 FORTE and linea 2 piano</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4 </span></p><p><br></p><h2><span style=\"background-color: transparent; color: rgb(99, 166, 0);\">May Song practice spot: La Do# Mi La (all fingers down!) (stai o leacă ritmul)</span></h2><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 1 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 2 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 3 </span></p><p><span style=\"background-color: transparent; color: rgb(255, 153, 0);\">Ziua 4&nbsp;</span></p><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/PnWwO2wlTB8?showinfo=0\"></iframe><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/forms/d/e/1FAIpQLSeixAJb42wqNpIf0NAytYAin3ziFamgh8XebJ2g8Pgtvx4kng/viewform?embedded=true\"></iframe><p><br></p>",
+              "createdAt": "2023-11-16T13:43:50.372Z",
+              "editContent": "",
+              "id": "05fb3a9b-d3eb-4bba-baf0-7ef9b9aa15dc",
+              "status": "published",
+              "title": "First Computer Science Homework",
+              "updatedAt": "2023-11-16T20:59:37.548Z"
+            },
+            "988d2433-fa35-432d-8d2f-8fdee066af7c": {
+              "content": "<p><br></p><h2>Quiz:</h2><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/forms/d/e/1FAIpQLSeixAJb42wqNpIf0NAytYAin3ziFamgh8XebJ2g8Pgtvx4kng/viewform?usp=pp_url&amp;entry.746023078=Natalia&amp;embedded=true\"></iframe><p><br></p>",
+              "createdAt": "2023-11-16T21:05:58.890Z",
+              "editContent": "",
+              "id": "988d2433-fa35-432d-8d2f-8fdee066af7c",
+              "status": "published",
+              "title": "Homework 1",
+              "updatedAt": "2023-11-16T21:12:37.647Z"
+            },
+            "fcfe7a16-6ce5-4ba7-bcd2-b54c569b9adb": {
+              "content": "<img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FRCheQ0PFIGg9ePXlsSCLJBJmCrG3%2Ffiles%2F17036897695964290845111457576984_66dnoNjIYR.jpg?alt=media&amp;token=461b71c8-cf58-4f2e-a339-00e8d5e4c12a\" width=\"431\" style=\"cursor: nwse-resize;\"><p>Title</p><p>Write your notes here...</p>",
+              "createdAt": "2023-12-27T15:09:26.098Z",
+              "editContent": "",
+              "id": "fcfe7a16-6ce5-4ba7-bcd2-b54c569b9adb",
+              "status": "published",
+              "title": "title",
+              "updatedAt": "2024-01-11T16:08:30.526Z"
+            }
+          },
+          "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
+            "0d9cd215-23f1-4ef4-b9b8-8a07732cd195": {
+              "content": "<h2>Teme</h2><p><strong>Am făcut deja la oră:</strong></p><ul><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/3?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Making our first sprite</a> ✅</li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/4?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Positioning sprites</a> ✅</li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/5?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Choose costumes</a> ✅</li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/6?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Sprite properties</a> ✅</li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/7?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Behaviors</a> ✅</li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/8?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Practice</a> ✅</li></ul><p><strong>De făcut acasă:</strong></p><ul><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/8/sublevel/2?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Resize the fruit</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/9?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Free play</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/1?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\"><strong>Prezice</strong></a><strong>: citește codul și încearcă să prezici ce face avionul când pornim programul. </strong></li><li><strong>Recapitulare: </strong><a href=\"https://staging-studio.code.org/s/course3/lessons/12/levels/1\" rel=\"noopener noreferrer\" target=\"_blank\"><strong>more loops</strong></a></li></ul><p><br></p><p><br></p><p>Section name:&nbsp;<strong>Lecții de Informatică cu Tudor</strong></p><p>1.) Go to&nbsp;<a href=\"https://studio.code.org/sections/NBWTJJ\" rel=\"noopener noreferrer\" target=\"_blank\" style=\"background-color: transparent; color: rgb(150, 96, 191);\"><strong>https://studio.code.org/sections/NBWTJJ</strong></a>&nbsp;or to&nbsp;<a href=\"https://studio.code.org/join\" rel=\"noopener noreferrer\" target=\"_blank\" style=\"background-color: transparent; color: rgb(150, 96, 191);\"><strong>https://studio.code.org/join</strong></a>&nbsp;and type in your 6-letter section code:&nbsp;<strong>NBWTJJ</strong></p><p>2.) Choose your name:&nbsp;<strong>Tudor</strong></p><p><span style=\"color: rgb(105, 105, 105);\">3.) Choose your secret picture:</span></p><img src=\"https://code.org/images/password_images/alien_thumb@2x.png\" width=\"null\"><h2>Recapitulare</h2><ul><li>Repeat (Loops/Bucle), Unghiuri: Artistul</li><li class=\"ql-indent-1\"><a href=\"https://studio.code.org/s/coursee-2022/lessons/7/levels/4\" rel=\"noopener noreferrer\" target=\"_blank\">Fancy Loops</a></li><li class=\"ql-indent-1\"><a href=\"https://studio.code.org/s/coursee-2022/lessons/7/extras\" rel=\"noopener noreferrer\" target=\"_blank\">Bonus levels: triangles and octogons</a></li></ul><p><br></p><h1>Materiale de curs</h1><ul><li><a href=\"https://studio.code.org/s/coursef-2023\" rel=\"noopener noreferrer\" target=\"_blank\">Sprite Lab</a></li><li><a href=\"https://docs.google.com/presentation/d/1xZxFMLB1qqUcs-nsW03Uh85kk_qGBnpitYn5qig-UVA/edit?usp=sharing\" rel=\"noopener noreferrer\" target=\"_blank\">Slides</a></li></ul><p><br></p><h2>Introducing Sprites Lab. What is a sprite.</h2><p><a href=\"https://studio.code.org/s/coursef-2023/lessons/2\" rel=\"noopener noreferrer\" target=\"_blank\">Lesson plan</a></p><p><br></p><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FRCheQ0PFIGg9ePXlsSCLJBJmCrG3%2Ffiles%2F640px-Tinker_Bell_KHBBS_gCAdWjkZcR.webp?alt=media&amp;token=9be4cf51-f624-4aa4-9732-f1964ac68c2e\" width=\"203\"><img src=\"https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FRCheQ0PFIGg9ePXlsSCLJBJmCrG3%2Ffiles%2FTinker_bell2-removebg-preview_IdcAM63W5V.webp?alt=media&amp;token=0539aeea-a702-496a-acc1-114281bb1643\" width=\"null\"><p><br></p><p><br></p><h3>Introducing sprites</h3><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/yd-9xZ275dM?showinfo=0\"></iframe><p><br></p><h3>What is a sprite</h3><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/presentation/d/e/2PACX-1vQJU9d0bY3jHqSX5yM2NvQ8hPDBpvgYTcRkAI88gm4ztKjF7_WzUzA-MGEQP89t5hlw7wf9P3sekO-b/embed?start=false&amp;loop=false&amp;delayms=3000#slide=id.g1025c1b7fb3_0_110\"></iframe><p><br></p><h3>Sample apps</h3><ul><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/2/levels/2/sublevel/1\" rel=\"noopener noreferrer\" target=\"_blank\">Virtual pet</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/2/levels/2/sublevel/2\" rel=\"noopener noreferrer\" target=\"_blank\">Collector game</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/2/levels/2\" rel=\"noopener noreferrer\" target=\"_blank\">Others</a></li></ul><p><br></p><h2>Making sprites</h2><p><a href=\"https://studio.code.org/s/coursef-2023/lessons/3\" rel=\"noopener noreferrer\" target=\"_blank\">Lesson plan</a></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://docs.google.com/presentation/d/e/2PACX-1vQJU9d0bY3jHqSX5yM2NvQ8hPDBpvgYTcRkAI88gm4ztKjF7_WzUzA-MGEQP89t5hlw7wf9P3sekO-b/embed?start=false&amp;loop=false&amp;delayms=3000#slide=id.g1025c1b7fb3_0_283\"></iframe><p><br></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">Reflect:</strong><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">&nbsp;What is the same or different about our instructions and </span><a href=\"https://studio.code.org/projects/spritelab/i1-YKJAmtlLMi54FJRIVNnWR_yLy-xRpmUAKcIAlaa0/embed_app_and_code\" rel=\"noopener noreferrer\" target=\"_blank\" style=\"color: rgb(0, 173, 188); background-color: transparent;\">this code</a><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">?</span></p><p><br></p><h3>How to create a sprite</h3><p><br></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">Vocabulary</strong></p><ul><li>Algorithm - A list of steps to complete a task.</li><li>Behavior - An action in Sprite Lab that a sprite performs continuously until it’s told to stop.</li><li>Program - An algorithm that has been coded into something that can be run by a machine.</li><li>Sprite - A graphic on the screen with a location, size, and appearance.</li></ul><p><br></p><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/wbTJpx3driA?showinfo=0\"></iframe><p><br></p><h3>Prediction</h3><ul><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/1?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">What will the plane do?</a></li></ul><p><br></p><h3>Activities</h3><ul><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/3?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Making our first sprite</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/4?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Positioning sprites</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/5?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Choose costumes</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/6?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Sprite properties</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/7?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Behaviors</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/8?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Practice</a></li><li><a href=\"https://studio.code.org/s/coursef-2023/lessons/3/levels/9?no_redirect=1\" rel=\"noopener noreferrer\" target=\"_blank\">Free play</a></li></ul>",
+              "createdAt": "2023-11-30T13:04:39.417Z",
+              "editContent": "",
+              "id": "0d9cd215-23f1-4ef4-b9b8-8a07732cd195",
+              "status": "published",
+              "title": "Concepte noi: Sprites (Spiriduși)",
+              "updatedAt": "2023-11-30T13:26:27.594Z"
+            },
+            "741c229b-9b6c-4104-8019-95c5f58bace5": {
+              "content": "<p>Ce am făcut azi:</p><ul><li>Am făcut cunoștință cu un nou roboțel: Charlie.</li><li>Am învățat despre procente:</li><li class=\"ql-indent-1\">100%: viteză maximă</li><li class=\"ql-indent-1\">50%: viteză la jumătate</li><li class=\"ql-indent-1\">25%: un sfert din viteza maximă</li><li class=\"ql-indent-1\">0%: oprit</li><li>Am combinat secvențe repeat într-un dans complex.</li><li class=\"ql-indent-1\">Roboțelul face o piruetă stânga-dreapta de două ori (într-un repeat)</li><li class=\"ql-indent-1\">Roboțelul mișcă mâinile de două ori (într-un alt repeat)</li><li class=\"ql-indent-1\">Acțiunile anterioare sunt repetate de 3 ori (adăugate într-un repeat tată)</li><li>Am construit un \"ochi\" pentru Charlie care îi permite să recunoască culori (un senzor de culoare).</li><li>Am văzut un program pre-existent care îi permite lui Charlie să facă diverse acțiuni în funcție de culoarea văzută:</li><li class=\"ql-indent-1\">Verde — piruetă</li><li class=\"ql-indent-1\">Roșu — vine spre mine</li><li class=\"ql-indent-1\">Galben — fuge de mine și strigă</li><li class=\"ql-indent-1\">Albastru — rămâne pe data viitoare...</li><li>Data viitoare vom construi chiar noi un astfel de program, și vom recapitula \"if-then-else\" ca să creăm acest program.</li></ul><iframe class=\"ql-video\" frameborder=\"0\" allowfullscreen=\"true\" src=\"https://www.youtube.com/embed/TfkTHl7uTqI?showinfo=0\"></iframe><p><br></p>",
+              "createdAt": "2023-11-16T13:56:56.597Z",
+              "editContent": "",
+              "id": "741c229b-9b6c-4104-8019-95c5f58bace5",
+              "status": "published",
+              "title": "Recapitulare: repeat",
+              "updatedAt": "2023-11-16T14:05:41.138Z"
+            }
+          }
+        }
+      }
+    }
+  },
+  "students": {
+    "rDyoGDjCmhVmNmFIzJ1Sf7EMPLK2": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": ""
+      }
+    },
+    "4uVG6qXlF8Soe5xuRLE8aEPdjQe2": {
+      "teachers": {
+        "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": ""
+      }
+    },
+    "6kGbjPdHmTcVufRJpULR9r3yjm32": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": ""
+      }
+    },
+    "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": "",
+        "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": ""
+      }
+    },
+    "LE4fJeEZgsdxBrLV9Zo5BTBr5wu1": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": ""
+      }
+    },
+    "RvSl5ZrKLUZLBoqfWZQQxVXSez62": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": ""
+      }
+    },
+    "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": "",
+        "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": ""
+      }
+    },
+    "Vtym55Irg2TdSLnKZpxqIP9vtVt2": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": ""
+      }
+    },
+    "bdfQDUmpytfXMiyTDdhNvQvcp3L2": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": ""
+      }
+    },
+    "wNElZogYLKabFeiTrcKW75JfICh1": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": ""
+      }
+    },
+    "yuuVbai3qXZY89dOhYVLvHwJ9eW2": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": ""
+      }
+    }
+  },
+  "teachers": {
+    "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+      "students": {
+        "6kGbjPdHmTcVufRJpULR9r3yjm32": "",
+        "CrJ0nlfZOrY4ac9USwzQzaURyWx2": "",
+        "LE4fJeEZgsdxBrLV9Zo5BTBr5wu1": "",
+        "RvSl5ZrKLUZLBoqfWZQQxVXSez62": "",
+        "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": "",
+        "Vtym55Irg2TdSLnKZpxqIP9vtVt2": "",
+        "bdfQDUmpytfXMiyTDdhNvQvcp3L2": "",
+        "wNElZogYLKabFeiTrcKW75JfICh1": "",
+        "yuuVbai3qXZY89dOhYVLvHwJ9eW2": "",
+        "rDyoGDjCmhVmNmFIzJ1Sf7EMPLK2": ""
+      }
+    },
+    "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": {
+      "students": {
+        "4uVG6qXlF8Soe5xuRLE8aEPdjQe2": "",
+        "CrJ0nlfZOrY4ac9USwzQzaURyWx2": "",
+        "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": ""
+      }
+    }
+  },
+  "users": {
+    "4uVG6qXlF8Soe5xuRLE8aEPdjQe2": {
+      "email": "ion.popescu@gmail.com",
+      "name": "Ionuț Popescu",
+      "role": "student"
+    },
+    "6kGbjPdHmTcVufRJpULR9r3yjm32": {
+      "email": "catalina_gubernat@yahoo.com",
+      "name": "Natalia",
+      "role": "student"
+    },
+    "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+      "email": "susannaalicej@gmail.com",
+      "name": "Susanna Johnson-Chelaru",
+      "role": "teacher",
+      "subject": "violin"
+    },
+    "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
+      "email": "florin.chelaru@gmail.com",
+      "name": "Florin Chelaru",
+      "role": "student"
+    },
+    "LE4fJeEZgsdxBrLV9Zo5BTBr5wu1": {
+      "email": "timus.valentina@gmail.com",
+      "name": "Maria",
+      "role": "student"
+    },
+    "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": {
+      "email": "florinchelaru@gmail.com",
+      "name": "Florin Chelaru",
+      "role": "teacher",
+      "subject": "computerScience"
+    },
+    "RvSl5ZrKLUZLBoqfWZQQxVXSez62": {
+      "email": "cristianabolocan1@gmail.com",
+      "name": "Cristiana Bolocan",
+      "role": "student"
+    },
+    "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
+      "email": "ursache.andreea@gmail.com",
+      "name": "Tudor Teleche",
+      "role": "student"
+    },
+    "Vtym55Irg2TdSLnKZpxqIP9vtVt2": {
+      "email": "diana.sandovici@yahoo.com",
+      "name": "Sara",
+      "role": "student"
+    },
+    "bdfQDUmpytfXMiyTDdhNvQvcp3L2": {
+      "email": "athlani.jennifer@gmail.com",
+      "name": "Jennifer Athlani",
+      "role": "student"
+    },
+    "wNElZogYLKabFeiTrcKW75JfICh1": {
+      "email": "prodanciuc.c.augustus@gmail.com",
+      "name": "Augustus Prodanciuc",
+      "role": "student"
+    },
+    "yuuVbai3qXZY89dOhYVLvHwJ9eW2": {
+      "email": "corina.cioclu@gmail.com",
+      "name": "Antonia",
+      "role": "student"
+    },
+    "rDyoGDjCmhVmNmFIzJ1Sf7EMPLK2": {
+      "email": "ioana.buhaescu@yahoo.com",
+      "name": "Ilinca Buhăescu",
+      "role": "student"
+    }
+  }
+}
