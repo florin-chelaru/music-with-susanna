@@ -103,6 +103,47 @@ export const TESTIMONIALS: LocalizedTestimonial[] = [
       expandable: true
     }
   },
+
+  {
+    [SupportedLocale.EN_US]: {
+      title: 'Viola Student, Iași, Romania',
+      subtitle: 'age thirteen',
+      content: (
+        <>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            I believe that Mrs. Susanna is an excellent viola instructor. She teaches very well and
+            helps me understand things that I normally wouldn&apos;t. She has helped me convey
+            emotions when I play a song, not just play it for the sake of playing. She has helped me
+            maintain exemplary posture to present myself well at exams, competitions, etc. She has
+            helped me create a pleasing sound to enchant anyone when I play. In conclusion, I love
+            my teacher and hope to study with her until college or even beyond.
+          </Typography>
+        </>
+      ),
+      rating: 5,
+      expandable: true
+    },
+    [SupportedLocale.RO_RO]: {
+      title: 'Elev de violă, Iași',
+      subtitle: 'treisprezece ani',
+      content: (
+        <>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Eu cred că doamna Susanna este o profesoară excelentă. Predă foarte bine și mă ajută să
+            înțeleg unele lucruri pe care în mod normal nu le-aș înțelege. M-a ajutat să transmit
+            emoții atunci când cânt o melodie, nu doar să o cânt pentru a fi cântată, m-a ajutat să
+            am o postură exeplară pentru a mă prezenta bine la examene, concursuri etc.,m-a ajutat
+            să creez un sunet favorabil pentru a putea încânta pe orice atunci când cant. În
+            concluzie o iubesc pe doamna profesoară și sper să studiez cu ea până la facultate sau
+            chiar după.
+          </Typography>
+        </>
+      ),
+      rating: 5,
+      expandable: true
+    }
+  },
+
   {
     [SupportedLocale.EN_US]: {
       title: 'Ariel Roth',
