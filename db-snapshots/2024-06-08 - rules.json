@@ -1,0 +1,48 @@
+{
+    /* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
+    "rules": {
+        "users": {
+            "$uid": {
+                ".write": "$uid === auth.uid",
+                ".read": true
+            }
+        },
+        "teachers": {
+            "$tid": {
+                ".write": "$tid === auth.uid",
+                ".read": "$tid === auth.uid"
+            }
+        },
+        "students": {
+            "$sid": {
+                ".write": false,
+                ".read": "$sid === auth.uid"
+            }
+        },
+        "homework": {
+            "teachers": {
+                "$tid": {
+                    ".write": "$tid === auth.uid",
+                    ".read": "$tid === auth.uid",
+                    "students": {
+                        "$sid": {
+                            ".read": "$tid === auth.uid || $sid === auth.uid",
+                            "$hid": {
+                                ".read": "$tid === auth.uid || ($sid === auth.uid && data.child('visible_to_student').val() === true)"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "deleted": {
+            "homework": {
+                "teachers": {
+                    "$tid": {
+                        ".write": "$tid === auth.uid"
+                    }
+                }
+            }
+        }
+    }
+}
