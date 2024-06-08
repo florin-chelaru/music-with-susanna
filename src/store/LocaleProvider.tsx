@@ -30,6 +30,7 @@ export interface GlobalLocalizedData extends LocalizedData {
   signUp: string
   students: string
   subjects: string
+  studentsInRecital: string
   testimonials: string
   youtubeChildrensChannel: string
 }

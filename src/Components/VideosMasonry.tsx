@@ -8,17 +8,27 @@ import { ImageList, useMediaQuery, useTheme } from '@mui/material'
 export interface VideoMasonryProps {
   onVideoSelected?: (video: string) => void
   maxVideos?: number
+  videos?: any[]
+  cols?: number
 }
 
-export default function VideosMasonry({ onVideoSelected, maxVideos }: VideoMasonryProps) {
-  const videoCardProps: VideoThumbnailCardProps[] = YOUTUBE_VIDEOS.map((v) => ({
-    image: v.snippet.thumbnails.high.url,
-    title: v.snippet.title,
-    videoId: v.videoId
-  })).slice(0, maxVideos ?? YOUTUBE_VIDEOS.length)
+export default function VideosMasonry({
+  onVideoSelected,
+  maxVideos,
+  videos = YOUTUBE_VIDEOS,
+  cols
+}: VideoMasonryProps) {
+  const videoCardProps: VideoThumbnailCardProps[] = videos
+    .map((v) => ({
+      image: v.snippet.thumbnails.high.url,
+      title: v.snippet.title,
+      videoId: v.videoId
+    }))
+    .slice(0, maxVideos ?? YOUTUBE_VIDEOS.length)
 
   const theme = useTheme()
   const md = useMediaQuery(theme.breakpoints.up('md'))
+  cols = cols ?? (md ? 3 : 2)
 
   const itemsPerPage = 8
   const [initialLoad, setInitialLoad] = useState(true)
@@ -44,7 +54,7 @@ export default function VideosMasonry({ onVideoSelected, maxVideos }: VideoMason
             hasMore={hasMore}
             loader={<h4 className="loader">Loading...</h4>}
             useWindow={true}>
-            <ImageList cols={md ? 3 : 2} gap={16}>
+            <ImageList cols={cols} gap={16}>
               {videoCardProps.slice(0, records).map((props, i) => (
                 <VideoThumbnailCard
                   key={`thumbnail-${i}`}

@@ -1,6 +1,17 @@
 import React, { useContext } from 'react'
 import Toolbar from '@mui/material/Toolbar'
-import { Avatar, Button, Container, Link, Stack } from '@mui/material'
+import {
+  Avatar,
+  Button,
+  Card,
+  CardMedia,
+  Container,
+  ImageList,
+  Link,
+  Stack,
+  useMediaQuery,
+  useTheme
+} from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import IntroCard from '../Components/IntroCard'
 import TestimonialsMasonry from '../Components/TestimonialsMasonry'
@@ -12,6 +23,7 @@ import { useNavigate } from 'react-router-dom'
 import { withBaseURL } from '../util/string'
 import { scrollToTop } from '../util/window'
 import ImportantEventCard from '../Components/ImportantEventCard'
+import RECITAL_VIDEOS from '../data/RecitalVideos'
 
 export interface HomeProps {}
 
@@ -19,6 +31,10 @@ export default function Home({}: HomeProps) {
   const strings = useContext<LocaleHandler>(LocaleContext).globalStringList
   const selectedVideoManager = useContext<SelectedVideoManager>(SelectedVideoContext)
   const navigate = useNavigate()
+
+  const theme = useTheme()
+  const md = useMediaQuery(theme.breakpoints.up('md'))
+
   return (
     <>
       <Container maxWidth="md" sx={{ pt: 3 }}>
@@ -30,6 +46,33 @@ export default function Home({}: HomeProps) {
           <Grid2 xs={12}>
             <IntroCard />
           </Grid2>
+
+          <Grid2 xs={12} sx={{ justifyContent: 'center', alignItems: 'center' }}>
+            <br />
+            <Typography variant="h5" component="h2" sx={{ textAlign: 'center' }}>
+              {strings.studentsInRecital.toUpperCase()}
+            </Typography>
+          </Grid2>
+          <Grid2 xs={12}>
+            <Grid2 xs={12}>
+              <ImageList cols={md ? 2 : 1} gap={16}>
+                {RECITAL_VIDEOS.map((props: any, i) => (
+                  <Card key={`recital-video-${i}`}>
+                    <CardMedia
+                      component="iframe"
+                      height="400"
+                      src={`https://www.youtube.com/embed/${props.videoId}`}
+                      title="YouTube video player"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </Card>
+                ))}
+              </ImageList>
+            </Grid2>
+          </Grid2>
+
           <Grid2 xs={12} sx={{ justifyContent: 'center', alignItems: 'center' }}>
             <br />
             <Typography variant="h5" component="h2" sx={{ textAlign: 'center' }}>
