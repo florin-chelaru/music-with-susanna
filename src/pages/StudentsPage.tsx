@@ -1,10 +1,13 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import WhatsAppIcon from '@mui/icons-material/WhatsApp'
+import MenuBookIcon from '@mui/icons-material/MenuBook'
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Container,
   Link,
+  Stack,
   Toolbar,
   Typography
 } from '@mui/material'
@@ -51,9 +54,9 @@ export default function StudentsPage({}: StudentsPageProps) {
   async function getStudentInfo(studentId: string): Promise<User | undefined> {
     try {
       const snapshot = await get(ref(database, `users/${studentId}`))
-      const { email, name } = snapshot.val()
+      const { email, name, phone, parent } = snapshot.val()
 
-      return new User({ email, name })
+      return new User({ email, name, phone, parent })
     } catch (e) {
       console.error(`Could not retrieve name of student id ${studentId}: ${e}`)
       return undefined
@@ -132,6 +135,22 @@ export default function StudentsPage({}: StudentsPageProps) {
                 <Typography>{student.name}</Typography>
               </AccordionSummary>
               <AccordionDetails>
+                {student.phone && (
+                  <Link
+                    underline="hover"
+                    color="inherit"
+                    rel="noreferrer"
+                    target="_blank"
+                    href={`https://wa.me/${student.phone.slice(1)}`}>
+                    <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                      <WhatsAppIcon />
+                      <Typography variant="body1" gutterBottom component="h2">
+                        {student.parent ? `${student.parent}` : 'Message'}
+                      </Typography>
+                    </Stack>
+                  </Link>
+                )}
+
                 <Link
                   underline="hover"
                   color="inherit"
@@ -141,9 +160,12 @@ export default function StudentsPage({}: StudentsPageProps) {
                     navigate(`/homework/${user.uid}/${student.uid}`)
                     scrollToTop()
                   }}>
-                  <Typography variant="body1" gutterBottom component="h2">
-                    {componentStrings.homework}
-                  </Typography>
+                  <Stack direction="row" spacing={1}>
+                    <MenuBookIcon />
+                    <Typography variant="body1" gutterBottom component="h2">
+                      {componentStrings.homework}
+                    </Typography>
+                  </Stack>
                 </Link>
               </AccordionDetails>
             </Accordion>
