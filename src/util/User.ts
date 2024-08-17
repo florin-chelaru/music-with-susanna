@@ -11,6 +11,8 @@ export class User {
   role?: UserRole
   name?: string
   subject?: string
+  phone?: string
+  parent?: string
 
   get firstName(): string | undefined {
     if (!this.name) {

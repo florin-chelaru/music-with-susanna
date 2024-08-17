@@ -1224,38 +1224,50 @@
     "8tsejBIl9YQ2n5xT01hPEKc2hqn2": {
       "email": "ionelababan@gmail.com",
       "name": "Ștefan Baban",
-      "role": "student"
+      "role": "student",
+      "phone": "+40729078765",
+      "parent": "Ionela Baban"
     },
     "xICOnaL8VHVjqqFJiPuorluo1H22": {
       "email": "cocuzmadalina@yahoo.com",
       "name": "David Tănasă",
-      "role": "student"
+      "role": "student",
+      "phone": "+40753465549",
+      "parent": "Octavian Tănasă"
     },
     "4uVG6qXlF8Soe5xuRLE8aEPdjQe2": {
       "email": "ion.popescu@gmail.com",
       "name": "Ionuț Popescu",
-      "role": "student"
+      "role": "student",
+      "phone": "+40721068073",
+      "parent": "Florin Chelaru"
     },
     "6kGbjPdHmTcVufRJpULR9r3yjm32": {
       "email": "catalina_gubernat@yahoo.com",
-      "name": "Natalia",
-      "role": "student"
+      "name": "Natalia Gubernat",
+      "role": "student",
+      "phone": "+40741131380",
+      "parent": "Cătălina Gubernat"
     },
     "CgOaIwnaE5TPVsiRrsB9krTaC092": {
       "email": "susannaalicej@gmail.com",
       "name": "Susanna Johnson-Chelaru",
       "role": "teacher",
-      "subject": "violin"
+      "subject": "violin",
+      "phone": "+40724261320"
     },
     "CrJ0nlfZOrY4ac9USwzQzaURyWx2": {
       "email": "florin.chelaru@gmail.com",
       "name": "Florin Chelaru",
-      "role": "student"
+      "role": "student",
+      "phone": "+40721068073"
     },
     "LE4fJeEZgsdxBrLV9Zo5BTBr5wu1": {
       "email": "timus.valentina@gmail.com",
-      "name": "Maria",
-      "role": "student"
+      "name": "Maria Timuș",
+      "role": "student",
+      "phone": "+37368200222",
+      "parent": "Valentina Timuș"
     },
     "RCheQ0PFIGg9ePXlsSCLJBJmCrG3": {
       "email": "florinchelaru@gmail.com",
@@ -1266,32 +1278,43 @@
     "RvSl5ZrKLUZLBoqfWZQQxVXSez62": {
       "email": "cristianabolocan1@gmail.com",
       "name": "Cristiana Bolocan",
-      "role": "student"
+      "role": "student",
+      "phone": "+40740031884",
+      "parent": "Bogdan Bolocan"
     },
     "TIXUu9RL0OQVnSl7WTH7lSLGAIG3": {
       "email": "ursache.andreea@gmail.com",
       "name": "Tudor Teleche",
-      "role": "student"
+      "role": "student",
+      "phone": "+40746075760",
+      "parent": "Andreea Teleche"
     },
     "Vtym55Irg2TdSLnKZpxqIP9vtVt2": {
       "email": "diana.sandovici@yahoo.com",
-      "name": "Sara",
-      "role": "student"
+      "name": "Sara Sandovici",
+      "role": "student",
+      "phone": "+40747079682",
+      "parent": "Diana Sandovici"
     },
     "bdfQDUmpytfXMiyTDdhNvQvcp3L2": {
       "email": "athlani.jennifer@gmail.com",
       "name": "Jennifer Athlani",
-      "role": "student"
+      "role": "student",
+      "phone": "+33650855676"
     },
     "rDyoGDjCmhVmNmFIzJ1Sf7EMPLK2": {
       "email": "ioana.buhaescu@yahoo.com",
       "name": "Ilinca Buhăescu",
-      "role": "student"
+      "role": "student",
+      "phone": "+40739745295",
+      "parent": "Ioana Buhăescu"
     },
     "wNElZogYLKabFeiTrcKW75JfICh1": {
       "email": "prodanciuc.c.augustus@gmail.com",
       "name": "Augustus Prodanciuc",
-      "role": "student"
+      "role": "student",
+      "phone": "+40744618292",
+      "parent": "Cristina Prodanciuc"
     }
   }
 }
