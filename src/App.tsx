@@ -27,6 +27,7 @@ import SelectedVideoProvider from './store/SelectedVideoProvider'
 import { UserProvider } from './store/UserProvider'
 import CustomThemeProvider from './theme/CustomThemeProvider'
 import { gaSendPageView } from './util/google-analytics'
+import SchedulePage from './pages/SchedulePage'
 
 function App() {
   const navItems: RouteInfo[] = ROUTES
@@ -60,6 +61,7 @@ function App() {
                         <Route path="/students" element={<StudentsPage />} />
                         <Route path="/subjects" element={<SubjectsPage />} />
                         <Route path="/homework/:teacherId/:studentId" element={<Homework />} />
+                        <Route path="/schedule" element={<SchedulePage />} />
                       </Routes>
                     </Grid2>
                   </Grid2>
