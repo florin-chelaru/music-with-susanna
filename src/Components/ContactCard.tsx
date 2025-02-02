@@ -34,7 +34,7 @@ const EN_US: ContactTexts = {
     </>
   ),
   whatsAppLinkWithMessage:
-    'https://wa.me/40724261320?text=Hello%2C%20I%20would%20like%20to%20find%20out%20more%20about%20the%20violin%2Fviola%20lessons.%20My%20name%20is',
+    'https://wa.me/40791520792?text=Hello%2C%20I%20would%20like%20to%20find%20out%20more%20about%20the%20violin%2Fviola%20lessons.%20My%20name%20is',
   emailLinkWithMessage:
     'mailto:susanna.alice.j@gmail.com?subject=Violin%2Fviola%20lessons&body=Hello%2C%20I%20would%20like%20to%20find%20out%20more%20about%20the%20violin%2Fviola%20lessons.%20My%20name%20is'
 }
@@ -57,7 +57,7 @@ const RO_RO: ContactTexts = {
     </>
   ),
   whatsAppLinkWithMessage:
-    'https://wa.me/40724261320?text=Bun%C4%83%20ziua%2C%20a%C8%99%20vrea%20s%C4%83%20aflu%20detalii%20despre%20lec%C8%9Biile%20de%20vioar%C4%83%2Fviol%C4%83.%20Numele%20meu%20este%20',
+    'https://wa.me/40791520792?text=Bun%C4%83%20ziua%2C%20a%C8%99%20vrea%20s%C4%83%20aflu%20detalii%20despre%20lec%C8%9Biile%20de%20vioar%C4%83%2Fviol%C4%83.%20Numele%20meu%20este%20',
   emailLinkWithMessage:
     'mailto:susanna.alice.j@gmail.com?subject=Lec%C8%9Bii%20de%20vioar%C4%83%2Fviol%C4%83&body=Bun%C4%83%20ziua%2C%20a%C8%99%20vrea%20s%C4%83%20aflu%20detalii%20despre%20lec%C8%9Biile%20de%20vioar%C4%83%2Fviol%C4%83.%20Numele%20meu%20este%20'
 }
@@ -117,7 +117,7 @@ export default function ContactCard() {
                   flexWrap: 'wrap',
                   textDecoration: 'none'
                 }}>
-                <WhatsAppIcon fontSize="small" sx={{ mr: 1 }} /> 0724-261-320
+                <WhatsAppIcon fontSize="small" sx={{ mr: 1 }} /> 0791-520-792
               </Link>
             </Typography>
             <Typography variant="body2">
