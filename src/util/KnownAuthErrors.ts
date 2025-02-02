@@ -8,5 +8,6 @@ export enum KnownAuthErrors {
   EMPTY_PARENT_NAME = 'validation/empty-parent-name',
   EMPTY_PHONE_NUMBER = 'validation/empty-phone-number',
   INVALID_PHONE_NUMBER = 'validation/invalid-phone-number',
-  UNAUTHORIZED = 'auth/unauthorized'
+  UNAUTHORIZED = 'auth/unauthorized',
+  STUDENT_NAME_MISMATCH = 'validation/student-name-mismatch'
 }
