@@ -45,3 +45,10 @@ export function convertHtmlStringToPlain(str: string) {
 export function isValidEmail(email: string) {
   return /\S+@\S+\.\S+/.test(email)
 }
+
+export function isValidPhoneNumber(phone: string): boolean {
+  // Very basic phone number validator that checks that the input
+  // matches a string that starts with a '+' followed by one or more
+  // digits.
+  return /^\+\d+$/.test(phone)
+}

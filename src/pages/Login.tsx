@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import {
   Alert,
   Avatar,
@@ -16,22 +16,18 @@ import {
   Typography
 } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
+import { sendPasswordResetEmail, signInWithEmailAndPassword, UserCredential } from 'firebase/auth'
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import MultiActionDialog from '../Components/MultiActionDialog'
 import { auth } from '../store/Firebase'
-import {
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signOut,
-  UserCredential
-} from 'firebase/auth'
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
-import { SupportedLocale } from '../util/SupportedLocale'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { useUser } from '../store/UserProvider'
-import { useNavigate } from 'react-router-dom'
-import { scrollToTop } from '../util/window'
-import { UserRole } from '../util/User'
-import MultiActionDialog from '../Components/MultiActionDialog'
+import { KnownAuthErrors } from '../util/KnownAuthErrors'
 import { isValidEmail } from '../util/string'
+import { SupportedLocale } from '../util/SupportedLocale'
+import { UserRole } from '../util/User'
+import { scrollToTop } from '../util/window'
 
 interface LoginTexts {
   signInTitle: string
@@ -104,13 +100,6 @@ const LOGIN_TEXTS = new Map<SupportedLocale, LocalizedData>([
   [SupportedLocale.EN_US, EN_US],
   [SupportedLocale.RO_RO, RO_RO]
 ])
-
-enum KnownAuthErrors {
-  INVALID_EMAIL = 'auth/invalid-email',
-  INVALID_CREDENTIALS = 'auth/invalid-login-credentials',
-  EMPTY_EMAIL = 'validation/empty-email',
-  EMPTY_PASSWORD = 'validation/empty-password'
-}
 
 function parseAuthError(errorCode: string, loginTexts: LoginTexts): string {
   switch (errorCode) {
