@@ -1,5 +1,5 @@
-import { initializeApp } from 'firebase/app'
 import { getAnalytics } from 'firebase/analytics'
+import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getDatabase } from 'firebase/database'
 import { getStorage } from 'firebase/storage'
@@ -10,7 +10,7 @@ import { getStorage } from 'firebase/storage'
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: 'AIzaSyCkXG9QlcRtkNLAoGA7IWSyXIsMhUtjClc',
   authDomain: 'music-with-susanna.firebaseapp.com',
   databaseURL: 'https://music-with-susanna-default-rtdb.europe-west1.firebasedatabase.app',
