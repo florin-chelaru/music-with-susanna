@@ -1,3 +1,4 @@
+import DeleteIcon from '@mui/icons-material/Delete'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import MenuBookIcon from '@mui/icons-material/MenuBook'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp'
@@ -9,6 +10,7 @@ import {
   Box,
   Container,
   DialogContent,
+  DialogContentText,
   Link,
   Stack,
   TextField,
@@ -18,7 +20,7 @@ import {
 import Grid2 from '@mui/material/Unstable_Grid2'
 import { initializeApp } from 'firebase/app'
 import { UserCredential, createUserWithEmailAndPassword, getAuth } from 'firebase/auth'
-import { Unsubscribe, get, onValue, ref, set } from 'firebase/database'
+import { Unsubscribe, get, onValue, ref, remove, set } from 'firebase/database'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import FabCreate from '../Components/FabCreate'
@@ -33,72 +35,83 @@ import { User, UserRole } from '../util/User'
 import { scrollToTop } from '../util/window'
 
 interface StudentsPageTexts {
-  homework: string
-  addStudent: string
-  cancel: string
   add: string
-  studentName: string
-  parentName: string
-  parentPhoneNumber: string
-  emailAddress: string
-  password: string
-  repeatPassword: string
-  authErrorInvalidEmail: string
+  addStudent: string
+  areYouSure: string
   authErrorEmptyCredentials: string
   authErrorInvalidCredentials: string
+  authErrorInvalidEmail: string
+  authErrorUnauthorized: string
   authErrorUnknown: string
-  validationPasswordMismatch: string
-  validationErrorEmptyStudentName: string
+  cancel: string
+  delete: string
+  emailAddress: string
+  homework: string
+  parentName: string
+  parentPhoneNumber: string
+  password: string
+  repeatPassword: string
+  studentName: string
   validationErrorEmptyParentName: string
   validationErrorEmptyPhoneNumber: string
+  validationErrorEmptyStudentName: string
   validationErrorInvalidPhoneNumber: string
-  authErrorUnauthorized: string
+  validationErrorStudentNameMismatch: string
+  validationPasswordMismatch: string
 }
 
 const EN_US: StudentsPageTexts = {
-  homework: 'Homework',
-  addStudent: 'Add student',
-  cancel: 'Cancel',
   add: 'Add',
-  studentName: 'Student name',
-  parentName: 'Parent name',
-  parentPhoneNumber: 'Parent phone number',
-  emailAddress: 'Email address',
-  password: 'Password',
-  repeatPassword: 'Repeat password',
-  authErrorInvalidEmail: 'Invalid email address',
+  addStudent: 'Add student',
+  areYouSure:
+    'Are you sure you want to delete the student? Type the full name of the student below if you are really sure.',
   authErrorEmptyCredentials: 'Empty email or password',
   authErrorInvalidCredentials: 'Invalid username or password',
+  authErrorInvalidEmail: 'Invalid email address',
+  authErrorUnauthorized: 'Unauthorized',
   authErrorUnknown: 'Unknown error',
-  validationPasswordMismatch: 'Passwords do not match',
-  validationErrorEmptyStudentName: 'Empty student name',
+  cancel: 'Cancel',
+  delete: 'Delete student',
+  emailAddress: 'Email address',
+  homework: 'Homework',
+  parentName: 'Parent name',
+  parentPhoneNumber: 'Parent phone number',
+  password: 'Password',
+  repeatPassword: 'Repeat password',
+  studentName: 'Student name',
   validationErrorEmptyParentName: 'Empty parent name',
   validationErrorEmptyPhoneNumber: 'Empty phone number',
+  validationErrorEmptyStudentName: 'Empty student name',
   validationErrorInvalidPhoneNumber: 'Invalid phone number',
-  authErrorUnauthorized: 'Unauthorized'
+  validationErrorStudentNameMismatch: 'Incorrect student name',
+  validationPasswordMismatch: 'Passwords do not match'
 }
 
 const RO_RO: StudentsPageTexts = {
-  homework: 'Teme pe acasă',
-  addStudent: 'Adaugă student',
-  cancel: 'Anulează',
   add: 'Adaugă',
-  studentName: 'Numele studentului',
-  parentName: 'Numele părintelui',
-  parentPhoneNumber: 'Numărul de telefon al părintelui',
-  emailAddress: 'Adresă de email',
-  password: 'Parolă',
-  repeatPassword: 'Repetă parola',
-  authErrorInvalidEmail: 'Adresă de email invalidă',
+  addStudent: 'Adaugă student',
+  areYouSure:
+    'Ești sigur că vrei să ștergi studentul? Scrie numele complet al studentului mai jos dacă ești sigur.',
   authErrorEmptyCredentials: 'Email sau parolă lipsă',
   authErrorInvalidCredentials: 'Nume de utilizator sau parolă incorecte',
+  authErrorInvalidEmail: 'Adresă de email invalidă',
+  authErrorUnauthorized: 'Neautorizat',
   authErrorUnknown: 'Eroare necunoscută',
-  validationPasswordMismatch: 'Parolele nu se potrivesc',
-  validationErrorEmptyStudentName: 'Numele studentului lipsește',
+  cancel: 'Anulează',
+  delete: 'Șterge student',
+  emailAddress: 'Adresă de email',
+  homework: 'Teme pe acasă',
+  parentName: 'Numele părintelui',
+  parentPhoneNumber: 'Numărul de telefon al părintelui',
+  password: 'Parolă',
+  repeatPassword: 'Repetă parola',
+  studentName: 'Numele studentului',
   validationErrorEmptyParentName: 'Numele părintelui lipsește',
   validationErrorEmptyPhoneNumber: 'Numărul de telefon lipsește',
+  validationErrorEmptyStudentName: 'Numele studentului lipsește',
   validationErrorInvalidPhoneNumber: 'Număr de telefon invalid',
-  authErrorUnauthorized: 'Neautorizat'
+  validationErrorStudentNameMismatch: 'Numele studentului nu este corect',
+  validationPasswordMismatch: 'Parolele nu se potrivesc'
 }
 
 const STUDENTS_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -106,7 +119,7 @@ const STUDENTS_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData>([
   [SupportedLocale.RO_RO, RO_RO]
 ])
 
-function parseAuthError(errorCode: string, texts: StudentsPageTexts): string {
+function parseAuthError(errorCode: string | null, texts: StudentsPageTexts): string {
   switch (errorCode) {
     case KnownAuthErrors.INVALID_EMAIL:
       return texts.authErrorInvalidEmail
@@ -128,6 +141,8 @@ function parseAuthError(errorCode: string, texts: StudentsPageTexts): string {
       return texts.validationErrorInvalidPhoneNumber
     case KnownAuthErrors.UNAUTHORIZED:
       return texts.authErrorUnauthorized
+    case KnownAuthErrors.STUDENT_NAME_MISMATCH:
+      return texts.validationErrorStudentNameMismatch
     default:
       return texts.authErrorUnknown
   }
@@ -162,16 +177,16 @@ export default function StudentsPage({}: StudentsPageProps) {
 
   // Add student
   const [openAddStudentDialog, setOpenAddStudentDialog] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
-  const formRef = useRef<HTMLFormElement>(null)
+  const [addStudentError, setAddStudentError] = useState<string | null>(null)
+  const addStudentFormRef = useRef<HTMLFormElement>(null)
 
   const submitStudent = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    setError(null)
+    setAddStudentError(null)
 
     if (user?.role !== UserRole.TEACHER) {
-      setError(KnownAuthErrors.UNAUTHORIZED)
+      setAddStudentError(KnownAuthErrors.UNAUTHORIZED)
       return
     }
 
@@ -184,35 +199,35 @@ export default function StudentsPage({}: StudentsPageProps) {
     const repeatPassword = data.get('repeat-new-password') as string | null
 
     if (!email?.length) {
-      setError(KnownAuthErrors.EMPTY_EMAIL)
+      setAddStudentError(KnownAuthErrors.EMPTY_EMAIL)
       return
     }
     if (!password?.length) {
-      setError(KnownAuthErrors.EMPTY_PASSWORD)
+      setAddStudentError(KnownAuthErrors.EMPTY_PASSWORD)
       return
     }
     if (password !== repeatPassword) {
-      setError(KnownAuthErrors.PASSWORD_MISMATCH)
+      setAddStudentError(KnownAuthErrors.PASSWORD_MISMATCH)
       return
     }
 
     if (!studentName?.length) {
-      setError(KnownAuthErrors.EMPTY_STUDENT_NAME)
+      setAddStudentError(KnownAuthErrors.EMPTY_STUDENT_NAME)
       return
     }
 
     if (!parentName?.length) {
-      setError(KnownAuthErrors.EMPTY_PARENT_NAME)
+      setAddStudentError(KnownAuthErrors.EMPTY_PARENT_NAME)
       return
     }
 
     if (!parentPhoneNumber?.length) {
-      setError(KnownAuthErrors.EMPTY_PHONE_NUMBER)
+      setAddStudentError(KnownAuthErrors.EMPTY_PHONE_NUMBER)
       return
     }
 
     if (!isValidPhoneNumber(parentPhoneNumber)) {
-      setError(KnownAuthErrors.INVALID_PHONE_NUMBER)
+      setAddStudentError(KnownAuthErrors.INVALID_PHONE_NUMBER)
       return
     }
 
@@ -242,8 +257,43 @@ export default function StudentsPage({}: StudentsPageProps) {
         setOpenAddStudentDialog(false)
       })
       .catch((error) => {
-        setError(error.code)
+        setAddStudentError(error.code)
       })
+  }
+
+  // Delete student
+  const [openDeleteStudentDialog, setOpenDeleteStudentDialog] = useState<boolean>(false)
+  const [deleteStudentError, setDeleteStudentError] = useState<string | null>(null)
+  const deleteStudentFormRef = useRef<HTMLFormElement>(null)
+  const [selectedStudent, setSelectedStudent] = useState<User | null>(null)
+
+  const deleteSelectedStudent = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    setDeleteStudentError(null)
+
+    if (user?.role !== UserRole.TEACHER) {
+      setAddStudentError(KnownAuthErrors.UNAUTHORIZED)
+      return
+    }
+
+    const data = new FormData(event.currentTarget)
+    const studentName = data.get('student-name') as string | null
+    if (!studentName?.length) {
+      setDeleteStudentError(KnownAuthErrors.EMPTY_STUDENT_NAME)
+      return
+    }
+
+    if (selectedStudent?.name !== studentName) {
+      setDeleteStudentError(KnownAuthErrors.STUDENT_NAME_MISMATCH)
+      return
+    }
+
+    await remove(ref(database, `students/${selectedStudent.uid}/teachers/${user.uid}`))
+    await remove(ref(database, `teachers/${user.uid}/students/${selectedStudent.uid}`))
+
+    setSelectedStudent(null)
+    setOpenDeleteStudentDialog(false)
   }
 
   useEffect(() => {
@@ -341,10 +391,27 @@ export default function StudentsPage({}: StudentsPageProps) {
                       navigate(`/homework/${user.uid}/${student.uid}`)
                       scrollToTop()
                     }}>
-                    <Stack direction="row" spacing={1}>
+                    <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
                       <MenuBookIcon />
                       <Typography variant="body1" gutterBottom component="h2">
                         {componentStrings.homework}
+                      </Typography>
+                    </Stack>
+                  </Link>
+
+                  <Link
+                    underline="hover"
+                    color="inherit"
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setSelectedStudent(student)
+                      setOpenDeleteStudentDialog(true)
+                    }}>
+                    <Stack direction="row" spacing={1}>
+                      <DeleteIcon />
+                      <Typography variant="body1" gutterBottom component="h2">
+                        {componentStrings.delete}
                       </Typography>
                     </Stack>
                   </Link>
@@ -354,7 +421,7 @@ export default function StudentsPage({}: StudentsPageProps) {
           ))}
         </Grid2>
       </Container>
-      user.role === UserRole.TEACHER && (
+
       <MultiActionDialog
         open={openAddStudentDialog}
         onClose={() => setOpenAddStudentDialog(false)}
@@ -365,15 +432,17 @@ export default function StudentsPage({}: StudentsPageProps) {
           {
             label: componentStrings.add,
             onClick: () => {
-              formRef.current?.requestSubmit()
+              addStudentFormRef.current?.requestSubmit()
             }
           }
         ]}>
         <DialogContent>
-          {error && <Alert severity="error">{parseAuthError(error, componentStrings)}</Alert>}
+          {addStudentError && (
+            <Alert severity="error">{parseAuthError(addStudentError, componentStrings)}</Alert>
+          )}
           <Box
             component="form"
-            ref={formRef}
+            ref={addStudentFormRef}
             onSubmit={submitStudent}
             noValidate
             autoComplete="off"
@@ -386,7 +455,9 @@ export default function StudentsPage({}: StudentsPageProps) {
               label={componentStrings.studentName}
               name="student-name"
               autoComplete="off"
-              error={[KnownAuthErrors.EMPTY_STUDENT_NAME].includes(error as KnownAuthErrors)}
+              error={[KnownAuthErrors.EMPTY_STUDENT_NAME].includes(
+                addStudentError as KnownAuthErrors
+              )}
             />
             <TextField
               margin="normal"
@@ -396,7 +467,9 @@ export default function StudentsPage({}: StudentsPageProps) {
               label={componentStrings.parentName}
               name="parent-name"
               autoComplete="off"
-              error={[KnownAuthErrors.EMPTY_PARENT_NAME].includes(error as KnownAuthErrors)}
+              error={[KnownAuthErrors.EMPTY_PARENT_NAME].includes(
+                addStudentError as KnownAuthErrors
+              )}
             />
             <TextField
               margin="normal"
@@ -409,7 +482,7 @@ export default function StudentsPage({}: StudentsPageProps) {
               error={[
                 KnownAuthErrors.EMPTY_PHONE_NUMBER,
                 KnownAuthErrors.INVALID_PHONE_NUMBER
-              ].includes(error as KnownAuthErrors)}
+              ].includes(addStudentError as KnownAuthErrors)}
             />
             <TextField
               margin="normal"
@@ -423,7 +496,7 @@ export default function StudentsPage({}: StudentsPageProps) {
                 KnownAuthErrors.INVALID_EMAIL,
                 KnownAuthErrors.INVALID_CREDENTIALS,
                 KnownAuthErrors.EMPTY_EMAIL
-              ].includes(error as KnownAuthErrors)}
+              ].includes(addStudentError as KnownAuthErrors)}
             />
             <TextField
               margin="normal"
@@ -438,7 +511,7 @@ export default function StudentsPage({}: StudentsPageProps) {
                 KnownAuthErrors.INVALID_CREDENTIALS,
                 KnownAuthErrors.EMPTY_PASSWORD,
                 KnownAuthErrors.PASSWORD_MISMATCH
-              ].includes(error as KnownAuthErrors)}
+              ].includes(addStudentError as KnownAuthErrors)}
             />
             <TextField
               margin="normal"
@@ -453,19 +526,71 @@ export default function StudentsPage({}: StudentsPageProps) {
                 KnownAuthErrors.INVALID_CREDENTIALS,
                 KnownAuthErrors.EMPTY_PASSWORD,
                 KnownAuthErrors.PASSWORD_MISMATCH
-              ].includes(error as KnownAuthErrors)}
+              ].includes(addStudentError as KnownAuthErrors)}
             />
           </Box>
         </DialogContent>
       </MultiActionDialog>
-      )
-      {user.role === UserRole.TEACHER && (
-        <FabCreate
-          onClick={() => {
-            void setOpenAddStudentDialog(true)
-          }}
-        />
-      )}
+
+      <MultiActionDialog
+        open={openDeleteStudentDialog}
+        onClose={() => {
+          setSelectedStudent(null)
+          setOpenDeleteStudentDialog(false)
+        }}
+        aria-describedby="alert-dialog-description"
+        title={componentStrings.areYouSure}
+        actions={[
+          {
+            label: componentStrings.cancel,
+            onClick: () => {
+              setSelectedStudent(null)
+              setOpenDeleteStudentDialog(false)
+            }
+          },
+          {
+            label: componentStrings.delete,
+            onClick: () => {
+              deleteStudentFormRef.current?.requestSubmit()
+            }
+          }
+        ]}>
+        <DialogContent>
+          <DialogContentText>
+            {componentStrings.areYouSure} (<b>{selectedStudent?.name}</b>)
+          </DialogContentText>
+          {deleteStudentError && (
+            <Alert severity="error">{parseAuthError(deleteStudentError, componentStrings)}</Alert>
+          )}
+          <Box
+            component="form"
+            ref={deleteStudentFormRef}
+            onSubmit={(e) => {
+              void deleteSelectedStudent(e)
+            }}
+            noValidate
+            autoComplete="off"
+            sx={{ mt: 1 }}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              label={componentStrings.studentName}
+              name="student-name"
+              autoComplete="off"
+              error={[KnownAuthErrors.EMPTY_STUDENT_NAME].includes(
+                addStudentError as KnownAuthErrors
+              )}
+            />
+          </Box>
+        </DialogContent>
+      </MultiActionDialog>
+
+      <FabCreate
+        onClick={() => {
+          void setOpenAddStudentDialog(true)
+        }}
+      />
     </>
   )
 }
