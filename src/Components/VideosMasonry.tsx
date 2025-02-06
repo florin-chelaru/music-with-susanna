@@ -24,7 +24,7 @@ export default function VideosMasonry({
       title: v.snippet.title,
       videoId: v.videoId
     }))
-    .slice(0, maxVideos ?? YOUTUBE_VIDEOS.length)
+    .slice(0, maxVideos ?? videos.length)
 
   const theme = useTheme()
   const md = useMediaQuery(theme.breakpoints.up('md'))
@@ -36,7 +36,7 @@ export default function VideosMasonry({
   const [records, setRecords] = useState(itemsPerPage)
   const loadMore = () => {
     setInitialLoad(false)
-    if (records >= YOUTUBE_VIDEOS.length) {
+    if (records >= videos.length) {
       setHasMore(false)
     } else {
       setRecords(records + itemsPerPage)
