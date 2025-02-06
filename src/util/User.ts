@@ -13,6 +13,7 @@ export class User {
   subject?: string
   phone?: string
   parent?: string
+  accessToken?: string
 
   get firstName(): string | undefined {
     if (!this.name) {
@@ -44,9 +45,11 @@ export class User {
       this.role = other?.role ?? this.role
       this.name = other?.name ?? this.name
       this.subject = other?.subject ?? this.subject
+      this.accessToken = other?.accessToken ?? this.accessToken
     }
   }
 }
 
 export const EMPTY_USER: User = new User()
 export const LOADING_USER: User = new User({ loading: true })
+export const SUSANNA_USER_ID = 'CgOaIwnaE5TPVsiRrsB9krTaC092'

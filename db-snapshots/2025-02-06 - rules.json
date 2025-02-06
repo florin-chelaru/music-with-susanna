@@ -1,0 +1,56 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'teacher'",
+        ".read": "auth != null",
+        ".validate": "newData.child('role').val() === 'student'"
+      }
+    },
+    "teachers": {
+      "$tid": {
+        ".write": "$tid === auth.uid",
+        ".read": "$tid === auth.uid"
+      }
+    },
+    "students": {
+      "$sid": {
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'teacher'",
+        ".read": "$sid === auth.uid"
+      }
+    },
+    "homework": {
+      "teachers": {
+        "$tid": {
+          ".write": "$tid === auth.uid",
+          ".read": "$tid === auth.uid",
+          "students": {
+            "$sid": {
+              ".read": "$tid === auth.uid || $sid === auth.uid",
+              "$hid": {
+                ".read": "$tid === auth.uid || ($sid === auth.uid && data.child('visible_to_student').val() === true)"
+              }
+            }
+          }
+        }
+      }
+    },
+    "deleted": {
+      "homework": {
+        "teachers": {
+          "$tid": {
+            ".write": "$tid === auth.uid"
+          }
+        }
+      }
+    },
+    "videos": {
+      "teachers": {
+        "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+          ".read": true,
+          ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'teacher'"
+        }
+      }
+    }
+  }
+}

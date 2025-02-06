@@ -1,4 +1,6 @@
-const YOUTUBE_VIDEOS = [
+import YouTubeVideo from '../util/YouTubeVideo'
+
+const YOUTUBE_VIDEOS: YouTubeVideo[] = [
   {
     videoId: 'G-SyAOIcvpI',
     snippet: {

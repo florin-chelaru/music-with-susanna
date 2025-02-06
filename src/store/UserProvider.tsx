@@ -60,6 +60,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         type: UserActionType.UPDATE_USER,
         payload: new User({
           uid: authUser.uid,
+          // @ts-ignore
+          accessToken: authUser.accessToken,
           email: authUser.email ?? undefined,
           loading: true
         })
