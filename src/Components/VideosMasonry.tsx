@@ -1,12 +1,13 @@
-import React, { useState } from 'react'
-import Grid2 from '@mui/material/Unstable_Grid2'
-import VideoThumbnailCard, { VideoThumbnailCardProps } from './VideoThumbnailCard'
-import YOUTUBE_VIDEOS from '../data/YouTubeVideos'
-import InfiniteScroll from 'react-infinite-scroller'
 import { ImageList, useMediaQuery, useTheme } from '@mui/material'
+import Grid2 from '@mui/material/Unstable_Grid2'
+import { useState } from 'react'
+import InfiniteScroll from 'react-infinite-scroller'
+import YOUTUBE_VIDEOS from '../data/YouTubeVideos'
+import VideoThumbnailCard, { VideoThumbnailCardProps } from './VideoThumbnailCard'
 
 export interface VideoMasonryProps {
   onVideoSelected?: (video: string) => void
+  onVideoDelete?: (video: string) => void
   maxVideos?: number
   videos?: any[]
   cols?: number
@@ -14,6 +15,7 @@ export interface VideoMasonryProps {
 
 export default function VideosMasonry({
   onVideoSelected,
+  onVideoDelete,
   maxVideos,
   videos = YOUTUBE_VIDEOS,
   cols
@@ -59,6 +61,7 @@ export default function VideosMasonry({
                 <VideoThumbnailCard
                   key={`thumbnail-${i}`}
                   onSelected={onVideoSelected}
+                  onDelete={onVideoDelete}
                   {...props}
                 />
               ))}
