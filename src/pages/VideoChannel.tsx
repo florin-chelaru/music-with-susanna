@@ -142,7 +142,7 @@ export default function VideoChannel() {
 
   useEffect(() => {
     videosUnsubscriberRef.current?.()
-    // Subscribe to changes in homework
+    // Subscribe to changes in videos
     videosUnsubscriberRef.current = onValue(
       ref(database, `videos/teachers/${SUSANNA_USER_ID}`),
       (snapshot) => handleVideosFromDb(snapshot),

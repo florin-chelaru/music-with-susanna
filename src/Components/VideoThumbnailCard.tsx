@@ -47,7 +47,6 @@ const VideoThumbnailCard = React.memo(
           {onDelete && (
             <Fab
               aria-label="delete"
-              color="secondary"
               size="small"
               sx={{ position: 'absolute', top: -70, left: 10 }}
               onClick={() => onDelete?.(videoId)}>
