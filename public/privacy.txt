@@ -1,0 +1,11 @@
+This app fetches posts from a Facebook page that I, Susanna Alice
+Johnson-Chelaru, own: https://www.facebook.com/MusicwithMsJohnson/. It does not
+collect, store, or process any personal information. The app only accesses
+publicly available posts from the page and presents them to users. No sensitive
+or private data is used or stored by the app.
+
+By using this app, users are accessing publicly available content that can be
+viewed on Facebook. The app does not share or sell any data.
+
+For questions or concerns, please contact me at susanna.alice.j@gmail.com, or
+the page developer, Florin Chelaru, at florin.chelaru@gmail.com.
