@@ -85,6 +85,7 @@ export default function VideoChannel() {
   }, [])
   const componentStrings = localeManager.componentStrings(VideoChannel.name)
 
+  const currentVideos = useRef<YouTubeVideo[]>(YOUTUBE_VIDEOS)
   const [videos, setVideos] = useState<YouTubeVideo[]>(YOUTUBE_VIDEOS)
   const [deletedVideos, setDeletedVideos] = useState<Set<string>>(new Set<string>())
   const videosUnsubscriberRef = useRef<Unsubscribe>()
@@ -108,6 +109,7 @@ export default function VideoChannel() {
         return !deletedVideos.has(v.videoId)
       })
 
+      currentVideos.current = filteredVideos
       setVideos(filteredVideos)
     },
     []
@@ -124,7 +126,7 @@ export default function VideoChannel() {
       setDeletedVideos(deletedVideosSet)
 
       const uniqueVideoIds = new Set<string>()
-      const filteredVideos = videos.filter((v) => {
+      const filteredVideos = currentVideos.current.filter((v) => {
         if (uniqueVideoIds.has(v.videoId)) {
           return false
         }
@@ -132,6 +134,7 @@ export default function VideoChannel() {
         return !deletedVideosSet.has(v.videoId)
       })
 
+      currentVideos.current = filteredVideos
       setVideos(filteredVideos)
     },
     [videos]
