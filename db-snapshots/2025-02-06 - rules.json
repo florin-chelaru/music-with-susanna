@@ -42,6 +42,14 @@
             ".write": "$tid === auth.uid"
           }
         }
+      },
+      "videos": {
+        "teachers": {
+          "CgOaIwnaE5TPVsiRrsB9krTaC092": {
+            ".read": true,
+            ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'teacher'"
+          }
+        }
       }
     },
     "videos": {

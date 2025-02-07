@@ -5,6 +5,7 @@ import {
   CardMedia,
   Container,
   DialogContent,
+  DialogContentText,
   IconButton,
   InputBase,
   Paper,
@@ -12,7 +13,7 @@ import {
 } from '@mui/material'
 import Toolbar from '@mui/material/Toolbar'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import { DataSnapshot, onValue, ref, set, Unsubscribe } from 'firebase/database'
+import { DataSnapshot, onValue, ref, remove, set, Unsubscribe } from 'firebase/database'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import Announcement from '../Components/Announcement'
 import FabCreate from '../Components/FabCreate'
@@ -35,6 +36,9 @@ interface VideoChannelTexts {
   addVideo: string
   add: string
   cancel: string
+  delete: string
+  deleteVideo: string
+  areYouSureDescription: string
 }
 
 const EN_US: VideoChannelTexts = {
@@ -45,7 +49,10 @@ const EN_US: VideoChannelTexts = {
     'children’s songs and guides for parents of children studying violin and viola.',
   add: 'Add',
   addVideo: 'Add a video',
-  cancel: 'Cancel'
+  cancel: 'Cancel',
+  delete: 'Delete',
+  deleteVideo: 'Delete video',
+  areYouSureDescription: 'Are you sure you want to delete this video?'
 }
 
 const RO_RO: VideoChannelTexts = {
@@ -57,7 +64,10 @@ const RO_RO: VideoChannelTexts = {
     'vioară și violă.',
   add: 'Adaugă',
   addVideo: 'Adaugă un videoclip',
-  cancel: 'Anulează'
+  cancel: 'Anulează',
+  delete: 'Șterge',
+  deleteVideo: 'Șterge videoclipul',
+  areYouSureDescription: 'Ești sigur că vrei să ștergi acest videoclip?'
 }
 
 const TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -76,7 +86,9 @@ export default function VideoChannel() {
   const componentStrings = localeManager.componentStrings(VideoChannel.name)
 
   const [videos, setVideos] = useState<YouTubeVideo[]>(YOUTUBE_VIDEOS)
+  const [deletedVideos, setDeletedVideos] = useState<Set<string>>(new Set<string>())
   const videosUnsubscriberRef = useRef<Unsubscribe>()
+  const deletedVideosUnsubscriberRef = useRef<Unsubscribe>()
 
   const handleVideosFromDb = useMemo(
     () => (snapshot: DataSnapshot) => {
@@ -85,9 +97,44 @@ export default function VideoChannel() {
         return
       }
 
-      setVideos(Object.values(dbVideos).concat(YOUTUBE_VIDEOS) as YouTubeVideo[])
+      const uniqueVideoIds = new Set<string>()
+      const filteredVideos = (
+        Object.values(dbVideos).concat(YOUTUBE_VIDEOS) as YouTubeVideo[]
+      ).filter((v) => {
+        if (uniqueVideoIds.has(v.videoId)) {
+          return false
+        }
+        uniqueVideoIds.add(v.videoId)
+        return !deletedVideos.has(v.videoId)
+      })
+
+      setVideos(filteredVideos)
     },
     []
+  )
+
+  const handleDeletedVideosFromDb = useMemo(
+    () => (snapshot: DataSnapshot) => {
+      const deletedVideosDb = snapshot.val()
+      if (!deletedVideosDb) {
+        return
+      }
+
+      const deletedVideosSet = new Set<string>(Object.keys(deletedVideosDb))
+      setDeletedVideos(deletedVideosSet)
+
+      const uniqueVideoIds = new Set<string>()
+      const filteredVideos = videos.filter((v) => {
+        if (uniqueVideoIds.has(v.videoId)) {
+          return false
+        }
+        uniqueVideoIds.add(v.videoId)
+        return !deletedVideosSet.has(v.videoId)
+      })
+
+      setVideos(filteredVideos)
+    },
+    [videos]
   )
 
   useEffect(() => {
@@ -105,6 +152,20 @@ export default function VideoChannel() {
     }
   }, [])
 
+  useEffect(() => {
+    deletedVideosUnsubscriberRef.current?.()
+    deletedVideosUnsubscriberRef.current = onValue(
+      ref(database, `deleted/videos/teachers/${SUSANNA_USER_ID}`),
+      (snapshot) => handleDeletedVideosFromDb(snapshot),
+      (error) => {
+        console.error(`Could not retrieve deleted videos for teacher ${SUSANNA_USER_ID}: ${error}`)
+      }
+    )
+    return () => {
+      deletedVideosUnsubscriberRef.current?.()
+    }
+  }, [])
+
   const { user } = useUser()
 
   const [openAddVideoDialog, setOpenAddVideoDialog] = useState<boolean>(false)
@@ -114,6 +175,9 @@ export default function VideoChannel() {
   const [videoAlertSeverity, setVideoAlertSeverity] = useState<
     'success' | 'info' | 'warning' | 'error'
   >('info')
+
+  const [openAreYouSureDialog, setOpenAreYouSureDialog] = useState<boolean>(false)
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null)
 
   const fetchVideo = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -198,6 +262,14 @@ export default function VideoChannel() {
                   scrollTo({ top: 0 })
                 }, 0)
               }}
+              onVideoDelete={
+                user?.role !== 'teacher'
+                  ? undefined
+                  : (videoId) => {
+                      setSelectedVideoId(videoId)
+                      setOpenAreYouSureDialog(true)
+                    }
+              }
             />
           </Grid2>
         </Grid2>
@@ -227,6 +299,9 @@ export default function VideoChannel() {
               await set(
                 ref(database, `videos/teachers/${SUSANNA_USER_ID}/${videoData?.videoId}`),
                 videoData
+              )
+              await remove(
+                ref(database, `deleted/videos/teachers/${SUSANNA_USER_ID}/${videoData?.videoId}`)
               )
               setOpenAddVideoDialog(false)
             }
@@ -273,6 +348,32 @@ export default function VideoChannel() {
               />
             </Card>
           )}
+        </DialogContent>
+      </MultiActionDialog>
+
+      <MultiActionDialog
+        open={openAreYouSureDialog}
+        onClose={() => setOpenAreYouSureDialog(false)}
+        aria-describedby="alert-dialog-description"
+        title={componentStrings.deleteVideo}
+        actions={[
+          { label: componentStrings.cancel, onClick: () => setOpenAreYouSureDialog(false) },
+          {
+            label: componentStrings.delete,
+            onClick: async () => {
+              await set(
+                ref(database, `deleted/videos/teachers/${SUSANNA_USER_ID}/${selectedVideoId}`),
+                ''
+              )
+              await remove(ref(database, `videos/teachers/${SUSANNA_USER_ID}/${selectedVideoId}`))
+              setOpenAreYouSureDialog(false)
+            }
+          }
+        ]}>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {componentStrings.areYouSureDescription}
+          </DialogContentText>
         </DialogContent>
       </MultiActionDialog>
     </>

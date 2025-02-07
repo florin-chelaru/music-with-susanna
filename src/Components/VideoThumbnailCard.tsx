@@ -3,6 +3,7 @@ import { Card, CardActions, CardMedia, Link } from '@mui/material'
 import Typography from '@mui/material/Typography'
 import Fab from '@mui/material/Fab'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import DeleteIcon from '@mui/icons-material/Delete'
 import Grid2 from '@mui/material/Unstable_Grid2'
 
 export interface VideoThumbnailCardProps {
@@ -10,10 +11,11 @@ export interface VideoThumbnailCardProps {
   title: string
   videoId: string
   onSelected?: (href: string) => void
+  onDelete?: (href: string) => void
 }
 
 const VideoThumbnailCard = React.memo(
-  ({ image, title, videoId, onSelected }: VideoThumbnailCardProps) => {
+  ({ image, title, videoId, onSelected, onDelete }: VideoThumbnailCardProps) => {
     return (
       <Card>
         <CardMedia component="img" image={image} />
@@ -42,6 +44,16 @@ const VideoThumbnailCard = React.memo(
             onClick={() => onSelected?.(videoId)}>
             <PlayArrowIcon />
           </Fab>
+          {onDelete && (
+            <Fab
+              aria-label="delete"
+              color="secondary"
+              size="small"
+              sx={{ position: 'absolute', top: -70, left: 10 }}
+              onClick={() => onDelete?.(videoId)}>
+              <DeleteIcon />
+            </Fab>
+          )}
         </CardActions>
       </Card>
     )
