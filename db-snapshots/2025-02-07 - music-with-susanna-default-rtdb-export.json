@@ -184,14 +184,6 @@
           "CbkSmbyxoMg": "",
           "p4BHphMBlFA": ""
         }
-      },
-      "showcase": {
-        "teachers": {
-          "CgOaIwnaE5TPVsiRrsB9krTaC092": {
-            "CbkSmbyxoMg": "",
-            "p4BHphMBlFA": ""
-          }
-        }
       }
     }
   },
@@ -2189,32 +2181,102 @@
     "showcase": {
       "teachers": {
         "CgOaIwnaE5TPVsiRrsB9krTaC092": {
-          "G-SyAOIcvpI": {
-            "videoId": "G-SyAOIcvpI",
+          "Jh6E3aS3YhM": {
+            "etag": "SXAR0oDB6Vg-MYGGLy-B9LrJr1M",
+            "id": "Jh6E3aS3YhM",
+            "kind": "youtube#video",
             "snippet": {
-              "publishedAt": "2023-09-30T11:27:10Z",
-              "title": "some title",
-              "description": "some description",
+              "categoryId": "10",
+              "channelId": "UCrxcoyBWhGaf-xYNzutQzeg",
+              "channelTitle": "Music with Ms. Johnson",
+              "defaultAudioLanguage": "ro",
+              "description": "",
+              "liveBroadcastContent": "none",
+              "localized": {
+                "description": "",
+                "title": "Maria, Clasa 0 — Recital de Vioară Iunie 2024, Școala Paradis, Iași"
+              },
+              "publishedAt": "2024-06-08T08:40:07Z",
               "thumbnails": {
                 "default": {
-                  "url": "https://i.ytimg.com/vi/G-SyAOIcvpI/default.jpg",
-                  "width": 120,
-                  "height": 90
-                },
-                "medium": {
-                  "url": "https://i.ytimg.com/vi/G-SyAOIcvpI/mqdefault.jpg",
-                  "width": 320,
-                  "height": 180
+                  "height": 90,
+                  "url": "https://i.ytimg.com/vi/Jh6E3aS3YhM/default.jpg",
+                  "width": 120
                 },
                 "high": {
-                  "url": "https://i.ytimg.com/vi/G-SyAOIcvpI/hqdefault.jpg",
-                  "width": 480,
-                  "height": 360
+                  "height": 360,
+                  "url": "https://i.ytimg.com/vi/Jh6E3aS3YhM/hqdefault.jpg",
+                  "width": 480
+                },
+                "maxres": {
+                  "height": 720,
+                  "url": "https://i.ytimg.com/vi/Jh6E3aS3YhM/maxresdefault.jpg",
+                  "width": 1280
+                },
+                "medium": {
+                  "height": 180,
+                  "url": "https://i.ytimg.com/vi/Jh6E3aS3YhM/mqdefault.jpg",
+                  "width": 320
+                },
+                "standard": {
+                  "height": 480,
+                  "url": "https://i.ytimg.com/vi/Jh6E3aS3YhM/sddefault.jpg",
+                  "width": 640
                 }
-              }
-            }
+              },
+              "title": "Maria, Clasa 0 — Recital de Vioară Iunie 2024, Școala Paradis, Iași"
+            },
+            "videoId": "Jh6E3aS3YhM"
+          },
+          "T17VHc0TsfI": {
+            "etag": "WpvfHD723QHGVG_tsjHABTODkVA",
+            "id": "T17VHc0TsfI",
+            "kind": "youtube#video",
+            "snippet": {
+              "categoryId": "10",
+              "channelId": "UCrxcoyBWhGaf-xYNzutQzeg",
+              "channelTitle": "Music with Ms. Johnson",
+              "defaultAudioLanguage": "ro",
+              "description": "",
+              "liveBroadcastContent": "none",
+              "localized": {
+                "description": "",
+                "title": "Ilinca, Clasa a II-a — Recital de Vioară Iunie 2024, Școala Paradis, Iași"
+              },
+              "publishedAt": "2024-06-08T10:17:09Z",
+              "thumbnails": {
+                "default": {
+                  "height": 90,
+                  "url": "https://i.ytimg.com/vi/T17VHc0TsfI/default.jpg",
+                  "width": 120
+                },
+                "high": {
+                  "height": 360,
+                  "url": "https://i.ytimg.com/vi/T17VHc0TsfI/hqdefault.jpg",
+                  "width": 480
+                },
+                "maxres": {
+                  "height": 720,
+                  "url": "https://i.ytimg.com/vi/T17VHc0TsfI/maxresdefault.jpg",
+                  "width": 1280
+                },
+                "medium": {
+                  "height": 180,
+                  "url": "https://i.ytimg.com/vi/T17VHc0TsfI/mqdefault.jpg",
+                  "width": 320
+                },
+                "standard": {
+                  "height": 480,
+                  "url": "https://i.ytimg.com/vi/T17VHc0TsfI/sddefault.jpg",
+                  "width": 640
+                }
+              },
+              "title": "Ilinca, Clasa a II-a — Recital de Vioară Iunie 2024, Școala Paradis, Iași"
+            },
+            "videoId": "T17VHc0TsfI"
           }
         }
       }
     }
   }
+}
