@@ -1,5 +1,6 @@
-import React, { useContext } from 'react'
-import { PrettyAttachment, PrettyPost } from '../util/PrettyPost'
+import DeleteIcon from '@mui/icons-material/Delete'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import { Masonry } from '@mui/lab'
 import {
   Avatar,
@@ -9,6 +10,7 @@ import {
   CardContent,
   CardHeader,
   CardMedia,
+  Checkbox,
   Collapse,
   IconButton,
   ImageList,
@@ -16,20 +18,20 @@ import {
   Link,
   Typography
 } from '@mui/material'
+import Fab from '@mui/material/Fab'
+import React, { useContext } from 'react'
+import FACEBOOK_POSTS, { FACEBOOK_AVATAR } from '../data/FacebookPosts'
 import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import { AttachmentType } from '../util/AttachmentType'
-import TextWithLinks from './TextWithLinks'
-import FavoriteIcon from '@mui/icons-material/Favorite'
-import ShareIcon from '@mui/icons-material/Share'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import ExpandMoreButton from './ExpandMoreButton'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
-import Fab from '@mui/material/Fab'
-import FACEBOOK_POSTS, { FACEBOOK_AVATAR } from '../data/FacebookPosts'
+import { PrettyAttachment, PrettyPost } from '../util/PrettyPost'
 import { withBaseURL } from '../util/string'
+import ExpandMoreButton from './ExpandMoreButton'
+import TextWithLinks from './TextWithLinks'
 
 export interface FacebookPostCardProps {
   post: PrettyPost
+  onSelectToggle?: (post: PrettyPost, selected: boolean) => void
+  onDelete?: (post: PrettyPost) => void
 }
 
 export interface PostMediaProps {
@@ -103,7 +105,7 @@ export function PostMedia({ attachments }: PostMediaProps) {
   )
 }
 
-export function FacebookPostCard({ post }: FacebookPostCardProps) {
+export function FacebookPostCard({ post, onSelectToggle, onDelete }: FacebookPostCardProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   const [expanded, setExpanded] = React.useState(false)
   const handleExpandClick = () => {
@@ -168,12 +170,13 @@ export function FacebookPostCard({ post }: FacebookPostCardProps) {
         message
       )}
       <CardActions disableSpacing>
-        <IconButton aria-label="Like on Facebook" href={post.url} target="_blank" rel="noreferrer">
-          <FavoriteIcon />
-        </IconButton>
-        <IconButton aria-label="Share on Facebook" href={post.url} target="_blank" rel="noreferrer">
-          <ShareIcon />
-        </IconButton>
+        {onSelectToggle && <Checkbox onChange={(e) => onSelectToggle(post, e.target.checked)} />}
+        {onDelete && (
+          <IconButton aria-label="delete" onClick={() => onDelete(post)}>
+            <DeleteIcon />
+          </IconButton>
+        )}
+
         {needsExpansion && (
           <ExpandMoreButton
             expand={expanded}
@@ -188,11 +191,26 @@ export function FacebookPostCard({ post }: FacebookPostCardProps) {
   )
 }
 
-export default function FacebookPostsMasonry() {
+export interface FacebookPostsMasonryProps {
+  posts?: PrettyPost[]
+  onPostSelectToggle?: (post: PrettyPost, selected: boolean) => void
+  onPostDelete?: (post: PrettyPost) => void
+}
+
+export default function FacebookPostsMasonry({
+  posts = FACEBOOK_POSTS,
+  onPostSelectToggle,
+  onPostDelete
+}: FacebookPostsMasonryProps) {
   return (
     <Masonry columns={{ xs: 1, sm: 2, md: 2 }} spacing={1} sx={{ m: 0, p: 0 }}>
-      {FACEBOOK_POSTS.map((p) => (
-        <FacebookPostCard key={p.id} post={p} />
+      {posts.map((p) => (
+        <FacebookPostCard
+          key={p.id}
+          post={p}
+          onDelete={onPostDelete}
+          onSelectToggle={onPostSelectToggle}
+        />
       ))}
     </Masonry>
   )
