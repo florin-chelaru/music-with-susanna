@@ -67,7 +67,9 @@ export function PostMedia({ attachments }: PostMediaProps) {
                 flexShrink: 0,
                 minWidth: '100%',
                 minHeight: '100%',
-                maxHeight: attachment.width >= attachment.height ? '450px' : ''
+                // maxHeight: attachment.width >= attachment.height ? '450px' : ''
+                objectFit: 'cover', // Crops excess parts while maintaining aspect ratio
+                objectPosition: 'center' // Centers the image within the cropped area
               }}
             />
             {isVideo && (
@@ -93,11 +95,27 @@ export function PostMedia({ attachments }: PostMediaProps) {
           component={Link}
           rel="noreferrer"
           target="_blank"
-          href={attachment.url}>
+          href={attachment.url}
+          style={{
+            position: 'relative',
+            width: '100%',
+            paddingTop: '100%', // Makes it a square
+            overflow: 'hidden'
+          }}>
           <img
             src={withBaseURL(attachment.thumbnailUrl ?? attachment.url)}
             loading="lazy"
             alt="Photo from the post"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover', // Ensures the image fills the square
+              objectPosition: 'center',
+              transform: 'translate(-50%, -50%)' // Centers the image properly
+            }}
           />
         </ImageListItem>
       ))}
