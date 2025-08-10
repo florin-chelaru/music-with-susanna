@@ -72,7 +72,21 @@ export const RESUME_EN_US: Resume = {
       title: 'TEACHING EXPERIENCE',
       entries: [
         {
-          dates: 'May 2022 — present',
+          dates: 'Feb 2022 — present',
+          content: (
+            <>
+              <Typography variant="overline">
+                <b>
+                  My Private Music Studio <i>Violin with Susanna</i>
+                </b>{' '}
+                Iași, Romania
+              </Typography>
+              <Typography variant="body2">Profesor de Vioară și Violă</Typography>
+            </>
+          )
+        },
+        {
+          dates: 'May 2022 — May 2023',
           content: (
             <>
               <Typography variant="overline">
@@ -460,7 +474,21 @@ export const RESUME_RO_RO: Resume = {
       title: 'EXPERIENȚĂ PEDAGOGICĂ',
       entries: [
         {
-          dates: 'Mai 2022 — present',
+          dates: 'Feb 2022 — prezent',
+          content: (
+            <>
+              <Typography variant="overline">
+                <b>
+                  Propriul Studio de lecții de muzică <i>Vioară cu Susanna</i>
+                </b>{' '}
+                Iași, România
+              </Typography>
+              <Typography variant="body2">Profesor de Vioară și Violă</Typography>
+            </>
+          )
+        },
+        {
+          dates: 'Mai 2022 — Mai 2023',
           content: (
             <>
               <Typography variant="overline">

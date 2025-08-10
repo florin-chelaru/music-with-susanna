@@ -46,11 +46,19 @@ const EN_US: IntroTexts = {
       <br />
       Susanna teaches violin and viola lessons in Iași,{' '}
       <Link
-        href="https://goo.gl/maps/penDBbDqRtBaubUA7"
+        href="https://maps.app.goo.gl/p2ah2YXouU2M7b8e8"
         color="inherit"
         rel="noreferrer"
         target="_blank">
-        in the Copou area
+        Valea Lupului (jud Iași)
+      </Link>{' '}
+      and in{' '}
+      <Link
+        href="https://maps.app.goo.gl/E6kAfDrQNgMPVDwk7"
+        color="inherit"
+        rel="noreferrer"
+        target="_blank">
+        Piața Unirii, Iași
       </Link>
       .
     </>
@@ -86,13 +94,21 @@ const RO_RO: IntroTexts = {
       lingvistic de dobândire a limbii materne.
       <br />
       <br />
-      Susanna oferă lecții de vioară și violă la Iași, în Copou,{' '}
+      Susanna oferă lecții de vioară și violă în{' '}
       <Link
-        href="https://goo.gl/maps/penDBbDqRtBaubUA7"
+        href="https://maps.app.goo.gl/p2ah2YXouU2M7b8e8"
         color="inherit"
         rel="noreferrer"
         target="_blank">
-        în spatele Palatului Copiilor
+        Valea Lupului (jud Iași)
+      </Link>{' '}
+      și în{' '}
+      <Link
+        href="https://maps.app.goo.gl/E6kAfDrQNgMPVDwk7"
+        color="inherit"
+        rel="noreferrer"
+        target="_blank">
+        Piața Unirii, Iași
       </Link>
       .
     </>
