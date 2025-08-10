@@ -21,7 +21,7 @@ const EN_US: ContactTexts = {
   title: 'CONTACT ME',
   content: (
     <>
-      Please send me a message in the chat window, or{' '}
+      Please send me a message on WhatsApp, or{' '}
       <Link
         rel="noreferrer"
         target="_blank"
@@ -29,8 +29,39 @@ const EN_US: ContactTexts = {
         sx={{ textDecoration: 'none' }}>
         send me an email{' '}
       </Link>
-      to schedule a trial lesson or ask me a question. The lessons are taught in my apartment in
-      Iași, on Strada Nicolae Gane behind Palatului Copiilor (see map below).
+      to schedule a trial lesson or ask me a question.
+      <b>I have two teaching locations:</b>
+      <ul>
+        <li>
+          At my studio{' '}
+          <Link
+            href="https://maps.app.goo.gl/p2ah2YXouU2M7b8e8"
+            rel="noreferrer"
+            target="_blank"
+            sx={{ textDecoration: 'none' }}>
+            in Valea Lupului, on Str. Nicolae Tonitza
+          </Link>{' '}
+          (see{' '}
+          <Link
+            href="https://maps.app.goo.gl/p2ah2YXouU2M7b8e8"
+            rel="noreferrer"
+            target="_blank"
+            sx={{ textDecoration: 'none' }}>
+            map
+          </Link>
+          ),
+        </li>
+        <li>
+          In Iași, at the school Artis Mundi, in Piața Unirii{' '}
+          <Link
+            href="https://maps.app.goo.gl/E6kAfDrQNgMPVDwk7"
+            rel="noreferrer"
+            target="_blank"
+            sx={{ textDecoration: 'none' }}>
+            (see map).
+          </Link>
+        </li>
+      </ul>
     </>
   ),
   whatsAppLinkWithMessage:
@@ -43,8 +74,8 @@ const RO_RO: ContactTexts = {
   title: 'CONTACTEAZĂ-MĂ',
   content: (
     <>
-      Dacă vrei să programezi o lecție de probă sau să întrebi ceva, îmi poți trimite un mesaj în
-      fereastra de chat. Sau îmi poți scrie un email la{' '}
+      Dacă vrei să programezi o lecție de probă sau să întrebi ceva, îmi poți trimite un mesaj pe
+      WhatsApp. Sau îmi poți scrie un email la{' '}
       <Link
         rel="noreferrer"
         target="_blank"
@@ -52,8 +83,39 @@ const RO_RO: ContactTexts = {
         sx={{ textDecoration: 'none' }}>
         susanna.alice.j@gmail.com
       </Link>
-      . Lecțiile sunt ținute în Iași, pe Strada Nicolae Gane, în spatele Palatului Copiilor (vezi
-      harta mai jos).
+      . <b>Poți alege una din cele două locații unde țin cursurile:</b>
+      <ul>
+        <li>
+          La studioul meu din{' '}
+          <Link
+            href="https://maps.app.goo.gl/p2ah2YXouU2M7b8e8"
+            rel="noreferrer"
+            target="_blank"
+            sx={{ textDecoration: 'none' }}>
+            Valea Lupului, pe Str. Nicolae Tonitza nr. 26
+          </Link>{' '}
+          (vezi{' '}
+          <Link
+            href="https://maps.app.goo.gl/p2ah2YXouU2M7b8e8"
+            rel="noreferrer"
+            target="_blank"
+            sx={{ textDecoration: 'none' }}>
+            harta
+          </Link>
+          ),
+        </li>
+        <li>
+          La școala Artis Mundi din Iași, în Piața Unirii
+          <Link
+            href="https://maps.app.goo.gl/E6kAfDrQNgMPVDwk7"
+            rel="noreferrer"
+            target="_blank"
+            sx={{ textDecoration: 'none' }}>
+            {' '}
+            (vezi harta).
+          </Link>
+        </li>
+      </ul>
     </>
   ),
   whatsAppLinkWithMessage:
@@ -181,7 +243,7 @@ export default function ContactCard() {
       </Grid2>
       <CardMedia sx={{ mb: '-7px' }}>
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1356.123225821133!2d27.5774722!3d47.1726111!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x32da219e24d22664!2zNDfCsDEwJzIxLjQiTiAyN8KwMzQnMzguOSJF!5e0!3m2!1sen!2sro!4v1674318932988!5m2!1sen!2sro"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d518.2355239847917!2d27.50459987142122!3d47.19180272168651!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40cafb1553ca07c9%3A0xb1a81936802cef23!2sCursuri%20de%20Vioar%C4%83%20cu%20Susanna!5e0!3m2!1sen!2sro!4v1754824957343!5m2!1sen!2sro"
           width="100%"
           height="450"
           style={{ border: 0 }}

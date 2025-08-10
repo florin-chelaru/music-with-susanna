@@ -31,7 +31,9 @@ interface AnnouncementTexts extends LocalizedData {
 const EN_US: AnnouncementTexts = {
   alert: (hide: () => void, navigate?: NavigateFunction) => (
     <Alert severity="info" sx={{ borderRadius: 0 }} onClose={hide}>
-      <AlertTitle>STILL ACCEPTING STUDENTS FOR SCHOOL YEAR 2023-2024</AlertTitle>
+      <AlertTitle>
+        NOW ACCEPTING STUDENTS FOR SCHOOL YEAR 2025-2026 IN VALEA LUPULUI AND IN IAȘI!
+      </AlertTitle>
       <Link
         color="inherit"
         href=""
@@ -52,7 +54,9 @@ const EN_US: AnnouncementTexts = {
 const RO_RO: AnnouncementTexts = {
   alert: (hide: () => void, navigate?: NavigateFunction) => (
     <Alert severity="info" sx={{ borderRadius: 0 }} onClose={hide}>
-      <AlertTitle>ÎNCĂ PRIMESC ÎNSCRIERI PENTRU ANUL ȘCOLAR 2023-2024</AlertTitle>
+      <AlertTitle>
+        AU ÎNCEPUT ÎNSCRIERILE PENTRU ANUL ȘCOLAR 2025-2026, ÎN VALEA LUPULUI ȘI ÎN IAȘI!
+      </AlertTitle>
       <Link
         color="inherit"
         href=""

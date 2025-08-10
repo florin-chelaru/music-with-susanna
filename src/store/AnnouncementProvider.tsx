@@ -1,6 +1,6 @@
 import React, { createContext, useMemo, useState } from 'react'
 
-export const SHOW_ANNOUNCEMENT: boolean = false // switch to true to show the announcement by default
+export const SHOW_ANNOUNCEMENT: boolean = true // switch to true to show the announcement by default
 export const HIDE_ANNOUNCEMENT_COOKIE = 'hideAnnouncement01'
 
 export interface AnnouncementHandler {
