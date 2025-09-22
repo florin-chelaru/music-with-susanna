@@ -1,0 +1,27 @@
+/* src/index.css or src/App.css */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-container, .print-container * {
+    visibility: visible;
+  }
+  .print-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+
+  /* Page numbers */
+
+  @page {
+    margin: 15mm;
+    @bottom-center {
+      content: counter(page);
+    }
+  }
+}

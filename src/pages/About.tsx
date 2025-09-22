@@ -1,6 +1,5 @@
-import React, { useContext, useMemo } from 'react'
-import Toolbar from '@mui/material/Toolbar'
-import Grid2 from '@mui/material/Unstable_Grid2'
+import FormatQuoteIcon from '@mui/icons-material/FormatQuote'
+import { Masonry } from '@mui/lab'
 import {
   Box,
   Button,
@@ -11,16 +10,19 @@ import {
   useMediaQuery,
   useTheme
 } from '@mui/material'
-import FormatQuoteIcon from '@mui/icons-material/FormatQuote'
-import { Masonry } from '@mui/lab'
-import PhotoCard from '../Components/PhotoCard'
-import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
-import { ABOUT_TEXTS, AboutTexts } from '../data/Resume'
+import Toolbar from '@mui/material/Toolbar'
+import Grid2 from '@mui/material/Unstable_Grid2'
+import React, { useContext, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Announcement from '../Components/Announcement'
+import PhotoCard from '../Components/PhotoCard'
+import { ABOUT_TEXTS, AboutTexts } from '../data/Resume'
+import { AnnouncementContext, AnnouncementHandler } from '../store/AnnouncementProvider'
+import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
 import { withBaseURL } from '../util/string'
 import { scrollToTop } from '../util/window'
-import Announcement from '../Components/Announcement'
-import { AnnouncementContext, AnnouncementHandler } from '../store/AnnouncementProvider'
+import './About.css'
+import { useMediaPrint } from '../hooks/useMediaPrint'
 
 export interface AboutProps {}
 
@@ -37,6 +39,7 @@ export default function About({}: AboutProps) {
   const componentStrings = localeManager.componentStrings(About.name) as AboutTexts
 
   const navigate = useNavigate()
+  const mediaPrint = useMediaPrint()
 
   const content = (
     <Grid2 container>
@@ -59,12 +62,13 @@ export default function About({}: AboutProps) {
           onClick={() => {
             navigate('/contact')
             scrollToTop()
-          }}>
+          }}
+          className="no-print">
           {strings.contact}
         </Button>
       </Grid2>
       <Grid2 xs={12} spacing={2}>
-        <Masonry columns={{ xs: 1, md: 2 }} defaultSpacing={2} spacing={2}>
+        <Masonry columns={{ xs: 1, md: mediaPrint ? 1 : 2 }} defaultSpacing={2} spacing={2}>
           {componentStrings.resume.sections.map((section, i) => (
             <Box key={`section-${i}`}>
               <Typography variant="button" paragraph>
@@ -104,6 +108,7 @@ export default function About({}: AboutProps) {
               {content}
             </>
           )}
+          {mediaPrint && <Box className="print-container">{content}</Box>}
         </Grid2>
       </Grid2>
     </Container>
