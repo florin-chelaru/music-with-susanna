@@ -27,6 +27,7 @@ export interface GlobalLocalizedData extends LocalizedData {
   musicWithMsJohnson: string
   news: string
   readMore: string
+  schedule: string
   signUp: string
   students: string
   subjects: string

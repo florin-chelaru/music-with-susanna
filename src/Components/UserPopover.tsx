@@ -5,6 +5,7 @@ import { Button, IconButton, ListItemIcon, ListItemText, MenuItem, Stack } from 
 // components
 import MenuPopover from './MenuPopover'
 import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import PersonIcon from '@mui/icons-material/Person'
 import LoginIcon from '@mui/icons-material/Login'
 import LogoutIcon from '@mui/icons-material/Logout'
@@ -86,6 +87,17 @@ export default function UserPopover({}: UserPopoverProps) {
           )}
           {!!user.uid && (
             <>
+              <MenuItem
+                onClick={() => {
+                  handleClose()
+                  navigate('/schedule')
+                  scrollToTop()
+                }}>
+                <ListItemIcon>
+                  <CalendarMonthIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>{strings.schedule}</ListItemText>
+              </MenuItem>
               {user.role === UserRole.TEACHER && (
                 <MenuItem
                   onClick={() => {

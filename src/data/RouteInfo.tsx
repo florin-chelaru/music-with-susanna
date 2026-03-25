@@ -1,6 +1,7 @@
 import React from 'react'
 import HomeIcon from '@mui/icons-material/Home'
 import InfoIcon from '@mui/icons-material/Info'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import ContactMailIcon from '@mui/icons-material/ContactMail'
 import YouTubeIcon from '@mui/icons-material/YouTube'
 import FacebookIcon from '@mui/icons-material/Facebook'
@@ -86,6 +87,13 @@ export const ROUTES: RouteInfo[] = [
     label: (strings) => strings.subjects,
     icon: <PersonIcon />, // TODO
     path: '/subjects',
+    hiddenFromAppBar: true
+  },
+  {
+    key: 'schedule',
+    label: (strings) => strings.schedule,
+    icon: <CalendarMonthIcon />,
+    path: '/schedule',
     hiddenFromAppBar: true
   },
   {
