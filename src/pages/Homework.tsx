@@ -6,6 +6,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { TransitionGroup } from 'react-transition-group'
 import EditorCard from '../Components/EditorCard'
 import FabCreate from '../Components/FabCreate'
+import ResourcePickerDialog from '../Components/ResourcePickerDialog'
+import { Resource, ResourceType } from '../util/resources'
 import HomeworkCard from '../Components/HomeworkCard'
 import MultiActionDialog from '../Components/MultiActionDialog'
 import TableOfContents, { TocEntry } from '../TableOfContents'
@@ -56,6 +58,43 @@ const TEXTS = new Map<SupportedLocale, LocalizedData>([
 
 export interface HomeworkProps {}
 
+// Phase A mock data — replaced with real RTDB subscription in Phase B
+const MOCK_LIBRARY_RESOURCES: Resource[] = [
+  {
+    id: '1',
+    title: 'Invoice — Sample PDF',
+    type: ResourceType.PDF,
+    url: 'https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F2026-07-27%20-%20Twinfog%20QC%20Ware%20Invoice_DkCHGYPUfD.pdf?alt=media&token=98aaf657-49b0-40b4-84cd-11919e2b9da8',
+    fileName: 'invoice.pdf',
+    tags: { scales: 'Scales', beginner: 'Beginner' },
+    createdAt: 0
+  },
+  {
+    id: '2',
+    title: 'Minuet 3 — J. S. Bach',
+    type: ResourceType.AUDIO,
+    url: 'https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F20%20Minuet%203%20%5BJ.%20S.%20Bach%5D_UAw3qRRVIN.mp3?alt=media&token=25c51400-6ed1-44f9-bfab-fe23f86d7c88',
+    tags: { scales: 'Scales' },
+    createdAt: 0
+  },
+  {
+    id: '3',
+    title: 'Lesson Photo',
+    type: ResourceType.IMAGE,
+    url: 'https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F20240912_135617_BtXFvayhEC.jpg?alt=media&token=9d0899d1-e189-404c-bee6-a86649a08af5',
+    tags: { technique: 'Technique', beginner: 'Beginner' },
+    createdAt: 0
+  },
+  {
+    id: '4',
+    title: 'Violin Lesson — YouTube Demo',
+    type: ResourceType.YOUTUBE,
+    url: 'https://www.youtube.com/watch?v=FiZEZuCRTZI',
+    tags: { suzuki: 'Suzuki', beginner: 'Beginner' },
+    createdAt: 0
+  }
+]
+
 export default function Homework({}: HomeworkProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(() => localeManager.registerComponentStrings(Homework.name, TEXTS), [])
@@ -69,6 +108,7 @@ export default function Homework({}: HomeworkProps) {
   const homeworkChangedRef = useRef<number>(homeworkChanged)
   const navigate = useNavigate()
   const [openDialog, setOpenDialog] = useState<boolean>(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const dialogYesActionRef = useRef<() => void>(() => {})
   const homeworkUnsubscriberRef = useRef<Unsubscribe>()
   const homeworkDraftsUnsubscriberRef = useRef<Unsubscribe>()
@@ -400,6 +440,7 @@ export default function Homework({}: HomeworkProps) {
                           }
                           setOpenDialog(true)
                         }}
+                        onPickFromLibrary={() => setPickerOpen(true)}
                       />
                     )}
                   </Grid2>
@@ -425,6 +466,15 @@ export default function Homework({}: HomeworkProps) {
           }}
         />
       )}
+      <ResourcePickerDialog
+        open={pickerOpen}
+        resources={MOCK_LIBRARY_RESOURCES}
+        onClose={() => setPickerOpen(false)}
+        onInsert={(r) => {
+          console.log('insert resource', r.id)
+          setPickerOpen(false)
+        }}
+      />
       <MultiActionDialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}

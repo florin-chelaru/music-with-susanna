@@ -7,7 +7,7 @@ import FacebookIcon from '@mui/icons-material/Facebook'
 import SchoolIcon from '@mui/icons-material/School'
 import AttributionIcon from '@mui/icons-material/Attribution'
 import PersonIcon from '@mui/icons-material/Person'
-import { GlobalLocalizedData, LocaleContext, LocaleHandler } from '../store/LocaleProvider'
+import { GlobalLocalizedData } from '../store/LocaleProvider'
 
 export interface RouteInfo {
   key: string
@@ -93,6 +93,27 @@ export const ROUTES: RouteInfo[] = [
     label: (strings) => strings.homework,
     icon: <PersonIcon />, // TODO
     path: '/homework',
+    hiddenFromAppBar: true
+  },
+  {
+    key: 'resources',
+    label: (strings) => strings.resources,
+    icon: <PersonIcon />, // TODO
+    path: '/resources',
+    hiddenFromAppBar: true
+  },
+  {
+    key: 'student-resources',
+    label: (strings) => strings.resources,
+    icon: <PersonIcon />, // TODO
+    path: '/resources/student/:studentId',
+    hiddenFromAppBar: true
+  },
+  {
+    key: 'teacher-resources-student-view',
+    label: (strings) => strings.resources,
+    icon: <PersonIcon />, // TODO
+    path: '/resources/teacher/:teacherId',
     hiddenFromAppBar: true
   }
 ]

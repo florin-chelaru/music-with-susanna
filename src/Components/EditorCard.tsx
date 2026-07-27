@@ -1,4 +1,6 @@
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
 import {
+  Box,
   Button,
   Card,
   CardActions,
@@ -32,6 +34,7 @@ interface EditorCardTexts {
   cancel: string
   homeworkTemplateTitle: string
   homeworkTemplateBody: string
+  insertFromLibrary: string
 }
 
 const EN_US: EditorCardTexts = {
@@ -42,7 +45,8 @@ const EN_US: EditorCardTexts = {
   uploadingDescription: (fileName: string) => `Uploading file ${fileName} to the server`,
   cancel: 'Cancel',
   homeworkTemplateTitle: 'Title',
-  homeworkTemplateBody: 'Write your notes here...'
+  homeworkTemplateBody: 'Write your notes here...',
+  insertFromLibrary: 'Insert from Library'
 }
 
 const RO_RO: EditorCardTexts = {
@@ -53,7 +57,8 @@ const RO_RO: EditorCardTexts = {
   uploadingDescription: (fileName: string) => `Se încarcă fișierul ${fileName} pe server`,
   cancel: 'Renunță',
   homeworkTemplateTitle: 'Titlu',
-  homeworkTemplateBody: 'Introdu aici notițele...'
+  homeworkTemplateBody: 'Introdu aici notițele...',
+  insertFromLibrary: 'Inserează din Bibliotecă'
 }
 
 const TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -72,6 +77,7 @@ interface EditorCardProps extends CardProps {
   onPublish?(): void
   onDiscard?(): void
   onSave?(): void
+  onPickFromLibrary?(): void
 }
 
 export default function EditorCard({
@@ -80,6 +86,7 @@ export default function EditorCard({
   onPublish,
   onSave,
   onDiscard,
+  onPickFromLibrary,
   ...props
 }: EditorCardProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
@@ -156,16 +163,25 @@ export default function EditorCard({
           }}
         />
 
-        <CardActions sx={{ justifyContent: 'flex-end' }}>
-          <Button size="small" onClick={() => onDiscard?.()}>
-            {componentStrings.trash}
-          </Button>
-          <Button size="small" onClick={() => onSave?.()}>
-            {componentStrings.saveDraft}
-          </Button>
-          <Button size="small" onClick={() => onPublish?.()}>
-            {componentStrings.publish}
-          </Button>
+        <CardActions sx={{ justifyContent: 'space-between' }}>
+          {onPickFromLibrary ? (
+            <Button size="small" startIcon={<LibraryBooksIcon />} onClick={onPickFromLibrary}>
+              {componentStrings.insertFromLibrary}
+            </Button>
+          ) : (
+            <Box />
+          )}
+          <Box>
+            <Button size="small" onClick={() => onDiscard?.()}>
+              {componentStrings.trash}
+            </Button>
+            <Button size="small" onClick={() => onSave?.()}>
+              {componentStrings.saveDraft}
+            </Button>
+            <Button size="small" onClick={() => onPublish?.()}>
+              {componentStrings.publish}
+            </Button>
+          </Box>
         </CardActions>
       </Card>
       <MultiActionDialog
