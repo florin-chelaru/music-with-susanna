@@ -1,87 +1,100 @@
-import React, { createContext, useMemo, useState } from 'react'
+import { onValue, ref, set } from 'firebase/database'
+import React, { createContext, useEffect, useMemo, useState } from 'react'
+import { SupportedLocale } from '../util/SupportedLocale'
+import { UserRole } from '../util/User'
+import { database } from './Firebase'
+import { useUser } from './UserProvider'
 
-export const SHOW_ANNOUNCEMENT: boolean = true // switch to true to show the announcement by default
 export const HIDE_ANNOUNCEMENT_COOKIE = 'hideAnnouncement01'
+
+export interface AnnouncementLocaleData {
+  title: string
+  body: string
+}
+
+export interface AnnouncementData {
+  visible: boolean
+  [SupportedLocale.EN_US]: AnnouncementLocaleData
+  [SupportedLocale.RO_RO]: AnnouncementLocaleData
+}
 
 export interface AnnouncementHandler {
   readonly hidden: boolean
+  readonly loading: boolean
+  readonly data: AnnouncementData | null
 
   hide(): void
+  update(data: AnnouncementData): Promise<void>
 }
 
-class AnnouncementManager implements AnnouncementHandler {
-  private hidden_: boolean
-
-  constructor() {
-    let hidden = false
-
-    try {
-      hidden = !SHOW_ANNOUNCEMENT || localStorage.getItem(HIDE_ANNOUNCEMENT_COOKIE) === 'true'
-    } catch (e) {
-      console.error(
-        `Could not load announcement preferences from localStorage. Details: ${
-          (e as Error).message
-        }`
-      )
-    }
-    this.hidden_ = hidden
-  }
-
-  hide(): void {
-    this.hidden_ = true
-    try {
-      localStorage.setItem(HIDE_ANNOUNCEMENT_COOKIE, 'true')
-    } catch (e) {
-      console.error(
-        `Could not save the announcement preferences for the user: ${(e as Error).message}`
-      )
-    }
-  }
-
-  get hidden(): boolean {
-    return this.hidden_
+function userDismissed(): boolean {
+  try {
+    return localStorage.getItem(HIDE_ANNOUNCEMENT_COOKIE) === 'true'
+  } catch {
+    return false
   }
 }
 
-class AnnouncementManagerWrapper implements AnnouncementHandler {
-  private readonly announcementManager: AnnouncementManager
-  private readonly hideAnnouncement: () => void
-
-  constructor(announcementManager: AnnouncementManager, hideAnnouncement: () => void) {
-    this.announcementManager = announcementManager
-    this.hideAnnouncement = hideAnnouncement
-  }
-
-  get hidden(): boolean {
-    return this.announcementManager.hidden
-  }
-
-  hide() {
-    this.announcementManager.hide()
-    this.hideAnnouncement()
+function persistDismiss(): void {
+  try {
+    localStorage.setItem(HIDE_ANNOUNCEMENT_COOKIE, 'true')
+  } catch (e) {
+    console.error(`Could not save announcement preference: ${(e as Error).message}`)
   }
 }
 
-export const AnnouncementContext = createContext<AnnouncementHandler>(new AnnouncementManager())
+export const AnnouncementContext = createContext<AnnouncementHandler>({
+  hidden: true,
+  loading: true,
+  data: null,
+  hide: () => undefined,
+  update: () => Promise.resolve()
+})
 
 export interface AnnouncementProviderProps {
   children: JSX.Element | JSX.Element[]
 }
 
 const AnnouncementProvider = ({ children }: AnnouncementProviderProps) => {
-  const [hidden, setHidden] = useState<boolean | undefined>(!SHOW_ANNOUNCEMENT)
+  const { user } = useUser()
+  const [data, setData] = useState<AnnouncementData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [dismissed, setDismissed] = useState(userDismissed)
 
-  const announcementManager = useMemo<AnnouncementManager>(() => new AnnouncementManager(), [])
+  useEffect(() => {
+    const unsubscribe = onValue(ref(database, 'announcement'), (snap) => {
+      setData(snap.val() as AnnouncementData | null)
+      setLoading(false)
+    })
+    return unsubscribe
+  }, [])
 
-  const announcementWrapper = useMemo(
-    () => new AnnouncementManagerWrapper(announcementManager, () => setHidden(true)),
-    [hidden]
+  const isTeacher = user?.role === UserRole.TEACHER
+
+  const hidden = useMemo(() => {
+    if (isTeacher) return false
+    if (loading) return true
+    if (!data?.visible) return true
+    return dismissed
+  }, [isTeacher, loading, data, dismissed])
+
+  const handler = useMemo<AnnouncementHandler>(
+    () => ({
+      hidden,
+      loading,
+      data,
+      hide() {
+        setDismissed(true)
+        persistDismiss()
+      },
+      async update(newData: AnnouncementData) {
+        await set(ref(database, 'announcement'), newData)
+      }
+    }),
+    [hidden, loading, data]
   )
 
-  return (
-    <AnnouncementContext.Provider value={announcementWrapper}>
-      {children}
-    </AnnouncementContext.Provider>
-  )
+  return <AnnouncementContext.Provider value={handler}>{children}</AnnouncementContext.Provider>
 }
+
 export default AnnouncementProvider
