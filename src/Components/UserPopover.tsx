@@ -5,6 +5,7 @@ import { Button, IconButton, ListItemIcon, ListItemText, MenuItem, Stack } from 
 // components
 import MenuPopover from './MenuPopover'
 import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
 import PersonIcon from '@mui/icons-material/Person'
 import LoginIcon from '@mui/icons-material/Login'
 import LogoutIcon from '@mui/icons-material/Logout'
@@ -87,17 +88,30 @@ export default function UserPopover({}: UserPopoverProps) {
           {!!user.uid && (
             <>
               {user.role === UserRole.TEACHER && (
-                <MenuItem
-                  onClick={() => {
-                    handleClose()
-                    navigate('/students')
-                    scrollToTop()
-                  }}>
-                  <ListItemIcon>
-                    <PersonIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText>{strings.students}</ListItemText>
-                </MenuItem>
+                <>
+                  <MenuItem
+                    onClick={() => {
+                      handleClose()
+                      navigate('/students')
+                      scrollToTop()
+                    }}>
+                    <ListItemIcon>
+                      <PersonIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{strings.students}</ListItemText>
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      handleClose()
+                      navigate('/resources')
+                      scrollToTop()
+                    }}>
+                    <ListItemIcon>
+                      <LibraryBooksIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{strings.resources}</ListItemText>
+                  </MenuItem>
+                </>
               )}
               {user.role === UserRole.STUDENT && (
                 <MenuItem

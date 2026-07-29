@@ -4,10 +4,11 @@ import InfoIcon from '@mui/icons-material/Info'
 import ContactMailIcon from '@mui/icons-material/ContactMail'
 import YouTubeIcon from '@mui/icons-material/YouTube'
 import FacebookIcon from '@mui/icons-material/Facebook'
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
 import SchoolIcon from '@mui/icons-material/School'
 import AttributionIcon from '@mui/icons-material/Attribution'
 import PersonIcon from '@mui/icons-material/Person'
-import { GlobalLocalizedData, LocaleContext, LocaleHandler } from '../store/LocaleProvider'
+import { GlobalLocalizedData } from '../store/LocaleProvider'
 
 export interface RouteInfo {
   key: string
@@ -93,6 +94,34 @@ export const ROUTES: RouteInfo[] = [
     label: (strings) => strings.homework,
     icon: <PersonIcon />, // TODO
     path: '/homework',
+    hiddenFromAppBar: true
+  },
+  {
+    key: 'resources',
+    label: (strings) => strings.resources,
+    icon: <LibraryBooksIcon />,
+    path: '/resources',
+    hiddenFromAppBar: true
+  },
+  {
+    key: 'student-resources',
+    label: (strings) => strings.resources,
+    icon: <PersonIcon />, // TODO
+    path: '/resources/student/:studentId',
+    hiddenFromAppBar: true
+  },
+  {
+    key: 'teacher-resources-student-view',
+    label: (strings) => strings.resources,
+    icon: <PersonIcon />, // TODO
+    path: '/resources/teacher/:teacherId',
+    hiddenFromAppBar: true
+  },
+  {
+    key: 'resource-details',
+    label: (strings) => strings.resources,
+    icon: <LibraryBooksIcon />,
+    path: '/resources/:resourceId',
     hiddenFromAppBar: true
   }
 ]

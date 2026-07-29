@@ -1,5 +1,6 @@
 import DeleteIcon from '@mui/icons-material/Delete'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
 import MenuBookIcon from '@mui/icons-material/MenuBook'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import {
@@ -47,6 +48,7 @@ interface StudentsPageTexts {
   delete: string
   emailAddress: string
   homework: string
+  resources: string
   parentName: string
   parentPhoneNumber: string
   password: string
@@ -74,6 +76,7 @@ const EN_US: StudentsPageTexts = {
   delete: 'Delete student',
   emailAddress: 'Email address',
   homework: 'Homework',
+  resources: 'Resources',
   parentName: 'Parent name',
   parentPhoneNumber: 'Parent phone number',
   password: 'Password',
@@ -101,6 +104,7 @@ const RO_RO: StudentsPageTexts = {
   delete: 'Șterge student',
   emailAddress: 'Adresă de email',
   homework: 'Teme pe acasă',
+  resources: 'Resurse',
   parentName: 'Numele părintelui',
   parentPhoneNumber: 'Numărul de telefon al părintelui',
   password: 'Parolă',
@@ -241,7 +245,7 @@ export default function StudentsPage({}: StudentsPageProps) {
         console.log('User created:', userCredential.user)
 
         await set(ref(database, `users/${userCredential.user.uid}`), {
-          email: email,
+          email,
           name: studentName,
           parent: parentName,
           phone: parentPhoneNumber,
@@ -395,6 +399,23 @@ export default function StudentsPage({}: StudentsPageProps) {
                       <MenuBookIcon />
                       <Typography variant="body1" gutterBottom component="h2">
                         {componentStrings.homework}
+                      </Typography>
+                    </Stack>
+                  </Link>
+
+                  <Link
+                    underline="hover"
+                    color="inherit"
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      navigate(`/resources/student/${student.uid}`)
+                      scrollToTop()
+                    }}>
+                    <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                      <LibraryBooksIcon />
+                      <Typography variant="body1" gutterBottom component="h2">
+                        {componentStrings.resources}
                       </Typography>
                     </Stack>
                   </Link>
