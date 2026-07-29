@@ -13,11 +13,18 @@ import {
   updateResourceMetadata,
   useTeacherResources
 } from './resources'
+import { fetchYouTubeVideo } from './youtube'
 
 jest.mock('firebase/database')
 jest.mock('firebase/storage')
 jest.mock('../store/Firebase', () => ({ database: {}, storage: {} }))
+jest.mock('./youtube', () => ({
+  extractYouTubeVideoId: jest.requireActual<typeof import('./youtube')>('./youtube')
+    .extractYouTubeVideoId,
+  fetchYouTubeVideo: jest.fn()
+}))
 
+const mockFetchYouTubeVideo = fetchYouTubeVideo as jest.Mock
 const mockRef = ref as jest.Mock
 const mockSet = set as jest.Mock
 const mockRemove = remove as jest.Mock
@@ -301,23 +308,64 @@ test('deduplicateResources updates homework resources map and replaces embedded 
   )
 })
 
+test('deduplicateResources groups users/ files by base name after stripping 10-char suffix', async () => {
+  const RES_SUFFIX_A_ID = 'res-s1'
+  const RES_SUFFIX_B_ID = 'res-s2'
+  const RES_SUFFIX_A = {
+    title: 'photo',
+    type: ResourceType.IMAGE,
+    url: 'https://storage.example.com/photo_a.jpg',
+    fileName: 'photo_WSSN7Wb8F3.jpeg',
+    storagePath: `users/${TEACHER}/files/photo_WSSN7Wb8F3.jpeg`,
+    tags: {},
+    createdAt: '2026-01-01T00:00:00.000Z'
+  }
+  const RES_SUFFIX_B = {
+    title: 'photo (copy)',
+    type: ResourceType.IMAGE,
+    url: 'https://storage.example.com/photo_b.jpg',
+    fileName: 'photo_4E1OJatQr5.jpeg',
+    storagePath: `users/${TEACHER}/files/photo_4E1OJatQr5.jpeg`,
+    tags: {},
+    createdAt: '2026-02-01T00:00:00.000Z'
+  }
+
+  mockGet.mockResolvedValueOnce(makeSnap({ [RES_SUFFIX_A_ID]: RES_SUFFIX_A, [RES_SUFFIX_B_ID]: RES_SUFFIX_B }))
+  mockGetMetadata.mockResolvedValue({ size: 1024 })
+  mockGet.mockResolvedValueOnce(makeSnap(null, false))
+  mockGet.mockResolvedValueOnce(makeSnap(null, false))
+  mockGet.mockResolvedValueOnce(makeSnap(null, false))
+  mockGet.mockResolvedValueOnce(makeSnap(RES_SUFFIX_B))
+
+  const result = await deduplicateResources(TEACHER)
+
+  expect(result).toEqual({ groupsFound: 1, resourcesRemoved: 1 })
+  expect(mockSet).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({ title: RES_SUFFIX_B.title })
+  )
+  expect(mockDeleteObject).toHaveBeenCalled()
+})
+
 // ---------------------------------------------------------------------------
 // importExistingUploads
 // ---------------------------------------------------------------------------
 
 const STORAGE_ITEM = {
-  name: 'kreutzer_a1b2c3.pdf',
-  fullPath: `users/${TEACHER}/files/kreutzer_a1b2c3.pdf`
+  name: 'kreutzer_WSSN7Wb8F3.pdf',
+  fullPath: `users/${TEACHER}/files/kreutzer_WSSN7Wb8F3.pdf`
 }
 const IMPORTED_URL = 'https://storage.example.com/kreutzer_imported.pdf'
 
-test('importExistingUploads returns zero counts when storage folder is empty', async () => {
+test('importExistingUploads returns zero counts when storage folder is empty and no homework', async () => {
   mockListAll.mockResolvedValueOnce({ items: [], prefixes: [] })
+  mockGet.mockResolvedValueOnce(makeSnap(null, false)) // existingResources
+  mockGet.mockResolvedValueOnce(makeSnap(null, false)) // pubHw
+  mockGet.mockResolvedValueOnce(makeSnap(null, false)) // draftHw
 
   const result = await importExistingUploads(TEACHER)
 
   expect(result).toEqual({ imported: 0, skipped: 0 })
-  expect(mockGet).not.toHaveBeenCalled()
 })
 
 test('importExistingUploads creates a Resource entry for a new file', async () => {
@@ -328,7 +376,9 @@ test('importExistingUploads creates a Resource entry for a new file', async () =
     timeCreated: '2026-03-01T00:00:00.000Z',
     size: 512
   })
-  // get(existingResources) — no existing entries
+  // get(existingResources), get(pubHw), get(draftHw) — no existing entries
+  mockGet.mockResolvedValueOnce(makeSnap(null, false))
+  mockGet.mockResolvedValueOnce(makeSnap(null, false))
   mockGet.mockResolvedValueOnce(makeSnap(null, false))
 
   const result = await importExistingUploads(TEACHER)
@@ -346,14 +396,77 @@ test('importExistingUploads creates a Resource entry for a new file', async () =
   )
 })
 
+test('importExistingUploads imports YouTube links from homework content and deduplicates by video ID', async () => {
+  const VIDEO_ID = 'abc123'
+  const EMBED_URL = `https://www.youtube.com/embed/${VIDEO_ID}`
+  const SHORT_URL = `https://youtu.be/${VIDEO_ID}`
+  const CANONICAL_URL = `https://www.youtube.com/watch?v=${VIDEO_ID}`
+  // Two homework entries reference the same video via different URL formats
+  const pubHw = {
+    [STUDENT]: {
+      'hw-1': { content: `<iframe src="${EMBED_URL}"></iframe>` },
+      'hw-2': { content: `<a href="${SHORT_URL}">Watch</a>` }
+    }
+  }
+
+  mockListAll.mockResolvedValueOnce({ items: [], prefixes: [] })
+  mockGet.mockResolvedValueOnce(makeSnap(null, false)) // existingResources
+  mockGet.mockResolvedValueOnce(makeSnap(pubHw)) // pubHw
+  mockGet.mockResolvedValueOnce(makeSnap(null, false)) // draftHw
+  mockFetchYouTubeVideo.mockResolvedValueOnce({
+    videoId: VIDEO_ID,
+    snippet: { title: 'Bach Concerto', description: '', publishedAt: '', thumbnails: {} }
+  })
+
+  const result = await importExistingUploads(TEACHER)
+
+  // One resource created (both URLs are the same video)
+  expect(result).toEqual({ imported: 1, skipped: 0 })
+  expect(mockFetchYouTubeVideo).toHaveBeenCalledWith(VIDEO_ID, undefined)
+  expect(mockSet).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({ type: ResourceType.YOUTUBE, url: CANONICAL_URL, title: 'Bach Concerto' })
+  )
+  // Backfill: both homework entries get the resource reference
+  expect(mockUpdate).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({
+      [`homework/teachers/${TEACHER}/students/${STUDENT}/hw-1/resources/${RESOURCE_ID}`]: EMBED_URL,
+      [`homework/teachers/${TEACHER}/students/${STUDENT}/hw-2/resources/${RESOURCE_ID}`]: SHORT_URL
+    })
+  )
+})
+
+test('importExistingUploads skips YouTube videos already in the resource library', async () => {
+  const VIDEO_ID = 'abc123'
+  const EMBED_URL = `https://www.youtube.com/embed/${VIDEO_ID}`
+  const CANONICAL_URL = `https://www.youtube.com/watch?v=${VIDEO_ID}`
+
+  mockListAll.mockResolvedValueOnce({ items: [], prefixes: [] })
+  // Existing resource already has the canonical URL for this video
+  mockGet.mockResolvedValueOnce(
+    makeSnap({ 'yt-existing': { type: ResourceType.YOUTUBE, url: CANONICAL_URL, title: 'Existing', tags: {}, createdAt: '2026-01-01T00:00:00.000Z' } })
+  )
+  mockGet.mockResolvedValueOnce(
+    makeSnap({ [STUDENT]: { 'hw-1': { content: `<iframe src="${EMBED_URL}"></iframe>` } } })
+  )
+  mockGet.mockResolvedValueOnce(makeSnap(null, false)) // draftHw
+
+  const result = await importExistingUploads(TEACHER)
+
+  expect(result).toEqual({ imported: 0, skipped: 1 })
+  expect(mockFetchYouTubeVideo).not.toHaveBeenCalled()
+  expect(mockSet).not.toHaveBeenCalled()
+})
+
 test('importExistingUploads skips files already present in the resource library', async () => {
   mockListAll.mockResolvedValueOnce({ items: [STORAGE_ITEM], prefixes: [] })
   mockGetDownloadURL.mockResolvedValueOnce(IMPORTED_URL)
   mockGetMetadata.mockResolvedValueOnce({ contentType: 'application/pdf', timeCreated: '2026-03-01T00:00:00.000Z', size: 512 })
-  // get(existingResources) — file already imported
-  mockGet.mockResolvedValueOnce(
-    makeSnap({ [RESOURCE_ID]: { ...DB_RECORD, url: IMPORTED_URL } })
-  )
+  // get(existingResources) — file already imported; get(pubHw), get(draftHw) — empty
+  mockGet.mockResolvedValueOnce(makeSnap({ [RESOURCE_ID]: { ...DB_RECORD, url: IMPORTED_URL } }))
+  mockGet.mockResolvedValueOnce(makeSnap(null, false))
+  mockGet.mockResolvedValueOnce(makeSnap(null, false))
 
   const result = await importExistingUploads(TEACHER)
 

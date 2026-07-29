@@ -44,6 +44,8 @@ interface ResourceDetailsPageTexts {
   deleteDisabledTooltip: string
   deleteConfirmTitle: string
   deleteConfirmBody: string
+  deleteHomeworkConfirmTitle: string
+  deleteHomeworkConfirmBody: string
   cancel: string
   confirm: string
   back: string
@@ -57,6 +59,8 @@ const EN_US: ResourceDetailsPageTexts = {
   deleteDisabledTooltip: 'Remove this resource from all homework before deleting',
   deleteConfirmTitle: 'Delete resource?',
   deleteConfirmBody: 'This will permanently delete the resource.',
+  deleteHomeworkConfirmTitle: 'Delete homework?',
+  deleteHomeworkConfirmBody: 'This homework will be permanently deleted.',
   cancel: 'Cancel',
   confirm: 'Delete',
   back: 'Back',
@@ -70,6 +74,8 @@ const RO_RO: ResourceDetailsPageTexts = {
   deleteDisabledTooltip: 'Elimină această resursă din toate temele înainte de a o șterge',
   deleteConfirmTitle: 'Ștergi resursa?',
   deleteConfirmBody: 'Resursa va fi ștearsă definitiv.',
+  deleteHomeworkConfirmTitle: 'Ștergi tema?',
+  deleteHomeworkConfirmBody: 'Această temă va fi ștearsă definitiv.',
   cancel: 'Anulează',
   confirm: 'Șterge',
   back: 'Înapoi',
@@ -148,6 +154,8 @@ export default function ResourceDetailsPage() {
   const [resourceExpanded, setResourceExpanded] = useState(true)
   const [editResourceTarget, setEditResourceTarget] = useState<Resource | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteHomeworkTarget, setDeleteHomeworkTarget] =
+    useState<ResourceHomeworkReference | null>(null)
 
   useEffect(() => {
     if (!teacherId || !resourceId) return
@@ -179,7 +187,7 @@ export default function ResourceDetailsPage() {
   const loadReferences = useCallback(() => {
     if (!teacherId || !resourceId) return
     setRefsLoading(true)
-    findResourceUsageInHomework(teacherId, resourceId)
+    findResourceUsageInHomework(teacherId, resourceId, resource?.url)
       .then((refs) => {
         setReferences(refs)
         setRefsLoading(false)
@@ -207,7 +215,7 @@ export default function ResourceDetailsPage() {
         setHomeworks(hwMap)
       })
       .catch(() => setRefsLoading(false))
-  }, [teacherId, resourceId])
+  }, [teacherId, resourceId, resource?.url])
 
   useEffect(() => {
     loadReferences()
@@ -356,6 +364,38 @@ export default function ResourceDetailsPage() {
     setDeleteOpen(false)
   }
 
+  const handleDeleteHomeworkConfirm = () => {
+    const r = deleteHomeworkTarget
+    if (!r || !teacherId) return
+    setDeleteHomeworkTarget(null)
+    const hw = homeworks.get(r.homeworkId)
+    const updatedHw = hw
+      ? { ...hw, updatedAt: new Date().toISOString(), deletedAt: new Date().toISOString() }
+      : null
+    if (updatedHw) {
+      void set(
+        ref(
+          database,
+          `deleted/homework/teachers/${teacherId}/students/${r.studentId}/${r.homeworkId}`
+        ),
+        removeUndefinedKeys(updatedHw)
+      ).catch(console.error)
+    }
+    void remove(
+      ref(database, `homework/teachers/${teacherId}/students/${r.studentId}/${r.homeworkId}`)
+    )
+      .then(() =>
+        remove(
+          ref(
+            database,
+            `homework/teachers/${teacherId}/drafts/students/${r.studentId}/${r.homeworkId}`
+          )
+        )
+      )
+      .then(() => loadReferences())
+      .catch(console.error)
+  }
+
   const toc = <TableOfContents entries={tocEntries} />
 
   return (
@@ -405,7 +445,7 @@ export default function ResourceDetailsPage() {
                 expanded={resourceExpanded}
                 onExpandedChange={setResourceExpanded}
                 onEdit={isTeacher ? (r) => setEditResourceTarget(r) : undefined}
-                onDelete={isTeacher ? () => setDeleteOpen(true) : undefined}
+                onDelete={isTeacher && canDelete ? () => setDeleteOpen(true) : undefined}
               />
             </Box>
           ) : null}
@@ -475,6 +515,7 @@ export default function ResourceDetailsPage() {
                             (res) => res.id in (hw.resources ?? {})
                           )}
                           onEdit={isTeacher ? () => handleEditHomework(r) : undefined}
+                          onDelete={isTeacher ? () => setDeleteHomeworkTarget(r) : undefined}
                           readonly={!isTeacher}
                         />
                       )
@@ -501,6 +542,19 @@ export default function ResourceDetailsPage() {
         ]}>
         <DialogContent>
           <DialogContentText>{strings.deleteConfirmBody}</DialogContentText>
+        </DialogContent>
+      </MultiActionDialog>
+
+      <MultiActionDialog
+        open={deleteHomeworkTarget !== null}
+        onClose={() => setDeleteHomeworkTarget(null)}
+        title={strings.deleteHomeworkConfirmTitle}
+        actions={[
+          { label: strings.cancel, onClick: () => setDeleteHomeworkTarget(null) },
+          { label: strings.confirm, onClick: handleDeleteHomeworkConfirm, autoFocus: true }
+        ]}>
+        <DialogContent>
+          <DialogContentText>{strings.deleteHomeworkConfirmBody}</DialogContentText>
         </DialogContent>
       </MultiActionDialog>
 

@@ -1,10 +1,16 @@
+import AudiotrackIcon from '@mui/icons-material/Audiotrack'
+import ImageIcon from '@mui/icons-material/Image'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import YouTubeIcon from '@mui/icons-material/YouTube'
 import {
   Box,
   Button,
+  ButtonBase,
   CircularProgress,
   Container,
   DialogContent,
   DialogContentText,
+  Divider,
   Link,
   MenuItem,
   Select,
@@ -30,6 +36,7 @@ import {
   DuplicateGroup,
   ImportResult,
   Resource,
+  ResourceType,
   addYouTubeResource,
   deduplicateSingleGroup,
   deleteResource,
@@ -40,6 +47,19 @@ import {
   uploadResource,
   useTeacherResources
 } from '../util/resources'
+
+function resourceTypeIcon(type: ResourceType) {
+  switch (type) {
+    case ResourceType.PDF:
+      return <PictureAsPdfIcon color="error" />
+    case ResourceType.AUDIO:
+      return <AudiotrackIcon color="primary" />
+    case ResourceType.IMAGE:
+      return <ImageIcon color="success" />
+    case ResourceType.YOUTUBE:
+      return <YouTubeIcon sx={{ color: '#FF0000' }} />
+  }
+}
 
 type SortOption = 'name' | 'date-desc' | 'date-asc'
 
@@ -62,9 +82,6 @@ interface TeacherResourcesPageTexts {
   importing: string
   importNone: string
   importDone: string
-  findDuplicates: string
-  findingDuplicates: string
-  noDuplicatesFound: string
   duplicatesTitle: string
   duplicateLinks: string
   mergeGroup: string
@@ -73,6 +90,9 @@ interface TeacherResourcesPageTexts {
   mergeCanonical: string
   mergeWillDelete: string
   mergeHomeworkNote: string
+  youtubeAlreadyExistsTitle: string
+  youtubeAlreadyExistsBody: string
+  ok: string
 }
 
 const EN_US: TeacherResourcesPageTexts = {
@@ -95,9 +115,6 @@ const EN_US: TeacherResourcesPageTexts = {
   importing: 'Importing…',
   importNone: 'No new files found',
   importDone: 'files imported',
-  findDuplicates: 'Find Duplicates',
-  findingDuplicates: 'Scanning…',
-  noDuplicatesFound: 'No duplicates found',
   duplicatesTitle: 'Duplicate groups',
   duplicateLinks: 'Duplicates:',
   mergeGroup: 'Merge',
@@ -106,7 +123,10 @@ const EN_US: TeacherResourcesPageTexts = {
   mergeCanonical: 'Canonical file (will be kept):',
   mergeWillDelete: 'Duplicates to delete:',
   mergeHomeworkNote:
-    'All homework entries that embed these files will be updated to use the canonical file.'
+    'All homework entries that embed these files will be updated to use the canonical file.',
+  youtubeAlreadyExistsTitle: 'Video already in library',
+  youtubeAlreadyExistsBody: 'This video is already in your library.',
+  ok: 'OK'
 }
 
 const RO_RO: TeacherResourcesPageTexts = {
@@ -129,9 +149,6 @@ const RO_RO: TeacherResourcesPageTexts = {
   importing: 'Se importă…',
   importNone: 'Nu s-au găsit fișiere noi',
   importDone: 'fișiere importate',
-  findDuplicates: 'Caută duplicate',
-  findingDuplicates: 'Scanare…',
-  noDuplicatesFound: 'Nu s-au găsit duplicate',
   duplicatesTitle: 'Grupuri de duplicate',
   duplicateLinks: 'Duplicate:',
   mergeGroup: 'Unifică',
@@ -140,7 +157,10 @@ const RO_RO: TeacherResourcesPageTexts = {
   mergeCanonical: 'Fișier canonic (va fi păstrat):',
   mergeWillDelete: 'Duplicate de șters:',
   mergeHomeworkNote:
-    'Toate temele care conțin aceste fișiere vor fi actualizate să folosească fișierul canonic.'
+    'Toate temele care conțin aceste fișiere vor fi actualizate să folosească fișierul canonic.',
+  youtubeAlreadyExistsTitle: 'Videoclip deja în bibliotecă',
+  youtubeAlreadyExistsBody: 'Acest videoclip este deja în biblioteca ta.',
+  ok: 'OK'
 }
 
 const TEACHER_RESOURCES_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -227,10 +247,16 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
   const [deleteBlocked, setDeleteBlocked] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importMessage, setImportMessage] = useState<string | null>(null)
-  const [scanningDuplicates, setScanningDuplicates] = useState(false)
-  const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[] | null>(null)
   const [deduplicateTarget, setDeduplicateTarget] = useState<DuplicateGroup | null>(null)
   const [deduplicatingGroup, setDeduplicatingGroup] = useState(false)
+  const [youtubeDupDialogOpen, setYoutubeDupDialogOpen] = useState(false)
+
+  const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([])
+  useEffect(() => {
+    const teacherId = user?.uid
+    if (!teacherId) return
+    findDuplicateGroups(teacherId).then(setDuplicateGroups).catch(console.error)
+  }, [user?.uid, resources.length])
 
   useEffect(() => {
     if (!importMessage) return
@@ -244,7 +270,7 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     setImporting(true)
     setImportMessage(null)
     try {
-      const result: ImportResult = await importExistingUploads(teacherId)
+      const result: ImportResult = await importExistingUploads(teacherId, user.accessToken)
       if (result.imported === 0) {
         setImportMessage(strings.importNone)
       } else {
@@ -257,31 +283,12 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     }
   }
 
-  const handleFindDuplicates = async () => {
-    const teacherId = user?.uid
-    if (!teacherId || scanningDuplicates) return
-    setScanningDuplicates(true)
-    try {
-      const groups = await findDuplicateGroups(teacherId)
-      setDuplicateGroups(groups)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setScanningDuplicates(false)
-    }
-  }
-
   const handleMergeConfirm = () => {
     const teacherId = user?.uid
     if (!teacherId || !deduplicateTarget || deduplicatingGroup) return
     setDeduplicatingGroup(true)
     deduplicateSingleGroup(teacherId, deduplicateTarget)
-      .then(() => {
-        setDuplicateGroups((prev) =>
-          prev ? prev.filter((g) => g.canonical.id !== deduplicateTarget.canonical.id) : prev
-        )
-        setDeduplicateTarget(null)
-      })
+      .then(() => setDeduplicateTarget(null))
       .catch(console.error)
       .finally(() => setDeduplicatingGroup(false))
   }
@@ -290,7 +297,7 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     if (!deleteTarget || !user?.uid) return
     setDeleteRefsLoading(true)
     setDeleteBlocked(false)
-    findResourceUsageInHomework(user.uid, deleteTarget.id)
+    findResourceUsageInHomework(user.uid, deleteTarget.id, deleteTarget.url)
       .then((refs) => {
         setDeleteBlocked(refs.length > 0)
         setDeleteRefsLoading(false)
@@ -328,7 +335,11 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     if (!teacherId) return
     const { title, tags } = data
     if (data.mode === 'youtube') {
-      void addYouTubeResource(teacherId, data.url, { title, tags }).catch(console.error)
+      void addYouTubeResource(teacherId, data.url, { title, tags }, resources)
+        .then((id) => {
+          if (resources.some((r) => r.id === id)) setYoutubeDupDialogOpen(true)
+        })
+        .catch(console.error)
     } else {
       void uploadResource({ teacherId, file: data.file, metadata: { title, tags } }).catch(
         console.error
@@ -337,8 +348,19 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     setUploadOpen(false)
   }
 
+  const duplicateIds = useMemo(
+    () => new Set(duplicateGroups.flatMap((g) => g.duplicates.map((d) => d.id))),
+    [duplicateGroups]
+  )
+
+  const canonicalGroupMap = useMemo(
+    () => new Map(duplicateGroups.map((g) => [g.canonical.id, g])),
+    [duplicateGroups]
+  )
+
   const visibleResources = resources
     .filter((r) => {
+      if (duplicateIds.has(r.id)) return false
       if (searchQuery && !r.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
       if (selectedTags.size > 0 && !Array.from(selectedTags).some((slug) => slug in r.tags))
         return false
@@ -416,69 +438,12 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
                 }}>
                 {importing ? strings.importing : strings.importUploads}
               </Button>
-              <Button
-                size="small"
-                disabled={scanningDuplicates}
-                onClick={() => {
-                  void handleFindDuplicates()
-                }}>
-                {scanningDuplicates ? strings.findingDuplicates : strings.findDuplicates}
-              </Button>
             </Stack>
           </Stack>
           {importMessage !== null && (
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
               {importMessage}
             </Typography>
-          )}
-          {duplicateGroups !== null && (
-            <Box sx={{ mb: 2 }}>
-              {duplicateGroups.length === 0 ? (
-                <Typography variant="caption" color="text.secondary">
-                  {strings.noDuplicatesFound}
-                </Typography>
-              ) : (
-                <Stack spacing={2}>
-                  <Typography variant="subtitle2">{strings.duplicatesTitle}</Typography>
-                  {duplicateGroups.map((group) => (
-                    <ResourceCard
-                      key={group.canonical.id}
-                      resource={group.canonical}
-                      editable
-                      expanded={expandedMap[group.canonical.id] ?? true}
-                      onExpandedChange={(v) => setExpanded(group.canonical.id, v)}
-                      onEdit={(r) => setEditTarget(r)}
-                      onDelete={(r) => setDeleteTarget(r)}
-                      onDetails={(r) => navigate(`/resources/${r.id}`)}
-                      footer={
-                        <Stack spacing={0.5}>
-                          <Typography variant="caption" color="text.secondary">
-                            {strings.duplicateLinks}
-                          </Typography>
-                          {group.duplicates.map((dup) => (
-                            <Link
-                              key={dup.id}
-                              component={RouterLink}
-                              to={`/resources/${dup.id}`}
-                              variant="body2">
-                              {dup.title}
-                            </Link>
-                          ))}
-                          <Box sx={{ pt: 0.5 }}>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => setDeduplicateTarget(group)}>
-                              {strings.mergeGroup}
-                            </Button>
-                          </Box>
-                        </Stack>
-                      }
-                    />
-                  ))}
-                </Stack>
-              )}
-            </Box>
           )}
           <ResourceTagFilter
             tags={tagIndex.map(({ slug, label }) => ({ slug, label }))}
@@ -505,6 +470,50 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
                   onEdit={(r) => setEditTarget(r)}
                   onDelete={(r) => setDeleteTarget(r)}
                   onDetails={(r) => navigate(`/resources/${r.id}`)}
+                  footer={(() => {
+                    const group = canonicalGroupMap.get(resource.id)
+                    if (!group) return undefined
+                    return (
+                      <>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ px: 2, pt: 1.25, pb: 0.5, display: 'block' }}>
+                          {strings.duplicateLinks}
+                        </Typography>
+                        {group.duplicates.map((dup, i) => (
+                          <React.Fragment key={dup.id}>
+                            {i > 0 && <Divider />}
+                            <ButtonBase
+                              onClick={() => navigate(`/resources/${dup.id}`)}
+                              sx={{
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1.5,
+                                px: 2,
+                                py: 1.25,
+                                justifyContent: 'flex-start',
+                                '&:hover': { bgcolor: 'action.hover' }
+                              }}>
+                              {resourceTypeIcon(dup.type)}
+                              <Typography variant="body2" noWrap>
+                                {dup.title}
+                              </Typography>
+                            </ButtonBase>
+                          </React.Fragment>
+                        ))}
+                        <Box sx={{ px: 2, py: 1 }}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => setDeduplicateTarget(group)}>
+                            {strings.mergeGroup}
+                          </Button>
+                        </Box>
+                      </>
+                    )
+                  })()}
                 />
               </Grid2>
             ))}
@@ -610,6 +619,24 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
             ))}
           </Stack>
           <DialogContentText>{strings.mergeHomeworkNote}</DialogContentText>
+        </DialogContent>
+      </MultiActionDialog>
+
+      <MultiActionDialog
+        open={youtubeDupDialogOpen}
+        onClose={() => setYoutubeDupDialogOpen(false)}
+        title={strings.youtubeAlreadyExistsTitle}
+        actions={[
+          {
+            label: strings.ok,
+            onClick: () => {
+              setYoutubeDupDialogOpen(false)
+              setUploadOpen(true)
+            }
+          }
+        ]}>
+        <DialogContent>
+          <DialogContentText>{strings.youtubeAlreadyExistsBody}</DialogContentText>
         </DialogContent>
       </MultiActionDialog>
     </Container>

@@ -7,13 +7,11 @@ const FETCH_YOUTUBE_VIDEO_ENDPOINT =
 export function extractYouTubeVideoId(url: string): string | null {
   try {
     const u = new URL(url)
-    if (
-      (u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') &&
-      u.pathname === '/watch'
-    ) {
-      return u.searchParams.get('v')
+    if (u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') {
+      if (u.pathname === '/watch') return u.searchParams.get('v')
+      if (u.pathname.startsWith('/embed/')) return u.pathname.slice(7).split('?')[0] || null
     }
-    if (u.hostname === 'youtu.be') return u.pathname.slice(1) || null
+    if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0] || null
   } catch (_) {}
   return null
 }

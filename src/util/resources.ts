@@ -19,6 +19,7 @@ import {
 } from 'firebase/storage'
 import { useEffect, useMemo, useState } from 'react'
 import { database, storage } from '../store/Firebase'
+import { extractYouTubeVideoId, fetchYouTubeVideo } from './youtube'
 
 // ---------------------------------------------------------------------------
 // Public types (previously the entire file)
@@ -38,6 +39,7 @@ export interface Resource {
   url: string
   fileName?: string
   storagePath?: string
+  size?: number
   tags: Record<string, string>
   createdAt: string
 }
@@ -52,6 +54,7 @@ interface ResourceDbRecord {
   url: string
   fileName?: string
   storagePath?: string
+  size?: number
   tags: Record<string, string>
   createdAt: string
 }
@@ -77,7 +80,11 @@ const deletedResourcePath = (teacherId: string, resourceId: string) =>
   `deleted/resources/teachers/${teacherId}/${resourceId}`
 const sharedPath = (teacherId: string, studentId: string) =>
   `shared-resources/${teacherId}/students/${studentId}`
-const sharedStudentsPath = (teacherId: string) => `shared-resources/${teacherId}/students`
+async function getStudentIds(teacherId: string): Promise<string[]> {
+  const snap = await get(ref(database, `teachers/${teacherId}/students`))
+  if (!snap.exists()) return []
+  return Object.keys(snap.val() as Record<string, unknown>)
+}
 
 // ---------------------------------------------------------------------------
 // Hooks
@@ -227,6 +234,7 @@ export function uploadResource({
               url,
               fileName: file.name,
               storagePath: path,
+              size: file.size,
               tags: metadata.tags,
               createdAt: new Date().toISOString()
             }
@@ -241,8 +249,16 @@ export function uploadResource({
 export async function addYouTubeResource(
   teacherId: string,
   url: string,
-  metadata: ResourceMetadata
+  metadata: ResourceMetadata,
+  existingResources?: Resource[]
 ): Promise<string> {
+  const videoId = extractYouTubeVideoId(url)
+  if (videoId && existingResources) {
+    const dup = existingResources.find(
+      (r) => r.type === ResourceType.YOUTUBE && extractYouTubeVideoId(r.url) === videoId
+    )
+    if (dup) return dup.id
+  }
   const newRef = push(ref(database, resourcesPath(teacherId)))
   const resourceId = newRef.key
   if (!resourceId) throw new Error('Failed to generate resource ID')
@@ -285,15 +301,12 @@ export async function deleteResource(teacherId: string, resourceId: string): Pro
   await remove(source)
 
   // Remove from all shared-resources entries
-  const studentsSnap = await get(ref(database, sharedStudentsPath(teacherId)))
-  if (studentsSnap.exists()) {
-    const studentIds = Object.keys(studentsSnap.val() as Record<string, unknown>)
-    await Promise.all(
-      studentIds.map((studentId) =>
-        remove(ref(database, `${sharedPath(teacherId, studentId)}/${resourceId}`))
-      )
+  const studentIds = await getStudentIds(teacherId)
+  await Promise.all(
+    studentIds.map((studentId) =>
+      remove(ref(database, `${sharedPath(teacherId, studentId)}/${resourceId}`))
     )
-  }
+  )
 
   // Hard-delete Storage file if present
   if (record.storagePath) {
@@ -451,6 +464,21 @@ function isFileBacked(r: Resource): r is FileBackedResource {
   return typeof r.storagePath === 'string' && typeof r.fileName === 'string'
 }
 
+// Strips the 10-char alphanumeric suffix added by quill.ts processFile uploads:
+// "photo_WSSN7Wb8F3.jpeg" → "photo.jpeg", "photo.jpeg" → "photo.jpeg"
+function stripUploadSuffix(fileName: string): string {
+  const lastDot = fileName.lastIndexOf('.')
+  const base = lastDot > 0 ? fileName.slice(0, lastDot) : fileName
+  const ext = lastDot > 0 ? fileName.slice(lastDot) : ''
+  return base.replace(/_[A-Za-z0-9]{10}$/, '') + ext
+}
+
+// Files under users/ have the 10-char suffix; files under resources/ use the original name.
+function deduplicationKey(r: FileBackedResource, size: number): string {
+  const name = r.storagePath.startsWith('users/') ? stripUploadSuffix(r.fileName) : r.fileName
+  return `${name}::${size}`
+}
+
 function replaceUrlInHtml(html: string, oldUrl: string, newUrl: string): string {
   const oldEncoded = oldUrl.replace(/&/g, '&amp;')
   const newEncoded = newUrl.replace(/&/g, '&amp;')
@@ -465,21 +493,18 @@ async function mergeDuplicate(
   const dbUpdates: Record<string, unknown> = {}
 
   // Re-point shared-resources: add canonical for any student that had dup, remove dup
-  const studentsSnap = await get(ref(database, sharedStudentsPath(teacherId)))
-  if (studentsSnap.exists()) {
-    const studentIds = Object.keys(studentsSnap.val() as Record<string, unknown>)
-    await Promise.all(
-      studentIds.map(async (studentId) => {
-        const dupSharedRef = ref(database, `${sharedPath(teacherId, studentId)}/${dup.id}`)
-        const dupSharedSnap = await get(dupSharedRef)
-        if (!dupSharedSnap.exists()) return
-        const canonSharedRef = ref(database, `${sharedPath(teacherId, studentId)}/${canonical.id}`)
-        const canonSharedSnap = await get(canonSharedRef)
-        if (!canonSharedSnap.exists()) await set(canonSharedRef, true)
-        await remove(dupSharedRef)
-      })
-    )
-  }
+  const studentIds = await getStudentIds(teacherId)
+  await Promise.all(
+    studentIds.map(async (studentId) => {
+      const dupSharedRef = ref(database, `${sharedPath(teacherId, studentId)}/${dup.id}`)
+      const dupSharedSnap = await get(dupSharedRef)
+      if (!dupSharedSnap.exists()) return
+      const canonSharedRef = ref(database, `${sharedPath(teacherId, studentId)}/${canonical.id}`)
+      const canonSharedSnap = await get(canonSharedRef)
+      if (!canonSharedSnap.exists()) await set(canonSharedRef, true)
+      await remove(dupSharedRef)
+    })
+  )
 
   // Re-point homework: update resources map and replace embedded URLs
   function collectHomeworkUpdates(snap: DataSnapshot, basePath: string) {
@@ -544,6 +569,32 @@ async function mergeDuplicate(
   }
 }
 
+function groupByDeduplicationKey(
+  resources: Array<FileBackedResource & { size: number }>
+): DuplicateGroup[] {
+  const groups = new Map<string, Array<FileBackedResource & { size: number }>>()
+  for (const r of resources) {
+    const key = deduplicationKey(r, r.size)
+    const group = groups.get(key) ?? []
+    group.push(r)
+    groups.set(key, group)
+  }
+  return [...groups.values()]
+    .filter((g) => g.length > 1)
+    .map((g) => {
+      g.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      const [canonical, ...duplicates] = g
+      return { canonical, duplicates }
+    })
+}
+
+export function computeDuplicateGroups(resources: Resource[]): DuplicateGroup[] {
+  const sizedFileBacked = resources.filter(
+    (r): r is FileBackedResource & { size: number } => isFileBacked(r) && typeof r.size === 'number'
+  )
+  return groupByDeduplicationKey(sizedFileBacked)
+}
+
 export async function findDuplicateGroups(teacherId: string): Promise<DuplicateGroup[]> {
   const allSnap = await get(ref(database, resourcesPath(teacherId)))
   if (!allSnap.exists()) return []
@@ -551,8 +602,10 @@ export async function findDuplicateGroups(teacherId: string): Promise<DuplicateG
   const all = snapshotToResources(allSnap)
   const fileBacked = all.filter(isFileBacked)
 
-  const withMeta = await Promise.all(
+  // Use stored size when available; fall back to Storage metadata for older records.
+  const withSize = await Promise.all(
     fileBacked.map(async (r) => {
+      if (typeof r.size === 'number') return { ...r, size: r.size }
       try {
         const meta = await getMetadata(storageRef(storage, r.storagePath))
         return { ...r, size: meta.size }
@@ -561,23 +614,9 @@ export async function findDuplicateGroups(teacherId: string): Promise<DuplicateG
       }
     })
   )
-  const valid = withMeta.filter((r): r is FileBackedResource & { size: number } => r !== null)
+  const valid = withSize.filter((r): r is FileBackedResource & { size: number } => r !== null)
 
-  const groups = new Map<string, Array<FileBackedResource & { size: number }>>()
-  for (const r of valid) {
-    const key = `${r.fileName}::${r.size}`
-    const group = groups.get(key) ?? []
-    group.push(r)
-    groups.set(key, group)
-  }
-
-  return [...groups.values()]
-    .filter((g) => g.length > 1)
-    .map((g) => {
-      g.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-      const [canonical, ...duplicates] = g
-      return { canonical, duplicates }
-    })
+  return groupByDeduplicationKey(valid)
 }
 
 export async function deduplicateSingleGroup(
@@ -630,26 +669,103 @@ function inferTypeFromExtension(fileName: string): ResourceType {
 function cleanFileName(fileName: string): string {
   const extIndex = fileName.lastIndexOf('.')
   const base = extIndex > 0 ? fileName.slice(0, extIndex) : fileName
-  // Strip random upload suffix: "kreutzer_a1b2c3" → "kreutzer"
-  const cleaned = base.replace(/_[a-z0-9]{6,}$/, '')
+  const cleaned = base.replace(/_[A-Za-z0-9]{10}$/, '')
   return cleaned.replace(/[_-]+/g, ' ').trim() || base
 }
 
-export async function importExistingUploads(teacherId: string): Promise<ImportResult> {
-  const listResult = await listAll(storageRef(storage, `users/${teacherId}/files`))
-  if (listResult.items.length === 0) return { imported: 0, skipped: 0 }
+function extractYouTubeUrlsFromHtml(html: string): string[] {
+  const urls: string[] = []
+  const re = /(?:src|href)="(https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)[^"]+)"/gi
+  let m
+  while ((m = re.exec(html)) !== null) {
+    urls.push(m[1])
+  }
+  return urls
+}
 
-  const existingSnap = await get(ref(database, resourcesPath(teacherId)))
+function collectYouTubeVideoIds(snap: DataSnapshot): Map<string, Set<string>> {
+  const result = new Map<string, Set<string>>()
+  if (!snap.exists()) return result
+  const students = snap.val() as Record<
+    string,
+    Record<string, { content?: string; editContent?: string }>
+  >
+  for (const homeworks of Object.values(students)) {
+    for (const hw of Object.values(homeworks)) {
+      for (const html of [hw.content, hw.editContent]) {
+        if (!html) continue
+        for (const url of extractYouTubeUrlsFromHtml(html)) {
+          const videoId = extractYouTubeVideoId(url)
+          if (!videoId) continue
+          const existing = result.get(videoId) ?? new Set<string>()
+          existing.add(url)
+          result.set(videoId, existing)
+        }
+      }
+    }
+  }
+  return result
+}
+
+function collectHomeworkUrlReferences(
+  snap: DataSnapshot,
+  basePath: string,
+  resourceId: string,
+  url: string,
+  updates: Record<string, unknown>
+): void {
+  if (!snap.exists()) return
+  const urlEncoded = url.replace(/&/g, '&amp;')
+  const students = snap.val() as Record<
+    string,
+    Record<string, { resources?: Record<string, string>; content?: string; editContent?: string }>
+  >
+  for (const [studentId, homeworks] of Object.entries(students)) {
+    for (const [hwId, hw] of Object.entries(homeworks)) {
+      if (hw.resources?.[resourceId] !== undefined) continue
+      const inContent = !!(
+        hw.content &&
+        (hw.content.includes(url) || hw.content.includes(urlEncoded))
+      )
+      const inEdit = !!(
+        hw.editContent &&
+        (hw.editContent.includes(url) || hw.editContent.includes(urlEncoded))
+      )
+      if (inContent || inEdit) {
+        updates[`${basePath}/${studentId}/${hwId}/resources/${resourceId}`] = url
+      }
+    }
+  }
+}
+
+export async function importExistingUploads(
+  teacherId: string,
+  accessToken?: string
+): Promise<ImportResult> {
+  const [listResult, existingSnap, pubHwSnap, draftHwSnap] = await Promise.all([
+    listAll(storageRef(storage, `users/${teacherId}/files`)),
+    get(ref(database, resourcesPath(teacherId))),
+    get(ref(database, `homework/teachers/${teacherId}/students`)),
+    get(ref(database, `homework/teachers/${teacherId}/drafts/students`))
+  ])
+
   const existingUrls = new Set<string>()
+  const existingVideoIds = new Set<string>()
   if (existingSnap.exists()) {
     for (const record of Object.values(existingSnap.val() as Record<string, ResourceDbRecord>)) {
       existingUrls.add(record.url)
+      if (record.type === ResourceType.YOUTUBE) {
+        const vid = extractYouTubeVideoId(record.url)
+        if (vid) existingVideoIds.add(vid)
+      }
     }
   }
 
   let imported = 0
   let skipped = 0
+  const hwUpdates: Record<string, unknown> = {}
 
+  // Import files from Storage
   await Promise.all(
     listResult.items.map(async (item) => {
       try {
@@ -663,38 +779,144 @@ export async function importExistingUploads(teacherId: string): Promise<ImportRe
         const fileName = item.name
         const type = inferTypeFromMime(meta.contentType ?? '') ?? inferTypeFromExtension(fileName)
         const newRef = push(ref(database, resourcesPath(teacherId)))
+        if (!newRef.key) return
+        const resourceId = newRef.key
         const record: ResourceDbRecord = {
           title: cleanFileName(fileName),
           type,
           url,
           fileName,
           storagePath: item.fullPath,
+          size: meta.size,
           tags: {},
           createdAt: meta.timeCreated
         }
         await set(newRef, record)
         imported++
+
+        collectHomeworkUrlReferences(
+          pubHwSnap,
+          `homework/teachers/${teacherId}/students`,
+          resourceId,
+          url,
+          hwUpdates
+        )
+        collectHomeworkUrlReferences(
+          draftHwSnap,
+          `homework/teachers/${teacherId}/drafts/students`,
+          resourceId,
+          url,
+          hwUpdates
+        )
       } catch {
         // Skip inaccessible files
       }
     })
   )
 
+  // Import YouTube links found in homework content
+  const videoIdMap = new Map<string, Set<string>>()
+  for (const [videoId, urls] of [
+    ...collectYouTubeVideoIds(pubHwSnap),
+    ...collectYouTubeVideoIds(draftHwSnap)
+  ]) {
+    const existing = videoIdMap.get(videoId) ?? new Set<string>()
+    for (const u of urls) existing.add(u)
+    videoIdMap.set(videoId, existing)
+  }
+
+  for (const [videoId, foundUrls] of videoIdMap) {
+    if (existingVideoIds.has(videoId)) {
+      skipped++
+      continue
+    }
+
+    const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`
+    let title = 'YouTube Video'
+    try {
+      const meta = await fetchYouTubeVideo(videoId, accessToken)
+      title = meta.snippet.title
+    } catch {
+      // Fall back to default title
+    }
+
+    const newRef = push(ref(database, resourcesPath(teacherId)))
+    if (!newRef.key) continue
+    const resourceId = newRef.key
+    const record: ResourceDbRecord = {
+      title,
+      type: ResourceType.YOUTUBE,
+      url: canonicalUrl,
+      tags: {},
+      createdAt: new Date().toISOString()
+    }
+    await set(newRef, record)
+    imported++
+    existingVideoIds.add(videoId)
+
+    for (const rawUrl of foundUrls) {
+      collectHomeworkUrlReferences(
+        pubHwSnap,
+        `homework/teachers/${teacherId}/students`,
+        resourceId,
+        rawUrl,
+        hwUpdates
+      )
+      collectHomeworkUrlReferences(
+        draftHwSnap,
+        `homework/teachers/${teacherId}/drafts/students`,
+        resourceId,
+        rawUrl,
+        hwUpdates
+      )
+    }
+  }
+
+  if (Object.keys(hwUpdates).length > 0) {
+    await update(ref(database), hwUpdates)
+  }
+
   return { imported, skipped }
 }
 
 export async function findResourceUsageInHomework(
   teacherId: string,
-  resourceId: string
+  resourceId: string,
+  resourceUrl?: string
 ): Promise<ResourceHomeworkReference[]> {
   const references: ResourceHomeworkReference[] = []
+  const videoId = resourceUrl ? extractYouTubeVideoId(resourceUrl) : null
+
+  function isReferencedInHw(hw: {
+    resources?: Record<string, string>
+    content?: string
+    editContent?: string
+  }): boolean {
+    if (hw.resources?.[resourceId]) return true
+    for (const html of [hw.content, hw.editContent]) {
+      if (!html) continue
+      if (resourceUrl && html.includes(resourceUrl)) return true
+      if (videoId && (html.includes(`/embed/${videoId}`) || html.includes(`v=${videoId}`))) {
+        return true
+      }
+    }
+    return false
+  }
 
   async function scanPath(basePath: string, isDraft: boolean) {
     const snap = await get(ref(database, basePath))
     if (!snap.exists()) return
     const students = snap.val() as Record<
       string,
-      Record<string, { resources?: Record<string, string>; title?: string }>
+      Record<
+        string,
+        {
+          resources?: Record<string, string>
+          content?: string
+          editContent?: string
+          title?: string
+        }
+      >
     >
     const studentIds = Object.keys(students)
     const nameSnaps = await Promise.all(
@@ -704,7 +926,7 @@ export async function findResourceUsageInHomework(
       const studentId = studentIds[i]
       const studentName = (nameSnaps[i].val() as string | null) ?? studentId
       for (const [homeworkId, hw] of Object.entries(students[studentId])) {
-        if (hw.resources?.[resourceId]) {
+        if (isReferencedInHw(hw)) {
           references.push({
             studentId,
             studentName,

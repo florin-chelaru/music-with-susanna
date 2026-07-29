@@ -111,7 +111,14 @@ function ResourcePreview({ resource }: { resource: Resource }) {
           component="img"
           src={resource.url}
           alt={resource.title}
-          sx={{ width: '100%', mt: 1.5, display: 'block', borderRadius: 1 }}
+          sx={{
+            width: '100%',
+            maxWidth: { md: '60%' },
+            mt: 1.5,
+            display: 'block',
+            borderRadius: 1,
+            mx: 'auto'
+          }}
         />
       )
     case ResourceType.YOUTUBE: {
@@ -210,9 +217,11 @@ export default function ResourceCard({
             <Button size="small" onClick={() => onEdit?.(resource)}>
               {strings.edit}
             </Button>
-            <Button size="small" onClick={() => onDelete?.(resource)}>
-              {strings.delete}
-            </Button>
+            {onDelete && (
+              <Button size="small" onClick={() => onDelete(resource)}>
+                {strings.delete}
+              </Button>
+            )}
             {onDetails && (
               <Button size="small" onClick={() => onDetails(resource)}>
                 {strings.details}
@@ -246,7 +255,7 @@ export default function ResourceCard({
           </Box>
         )}
       </CardActions>
-      {footer && <Box sx={{ borderTop: 1, borderColor: 'divider', px: 2, py: 1.5 }}>{footer}</Box>}
+      {footer && <Box sx={{ borderTop: 1, borderColor: 'divider' }}>{footer}</Box>}
     </Card>
   )
 }
