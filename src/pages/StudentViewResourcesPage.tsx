@@ -1,4 +1,4 @@
-import { Button, Container, Stack, Toolbar, Typography } from '@mui/material'
+import { Button, Container, MenuItem, Select, Stack, Toolbar, Typography } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -12,22 +12,39 @@ import { SupportedLocale } from '../util/SupportedLocale'
 import { Resource, useHomeworkResources } from '../util/resources'
 import { get, ref } from 'firebase/database'
 
+type SortOption = 'name' | 'date-desc' | 'date-asc'
+
 interface StudentViewResourcesPageTexts {
   resourcesFrom: string
   expandAll: string
   collapseAll: string
+  back: string
+  sortBy: string
+  sortName: string
+  sortDateNewest: string
+  sortDateOldest: string
 }
 
 const EN_US: StudentViewResourcesPageTexts = {
   resourcesFrom: 'Resources from',
   expandAll: 'Expand All',
-  collapseAll: 'Collapse All'
+  collapseAll: 'Collapse All',
+  back: 'Back',
+  sortBy: 'Sort',
+  sortName: 'Name',
+  sortDateNewest: 'Newest first',
+  sortDateOldest: 'Oldest first'
 }
 
 const RO_RO: StudentViewResourcesPageTexts = {
   resourcesFrom: 'Resurse de la',
   expandAll: 'Extinde Toate',
-  collapseAll: 'Restrânge Toate'
+  collapseAll: 'Restrânge Toate',
+  back: 'Înapoi',
+  sortBy: 'Sortare',
+  sortName: 'Nume',
+  sortDateNewest: 'Recente',
+  sortDateOldest: 'Vechi'
 }
 
 const STUDENT_VIEW_RESOURCES_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -110,6 +127,7 @@ export default function StudentViewResourcesPage() {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
+  const [sortBy, setSortBy] = useState<SortOption>('date-desc')
 
   const handleTagToggle = (slug: string) => {
     setSelectedTags((prev) => {
@@ -120,12 +138,19 @@ export default function StudentViewResourcesPage() {
     })
   }
 
-  const visibleResources = resources.filter((r) => {
-    if (searchQuery && !r.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
-    if (selectedTags.size > 0 && !Array.from(selectedTags).some((slug) => slug in r.tags))
-      return false
-    return true
-  })
+  const visibleResources = resources
+    .filter((r) => {
+      if (searchQuery && !r.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
+      if (selectedTags.size > 0 && !Array.from(selectedTags).some((slug) => slug in r.tags))
+        return false
+      return true
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name') return a.title.localeCompare(b.title)
+      if (sortBy === 'date-desc')
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    })
 
   const allExpanded = resources.every((r) => expandedMap[r.id])
   const toggleAll = () => {
@@ -162,12 +187,31 @@ export default function StudentViewResourcesPage() {
 
         <Grid2 xs={12} sm={9} md={10}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-            <Typography variant="h5">
-              {strings.resourcesFrom}: <strong>{teacherName}</strong>
-            </Typography>
-            <Button size="small" onClick={toggleAll}>
-              {allExpanded ? strings.collapseAll : strings.expandAll}
-            </Button>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Button size="small" onClick={() => navigate(-1)}>
+                {strings.back}
+              </Button>
+              <Typography variant="h5">
+                {strings.resourcesFrom}: <strong>{teacherName}</strong>
+              </Typography>
+            </Stack>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography variant="caption" color="text.secondary" component="span">
+                {strings.sortBy}
+              </Typography>
+              <Select
+                size="small"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                sx={{ fontSize: '0.8125rem' }}>
+                <MenuItem value="name">{strings.sortName}</MenuItem>
+                <MenuItem value="date-desc">{strings.sortDateNewest}</MenuItem>
+                <MenuItem value="date-asc">{strings.sortDateOldest}</MenuItem>
+              </Select>
+              <Button size="small" onClick={toggleAll}>
+                {allExpanded ? strings.collapseAll : strings.expandAll}
+              </Button>
+            </Stack>
           </Stack>
 
           <ResourceTagFilter
@@ -192,6 +236,7 @@ export default function StudentViewResourcesPage() {
                   resource={resource}
                   expanded={expandedMap[resource.id] ?? false}
                   onExpandedChange={(v) => setExpanded(resource.id, v)}
+                  onDetails={(r) => navigate(`/resources/${r.id}`)}
                 />
               </Grid2>
             ))}

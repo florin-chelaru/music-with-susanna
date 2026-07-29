@@ -5,6 +5,7 @@ import {
   Container,
   DialogContent,
   DialogContentText,
+  Link,
   MenuItem,
   Select,
   Stack,
@@ -14,7 +15,7 @@ import {
 import MultiActionDialog from '../Components/MultiActionDialog'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import FabCreate from '../Components/FabCreate'
 import ResourceCard from '../Components/ResourceCard'
 import ResourceTagFilter from '../Components/ResourceTagFilter'
@@ -26,10 +27,15 @@ import { useUser } from '../store/UserProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { UserRole } from '../util/User'
 import {
+  DuplicateGroup,
+  ImportResult,
   Resource,
   addYouTubeResource,
+  deduplicateSingleGroup,
   deleteResource,
+  findDuplicateGroups,
   findResourceUsageInHomework,
+  importExistingUploads,
   updateResourceMetadata,
   uploadResource,
   useTeacherResources
@@ -52,6 +58,21 @@ interface TeacherResourcesPageTexts {
   viewDetails: string
   yes: string
   no: string
+  importUploads: string
+  importing: string
+  importNone: string
+  importDone: string
+  findDuplicates: string
+  findingDuplicates: string
+  noDuplicatesFound: string
+  duplicatesTitle: string
+  duplicateLinks: string
+  mergeGroup: string
+  merging: string
+  mergeConfirmTitle: string
+  mergeCanonical: string
+  mergeWillDelete: string
+  mergeHomeworkNote: string
 }
 
 const EN_US: TeacherResourcesPageTexts = {
@@ -69,7 +90,23 @@ const EN_US: TeacherResourcesPageTexts = {
     'This resource is still referenced in homework assignments. Please remove it from there first and then try again.',
   viewDetails: 'View details',
   yes: 'Delete',
-  no: 'Cancel'
+  no: 'Cancel',
+  importUploads: 'Import uploads',
+  importing: 'Importing…',
+  importNone: 'No new files found',
+  importDone: 'files imported',
+  findDuplicates: 'Find Duplicates',
+  findingDuplicates: 'Scanning…',
+  noDuplicatesFound: 'No duplicates found',
+  duplicatesTitle: 'Duplicate groups',
+  duplicateLinks: 'Duplicates:',
+  mergeGroup: 'Merge',
+  merging: 'Merging…',
+  mergeConfirmTitle: 'Merge duplicates?',
+  mergeCanonical: 'Canonical file (will be kept):',
+  mergeWillDelete: 'Duplicates to delete:',
+  mergeHomeworkNote:
+    'All homework entries that embed these files will be updated to use the canonical file.'
 }
 
 const RO_RO: TeacherResourcesPageTexts = {
@@ -87,7 +124,23 @@ const RO_RO: TeacherResourcesPageTexts = {
     'Această resursă este încă referențiată în teme. Elimină-o mai întâi de acolo și încearcă din nou.',
   viewDetails: 'Vezi detalii',
   yes: 'Șterge',
-  no: 'Anulează'
+  no: 'Anulează',
+  importUploads: 'Importă fișiere',
+  importing: 'Se importă…',
+  importNone: 'Nu s-au găsit fișiere noi',
+  importDone: 'fișiere importate',
+  findDuplicates: 'Caută duplicate',
+  findingDuplicates: 'Scanare…',
+  noDuplicatesFound: 'Nu s-au găsit duplicate',
+  duplicatesTitle: 'Grupuri de duplicate',
+  duplicateLinks: 'Duplicate:',
+  mergeGroup: 'Unifică',
+  merging: 'Se unifică…',
+  mergeConfirmTitle: 'Unești duplicatele?',
+  mergeCanonical: 'Fișier canonic (va fi păstrat):',
+  mergeWillDelete: 'Duplicate de șters:',
+  mergeHomeworkNote:
+    'Toate temele care conțin aceste fișiere vor fi actualizate să folosească fișierul canonic.'
 }
 
 const TEACHER_RESOURCES_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -172,6 +225,66 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
   const [deleteTarget, setDeleteTarget] = useState<Resource | null>(null)
   const [deleteRefsLoading, setDeleteRefsLoading] = useState(false)
   const [deleteBlocked, setDeleteBlocked] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importMessage, setImportMessage] = useState<string | null>(null)
+  const [scanningDuplicates, setScanningDuplicates] = useState(false)
+  const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[] | null>(null)
+  const [deduplicateTarget, setDeduplicateTarget] = useState<DuplicateGroup | null>(null)
+  const [deduplicatingGroup, setDeduplicatingGroup] = useState(false)
+
+  useEffect(() => {
+    if (!importMessage) return
+    const timer = setTimeout(() => setImportMessage(null), 4000)
+    return () => clearTimeout(timer)
+  }, [importMessage])
+
+  const handleImport = async () => {
+    const teacherId = user?.uid
+    if (!teacherId || importing) return
+    setImporting(true)
+    setImportMessage(null)
+    try {
+      const result: ImportResult = await importExistingUploads(teacherId)
+      if (result.imported === 0) {
+        setImportMessage(strings.importNone)
+      } else {
+        setImportMessage(`${result.imported} ${strings.importDone}`)
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const handleFindDuplicates = async () => {
+    const teacherId = user?.uid
+    if (!teacherId || scanningDuplicates) return
+    setScanningDuplicates(true)
+    try {
+      const groups = await findDuplicateGroups(teacherId)
+      setDuplicateGroups(groups)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setScanningDuplicates(false)
+    }
+  }
+
+  const handleMergeConfirm = () => {
+    const teacherId = user?.uid
+    if (!teacherId || !deduplicateTarget || deduplicatingGroup) return
+    setDeduplicatingGroup(true)
+    deduplicateSingleGroup(teacherId, deduplicateTarget)
+      .then(() => {
+        setDuplicateGroups((prev) =>
+          prev ? prev.filter((g) => g.canonical.id !== deduplicateTarget.canonical.id) : prev
+        )
+        setDeduplicateTarget(null)
+      })
+      .catch(console.error)
+      .finally(() => setDeduplicatingGroup(false))
+  }
 
   useEffect(() => {
     if (!deleteTarget || !user?.uid) return
@@ -295,8 +408,78 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
               <Button size="small" onClick={toggleAll}>
                 {allExpanded ? strings.collapseAll : strings.expandAll}
               </Button>
+              <Button
+                size="small"
+                disabled={importing}
+                onClick={() => {
+                  void handleImport()
+                }}>
+                {importing ? strings.importing : strings.importUploads}
+              </Button>
+              <Button
+                size="small"
+                disabled={scanningDuplicates}
+                onClick={() => {
+                  void handleFindDuplicates()
+                }}>
+                {scanningDuplicates ? strings.findingDuplicates : strings.findDuplicates}
+              </Button>
             </Stack>
           </Stack>
+          {importMessage !== null && (
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+              {importMessage}
+            </Typography>
+          )}
+          {duplicateGroups !== null && (
+            <Box sx={{ mb: 2 }}>
+              {duplicateGroups.length === 0 ? (
+                <Typography variant="caption" color="text.secondary">
+                  {strings.noDuplicatesFound}
+                </Typography>
+              ) : (
+                <Stack spacing={2}>
+                  <Typography variant="subtitle2">{strings.duplicatesTitle}</Typography>
+                  {duplicateGroups.map((group) => (
+                    <ResourceCard
+                      key={group.canonical.id}
+                      resource={group.canonical}
+                      editable
+                      expanded={expandedMap[group.canonical.id] ?? true}
+                      onExpandedChange={(v) => setExpanded(group.canonical.id, v)}
+                      onEdit={(r) => setEditTarget(r)}
+                      onDelete={(r) => setDeleteTarget(r)}
+                      onDetails={(r) => navigate(`/resources/${r.id}`)}
+                      footer={
+                        <Stack spacing={0.5}>
+                          <Typography variant="caption" color="text.secondary">
+                            {strings.duplicateLinks}
+                          </Typography>
+                          {group.duplicates.map((dup) => (
+                            <Link
+                              key={dup.id}
+                              component={RouterLink}
+                              to={`/resources/${dup.id}`}
+                              variant="body2">
+                              {dup.title}
+                            </Link>
+                          ))}
+                          <Box sx={{ pt: 0.5 }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => setDeduplicateTarget(group)}>
+                              {strings.mergeGroup}
+                            </Button>
+                          </Box>
+                        </Stack>
+                      }
+                    />
+                  ))}
+                </Stack>
+              )}
+            </Box>
+          )}
           <ResourceTagFilter
             tags={tagIndex.map(({ slug, label }) => ({ slug, label }))}
             searchQuery={searchQuery}
@@ -385,6 +568,48 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
               {deleteBlocked ? strings.deleteBlockedBody : strings.deleteConfirmBody}
             </DialogContentText>
           )}
+        </DialogContent>
+      </MultiActionDialog>
+
+      <MultiActionDialog
+        open={deduplicateTarget !== null}
+        onClose={() => {
+          if (!deduplicatingGroup) setDeduplicateTarget(null)
+        }}
+        title={strings.mergeConfirmTitle}
+        actions={[
+          {
+            label: strings.no,
+            onClick: () => setDeduplicateTarget(null),
+            disabled: deduplicatingGroup
+          },
+          {
+            label: deduplicatingGroup ? strings.merging : strings.mergeGroup,
+            onClick: handleMergeConfirm,
+            autoFocus: true,
+            disabled: deduplicatingGroup
+          }
+        ]}>
+        <DialogContent>
+          <DialogContentText>{strings.mergeCanonical}</DialogContentText>
+          {deduplicateTarget && (
+            <Typography variant="body2" sx={{ mt: 0.5, mb: 1.5 }}>
+              <Link href={deduplicateTarget.canonical.url} target="_blank" rel="noreferrer">
+                {deduplicateTarget.canonical.title}
+              </Link>
+            </Typography>
+          )}
+          <DialogContentText>{strings.mergeWillDelete}</DialogContentText>
+          <Stack spacing={0.25} sx={{ mt: 0.5, mb: 1.5 }}>
+            {deduplicateTarget?.duplicates.map((dup) => (
+              <Typography key={dup.id} variant="body2">
+                <Link component={RouterLink} to={`/resources/${dup.id}`} target="_blank">
+                  {dup.title}
+                </Link>
+              </Typography>
+            ))}
+          </Stack>
+          <DialogContentText>{strings.mergeHomeworkNote}</DialogContentText>
         </DialogContent>
       </MultiActionDialog>
     </Container>

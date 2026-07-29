@@ -104,21 +104,48 @@ export default function ResourceDetailsPage() {
 
   useEffect(() => {
     if (user.loading) return
-    if (!user.uid) {
-      navigate('/login')
-      return
-    }
-    if (user.role !== UserRole.TEACHER) {
-      navigate('/')
-    }
+    if (!user.uid) navigate('/login')
   }, [user, navigate])
 
-  const teacherId = user?.uid
+  const isTeacher = user?.role === UserRole.TEACHER
+
+  const [resolvedTeacherId, setResolvedTeacherId] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (user.loading) return
+    if (!user.uid) return
+    if (!resourceId) return
+    if (user.role === UserRole.TEACHER) {
+      setResolvedTeacherId(user.uid)
+      return
+    }
+    // Student: find which of their teachers owns this resource
+    get(ref(database, `students/${user.uid}/teachers`))
+      .then((snap) => {
+        if (!snap.exists()) return []
+        return Object.keys(snap.val() as Record<string, unknown>)
+      })
+      .then((teacherIds) =>
+        Promise.all(
+          teacherIds.map(async (tid) => {
+            const snap = await get(ref(database, `resources/teachers/${tid}/${resourceId}`))
+            return snap.exists() ? tid : null
+          })
+        )
+      )
+      .then((results) => {
+        const found = results.find(Boolean)
+        if (found) setResolvedTeacherId(found)
+      })
+      .catch(() => {})
+  }, [user, resourceId])
+
+  const teacherId = resolvedTeacherId
 
   // ── Resource card state ────────────────────────────────────────────────────
   const [resource, setResource] = useState<Resource | null>(null)
   const [resourceLoading, setResourceLoading] = useState(true)
-  const [resourceExpanded, setResourceExpanded] = useState(false)
+  const [resourceExpanded, setResourceExpanded] = useState(true)
   const [editResourceTarget, setEditResourceTarget] = useState<Resource | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
@@ -127,7 +154,8 @@ export default function ResourceDetailsPage() {
     get(ref(database, `resources/teachers/${teacherId}/${resourceId}`))
       .then((snap) => {
         if (snap.exists()) {
-          setResource({ id: resourceId, ...(snap.val() as Omit<Resource, 'id'>) })
+          const record = snap.val() as Omit<Resource, 'id'>
+          setResource({ id: resourceId, ...record, tags: record.tags ?? {} })
         }
         setResourceLoading(false)
       })
@@ -287,16 +315,18 @@ export default function ResourceDetailsPage() {
   }
 
   // ── Derived state ──────────────────────────────────────────────────────────
+  const visibleRefs = isTeacher ? references : references.filter((r) => r.studentId === user?.uid)
+
   const studentGroups = useMemo<StudentGroup[]>(() => {
     const byStudent = new Map<string, StudentGroup>()
-    for (const r of references) {
+    for (const r of visibleRefs) {
       if (!byStudent.has(r.studentId)) {
         byStudent.set(r.studentId, { studentId: r.studentId, studentName: r.studentName, refs: [] })
       }
       byStudent.get(r.studentId)?.refs.push(r)
     }
     return [...byStudent.values()]
-  }, [references])
+  }, [visibleRefs])
 
   const studentDivRefs = useRef<Map<string, React.RefObject<HTMLDivElement | null>>>(new Map())
   for (const group of studentGroups) {
@@ -342,21 +372,25 @@ export default function ResourceDetailsPage() {
             <Button size="small" onClick={() => navigate(-1)}>
               {strings.back}
             </Button>
-            <Box sx={{ flex: 1 }} />
-            <Tooltip
-              title={canDelete ? '' : strings.deleteDisabledTooltip}
-              disableHoverListener={canDelete}>
-              <span>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  size="small"
-                  disabled={!canDelete}
-                  onClick={() => setDeleteOpen(true)}>
-                  {strings.deleteResource}
-                </Button>
-              </span>
-            </Tooltip>
+            {isTeacher && (
+              <>
+                <Box sx={{ flex: 1 }} />
+                <Tooltip
+                  title={canDelete ? '' : strings.deleteDisabledTooltip}
+                  disableHoverListener={canDelete}>
+                  <span>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      disabled={!canDelete}
+                      onClick={() => setDeleteOpen(true)}>
+                      {strings.deleteResource}
+                    </Button>
+                  </span>
+                </Tooltip>
+              </>
+            )}
           </Stack>
 
           {resourceLoading ? (
@@ -367,11 +401,11 @@ export default function ResourceDetailsPage() {
             <Box sx={{ mb: 3 }}>
               <ResourceCard
                 resource={resource}
-                editable
+                editable={isTeacher}
                 expanded={resourceExpanded}
                 onExpandedChange={setResourceExpanded}
-                onEdit={(r) => setEditResourceTarget(r)}
-                onDelete={() => setDeleteOpen(true)}
+                onEdit={isTeacher ? (r) => setEditResourceTarget(r) : undefined}
+                onDelete={isTeacher ? () => setDeleteOpen(true) : undefined}
               />
             </Box>
           ) : null}
@@ -405,7 +439,7 @@ export default function ResourceDetailsPage() {
                     {group.refs.map((r) => {
                       const hw = homeworks.get(r.homeworkId)
                       if (!hw) return null
-                      return r.isDraft || inlineEdits.has(r.homeworkId) ? (
+                      return isTeacher && (r.isDraft || inlineEdits.has(r.homeworkId)) ? (
                         <EditorCard
                           key={r.homeworkId}
                           value={
@@ -440,7 +474,8 @@ export default function ResourceDetailsPage() {
                           resources={teacherResources.filter(
                             (res) => res.id in (hw.resources ?? {})
                           )}
-                          onEdit={() => handleEditHomework(r)}
+                          onEdit={isTeacher ? () => handleEditHomework(r) : undefined}
+                          readonly={!isTeacher}
                         />
                       )
                     })}

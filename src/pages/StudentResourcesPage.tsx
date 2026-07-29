@@ -1,7 +1,21 @@
-import { Button, Container, MenuItem, Select, Stack, Toolbar, Typography } from '@mui/material'
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  DialogContent,
+  DialogContentText,
+  MenuItem,
+  Select,
+  Stack,
+  Toolbar,
+  Typography
+} from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import EditResourceDialog from '../Components/EditResourceDialog'
+import MultiActionDialog from '../Components/MultiActionDialog'
 import ResourceCard from '../Components/ResourceCard'
 import ResourceTagFilter from '../Components/ResourceTagFilter'
 import TableOfContents, { TocEntry } from '../TableOfContents'
@@ -10,7 +24,13 @@ import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProv
 import { useUser } from '../store/UserProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { UserRole } from '../util/User'
-import { Resource, useHomeworkResources } from '../util/resources'
+import {
+  Resource,
+  deleteResource,
+  findResourceUsageInHomework,
+  updateResourceMetadata,
+  useHomeworkResources
+} from '../util/resources'
 import { get, ref } from 'firebase/database'
 
 type SortOption = 'name' | 'date-desc' | 'date-asc'
@@ -24,6 +44,13 @@ interface StudentResourcesPageTexts {
   sortName: string
   sortDateNewest: string
   sortDateOldest: string
+  deleteConfirmTitle: string
+  deleteConfirmBody: string
+  deleteBlockedTitle: string
+  deleteBlockedBody: string
+  viewDetails: string
+  yes: string
+  no: string
 }
 
 const EN_US: StudentResourcesPageTexts = {
@@ -34,7 +61,15 @@ const EN_US: StudentResourcesPageTexts = {
   sortBy: 'Sort',
   sortName: 'Name',
   sortDateNewest: 'Newest first',
-  sortDateOldest: 'Oldest first'
+  sortDateOldest: 'Oldest first',
+  deleteConfirmTitle: 'Delete resource?',
+  deleteConfirmBody: 'This will permanently delete the resource and remove it from all students.',
+  deleteBlockedTitle: 'Cannot delete resource',
+  deleteBlockedBody:
+    'This resource is still referenced in homework assignments. Please remove it from there first and then try again.',
+  viewDetails: 'View details',
+  yes: 'Delete',
+  no: 'Cancel'
 }
 
 const RO_RO: StudentResourcesPageTexts = {
@@ -45,7 +80,15 @@ const RO_RO: StudentResourcesPageTexts = {
   sortBy: 'Sortare',
   sortName: 'Nume',
   sortDateNewest: 'Recente',
-  sortDateOldest: 'Vechi'
+  sortDateOldest: 'Vechi',
+  deleteConfirmTitle: 'Ștergi resursa?',
+  deleteConfirmBody: 'Resursa va fi ștearsă definitiv și eliminată de la toți elevii.',
+  deleteBlockedTitle: 'Resursa nu poate fi ștearsă',
+  deleteBlockedBody:
+    'Această resursă este încă referențiată în teme. Elimină-o mai întâi de acolo și încearcă din nou.',
+  viewDetails: 'Vezi detalii',
+  yes: 'Șterge',
+  no: 'Anulează'
 }
 
 const STUDENT_RESOURCES_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -167,6 +210,36 @@ export default function StudentResourcesPage() {
 
   const tagIndex = useMemo(() => buildTagIndex(resources), [resources])
 
+  const [editTarget, setEditTarget] = useState<Resource | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Resource | null>(null)
+  const [deleteRefsLoading, setDeleteRefsLoading] = useState(false)
+  const [deleteBlocked, setDeleteBlocked] = useState(false)
+
+  useEffect(() => {
+    if (!deleteTarget || !user?.uid) return
+    setDeleteRefsLoading(true)
+    setDeleteBlocked(false)
+    findResourceUsageInHomework(user.uid, deleteTarget.id)
+      .then((refs) => {
+        setDeleteBlocked(refs.length > 0)
+        setDeleteRefsLoading(false)
+      })
+      .catch(() => setDeleteRefsLoading(false))
+  }, [deleteTarget, user?.uid])
+
+  const handleEditConfirm = (patch: { title: string; tags: Record<string, string> }) => {
+    const teacherId = user?.uid
+    if (!teacherId || !editTarget) return
+    void updateResourceMetadata(teacherId, editTarget.id, patch).catch(console.error)
+  }
+
+  const handleDeleteConfirm = () => {
+    const teacherId = user?.uid
+    if (!teacherId || !deleteTarget) return
+    void deleteResource(teacherId, deleteTarget.id).catch(console.error)
+    setDeleteTarget(null)
+  }
+
   const tocEntries: TocEntry[] = tagIndex.map(({ slug, label, firstResourceId }) => ({
     key: slug,
     ref: resourceRefsMap.current.get(firstResourceId) as React.RefObject<HTMLDivElement | null>,
@@ -191,16 +264,15 @@ export default function StudentResourcesPage() {
         </Grid2>
 
         <Grid2 xs={12} sm={9} md={10}>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-            <Button size="small" onClick={() => navigate(-1)}>
-              {strings.back}
-            </Button>
-          </Stack>
-
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-            <Typography variant="h5">
-              {strings.homeworkResourcesFor}: <strong>{studentName}</strong>
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Button size="small" onClick={() => navigate(-1)}>
+                {strings.back}
+              </Button>
+              <Typography variant="h5">
+                {strings.homeworkResourcesFor}: <strong>{studentName}</strong>
+              </Typography>
+            </Stack>
             <Stack direction="row" alignItems="center" spacing={1}>
               <Typography variant="caption" color="text.secondary" component="span">
                 {strings.sortBy}
@@ -240,8 +312,12 @@ export default function StudentResourcesPage() {
                 }>
                 <ResourceCard
                   resource={resource}
+                  editable
                   expanded={expandedMap[resource.id] ?? false}
                   onExpandedChange={(v) => setExpanded(resource.id, v)}
+                  onEdit={(r) => setEditTarget(r)}
+                  onDelete={(r) => setDeleteTarget(r)}
+                  onDetails={(r) => navigate(`/resources/${r.id}`)}
                 />
               </Grid2>
             ))}
@@ -252,6 +328,51 @@ export default function StudentResourcesPage() {
           {toc}
         </Grid2>
       </Grid2>
+
+      <EditResourceDialog
+        open={editTarget !== null}
+        resource={editTarget}
+        existingTags={tagIndex.map(({ label }) => label)}
+        onClose={() => setEditTarget(null)}
+        onConfirm={handleEditConfirm}
+      />
+
+      <MultiActionDialog
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        title={deleteBlocked ? strings.deleteBlockedTitle : strings.deleteConfirmTitle}
+        actions={
+          deleteRefsLoading
+            ? [{ label: strings.no, onClick: () => setDeleteTarget(null) }]
+            : deleteBlocked
+            ? [
+                { label: strings.no, onClick: () => setDeleteTarget(null) },
+                {
+                  label: strings.viewDetails,
+                  onClick: () => {
+                    if (deleteTarget) navigate(`/resources/${deleteTarget.id}`)
+                    setDeleteTarget(null)
+                  },
+                  autoFocus: true
+                }
+              ]
+            : [
+                { label: strings.no, onClick: () => setDeleteTarget(null) },
+                { label: strings.yes, onClick: handleDeleteConfirm, autoFocus: true }
+              ]
+        }>
+        <DialogContent>
+          {deleteRefsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : (
+            <DialogContentText>
+              {deleteBlocked ? strings.deleteBlockedBody : strings.deleteConfirmBody}
+            </DialogContentText>
+          )}
+        </DialogContent>
+      </MultiActionDialog>
     </Container>
   )
 }

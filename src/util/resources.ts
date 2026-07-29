@@ -12,6 +12,8 @@ import {
 import {
   deleteObject,
   getDownloadURL,
+  getMetadata,
+  listAll,
   ref as storageRef,
   uploadBytesResumable
 } from 'firebase/storage'
@@ -35,6 +37,7 @@ export interface Resource {
   type: ResourceType
   url: string
   fileName?: string
+  storagePath?: string
   tags: Record<string, string>
   createdAt: string
 }
@@ -54,7 +57,7 @@ interface ResourceDbRecord {
 }
 
 function toResource(id: string, record: ResourceDbRecord): Resource {
-  return { id, ...record }
+  return { id, ...record, tags: record.tags ?? {} }
 }
 
 function snapshotToResources(snapshot: DataSnapshot): Resource[] {
@@ -423,6 +426,261 @@ export interface ResourceHomeworkReference {
   homeworkId: string
   homeworkTitle: string
   isDraft: boolean
+}
+
+// ---------------------------------------------------------------------------
+// Deduplication
+// ---------------------------------------------------------------------------
+
+export interface DeduplicateResult {
+  groupsFound: number
+  resourcesRemoved: number
+}
+
+export interface DuplicateGroup {
+  canonical: Resource
+  duplicates: Resource[]
+}
+
+interface FileBackedResource extends Resource {
+  storagePath: string
+  fileName: string
+}
+
+function isFileBacked(r: Resource): r is FileBackedResource {
+  return typeof r.storagePath === 'string' && typeof r.fileName === 'string'
+}
+
+function replaceUrlInHtml(html: string, oldUrl: string, newUrl: string): string {
+  const oldEncoded = oldUrl.replace(/&/g, '&amp;')
+  const newEncoded = newUrl.replace(/&/g, '&amp;')
+  return html.split(oldUrl).join(newUrl).split(oldEncoded).join(newEncoded)
+}
+
+async function mergeDuplicate(
+  teacherId: string,
+  dup: FileBackedResource,
+  canonical: Resource
+): Promise<void> {
+  const dbUpdates: Record<string, unknown> = {}
+
+  // Re-point shared-resources: add canonical for any student that had dup, remove dup
+  const studentsSnap = await get(ref(database, sharedStudentsPath(teacherId)))
+  if (studentsSnap.exists()) {
+    const studentIds = Object.keys(studentsSnap.val() as Record<string, unknown>)
+    await Promise.all(
+      studentIds.map(async (studentId) => {
+        const dupSharedRef = ref(database, `${sharedPath(teacherId, studentId)}/${dup.id}`)
+        const dupSharedSnap = await get(dupSharedRef)
+        if (!dupSharedSnap.exists()) return
+        const canonSharedRef = ref(database, `${sharedPath(teacherId, studentId)}/${canonical.id}`)
+        const canonSharedSnap = await get(canonSharedRef)
+        if (!canonSharedSnap.exists()) await set(canonSharedRef, true)
+        await remove(dupSharedRef)
+      })
+    )
+  }
+
+  // Re-point homework: update resources map and replace embedded URLs
+  function collectHomeworkUpdates(snap: DataSnapshot, basePath: string) {
+    if (!snap.exists()) return
+    const students = snap.val() as Record<
+      string,
+      Record<string, { resources?: Record<string, string>; content?: string; editContent?: string }>
+    >
+    for (const [studentId, homeworks] of Object.entries(students)) {
+      for (const [hwId, hw] of Object.entries(homeworks)) {
+        const hwPath = `${basePath}/${studentId}/${hwId}`
+
+        if (hw.resources?.[dup.id] !== undefined) {
+          dbUpdates[`${hwPath}/resources/${dup.id}`] = null
+          if (hw.resources[canonical.id] === undefined) {
+            dbUpdates[`${hwPath}/resources/${canonical.id}`] = canonical.url
+          }
+        }
+
+        const dupEncoded = dup.url.replace(/&/g, '&amp;')
+        if (hw.content && (hw.content.includes(dup.url) || hw.content.includes(dupEncoded))) {
+          dbUpdates[`${hwPath}/content`] = replaceUrlInHtml(hw.content, dup.url, canonical.url)
+        }
+        if (
+          hw.editContent &&
+          (hw.editContent.includes(dup.url) || hw.editContent.includes(dupEncoded))
+        ) {
+          dbUpdates[`${hwPath}/editContent`] = replaceUrlInHtml(
+            hw.editContent,
+            dup.url,
+            canonical.url
+          )
+        }
+      }
+    }
+  }
+
+  const [pubSnap, draftSnap] = await Promise.all([
+    get(ref(database, `homework/teachers/${teacherId}/students`)),
+    get(ref(database, `homework/teachers/${teacherId}/drafts/students`))
+  ])
+  collectHomeworkUpdates(pubSnap, `homework/teachers/${teacherId}/students`)
+  collectHomeworkUpdates(draftSnap, `homework/teachers/${teacherId}/drafts/students`)
+
+  if (Object.keys(dbUpdates).length > 0) {
+    await update(ref(database), dbUpdates)
+  }
+
+  // Soft-delete the duplicate resource entry
+  const dupResRef = ref(database, resourcePath(teacherId, dup.id))
+  const dupResSnap = await get(dupResRef)
+  if (dupResSnap.exists()) {
+    await set(ref(database, deletedResourcePath(teacherId, dup.id)), dupResSnap.val())
+    await remove(dupResRef)
+  }
+
+  // Hard-delete the duplicate Storage file
+  try {
+    await deleteObject(storageRef(storage, dup.storagePath))
+  } catch {
+    // File may already be deleted; continue
+  }
+}
+
+export async function findDuplicateGroups(teacherId: string): Promise<DuplicateGroup[]> {
+  const allSnap = await get(ref(database, resourcesPath(teacherId)))
+  if (!allSnap.exists()) return []
+
+  const all = snapshotToResources(allSnap)
+  const fileBacked = all.filter(isFileBacked)
+
+  const withMeta = await Promise.all(
+    fileBacked.map(async (r) => {
+      try {
+        const meta = await getMetadata(storageRef(storage, r.storagePath))
+        return { ...r, size: meta.size }
+      } catch {
+        return null
+      }
+    })
+  )
+  const valid = withMeta.filter((r): r is FileBackedResource & { size: number } => r !== null)
+
+  const groups = new Map<string, Array<FileBackedResource & { size: number }>>()
+  for (const r of valid) {
+    const key = `${r.fileName}::${r.size}`
+    const group = groups.get(key) ?? []
+    group.push(r)
+    groups.set(key, group)
+  }
+
+  return [...groups.values()]
+    .filter((g) => g.length > 1)
+    .map((g) => {
+      g.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      const [canonical, ...duplicates] = g
+      return { canonical, duplicates }
+    })
+}
+
+export async function deduplicateSingleGroup(
+  teacherId: string,
+  group: DuplicateGroup
+): Promise<number> {
+  let removed = 0
+  for (const dup of group.duplicates) {
+    if (!isFileBacked(dup)) continue
+    await mergeDuplicate(teacherId, dup, group.canonical)
+    removed++
+  }
+  return removed
+}
+
+export async function deduplicateResources(teacherId: string): Promise<DeduplicateResult> {
+  const dupGroups = await findDuplicateGroups(teacherId)
+  if (dupGroups.length === 0) return { groupsFound: 0, resourcesRemoved: 0 }
+
+  let resourcesRemoved = 0
+  for (const group of dupGroups) {
+    resourcesRemoved += await deduplicateSingleGroup(teacherId, group)
+  }
+  return { groupsFound: dupGroups.length, resourcesRemoved }
+}
+
+// ---------------------------------------------------------------------------
+// Import existing uploads
+// ---------------------------------------------------------------------------
+
+export interface ImportResult {
+  imported: number
+  skipped: number
+}
+
+function inferTypeFromMime(contentType: string): ResourceType | null {
+  if (contentType === 'application/pdf') return ResourceType.PDF
+  if (contentType.startsWith('audio/')) return ResourceType.AUDIO
+  if (contentType.startsWith('image/')) return ResourceType.IMAGE
+  return null
+}
+
+function inferTypeFromExtension(fileName: string): ResourceType {
+  const ext = fileName.toLowerCase().split('.').pop() ?? ''
+  if (ext === 'pdf') return ResourceType.PDF
+  if (['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'].includes(ext)) return ResourceType.AUDIO
+  return ResourceType.IMAGE
+}
+
+function cleanFileName(fileName: string): string {
+  const extIndex = fileName.lastIndexOf('.')
+  const base = extIndex > 0 ? fileName.slice(0, extIndex) : fileName
+  // Strip random upload suffix: "kreutzer_a1b2c3" → "kreutzer"
+  const cleaned = base.replace(/_[a-z0-9]{6,}$/, '')
+  return cleaned.replace(/[_-]+/g, ' ').trim() || base
+}
+
+export async function importExistingUploads(teacherId: string): Promise<ImportResult> {
+  const listResult = await listAll(storageRef(storage, `users/${teacherId}/files`))
+  if (listResult.items.length === 0) return { imported: 0, skipped: 0 }
+
+  const existingSnap = await get(ref(database, resourcesPath(teacherId)))
+  const existingUrls = new Set<string>()
+  if (existingSnap.exists()) {
+    for (const record of Object.values(existingSnap.val() as Record<string, ResourceDbRecord>)) {
+      existingUrls.add(record.url)
+    }
+  }
+
+  let imported = 0
+  let skipped = 0
+
+  await Promise.all(
+    listResult.items.map(async (item) => {
+      try {
+        const [url, meta] = await Promise.all([getDownloadURL(item), getMetadata(item)])
+
+        if (existingUrls.has(url)) {
+          skipped++
+          return
+        }
+
+        const fileName = item.name
+        const type = inferTypeFromMime(meta.contentType ?? '') ?? inferTypeFromExtension(fileName)
+        const newRef = push(ref(database, resourcesPath(teacherId)))
+        const record: ResourceDbRecord = {
+          title: cleanFileName(fileName),
+          type,
+          url,
+          fileName,
+          storagePath: item.fullPath,
+          tags: {},
+          createdAt: meta.timeCreated
+        }
+        await set(newRef, record)
+        imported++
+      } catch {
+        // Skip inaccessible files
+      }
+    })
+  )
+
+  return { imported, skipped }
 }
 
 export async function findResourceUsageInHomework(

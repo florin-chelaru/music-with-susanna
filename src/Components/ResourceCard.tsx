@@ -14,7 +14,7 @@ import {
   Stack,
   Typography
 } from '@mui/material'
-import { useContext, useMemo } from 'react'
+import { ReactNode, useContext, useMemo } from 'react'
 import ExpandMoreButton from './ExpandMoreButton'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
@@ -143,6 +143,8 @@ export interface ResourceCardProps {
   onDelete?: (resource: Resource) => void
   /** When provided, shows a Details button in editable mode. Omit to hide it. */
   onDetails?: (resource: Resource) => void
+  /** Optional content rendered at the bottom of the card, inside a top-bordered section. */
+  footer?: ReactNode
 }
 
 export default function ResourceCard({
@@ -153,13 +155,14 @@ export default function ResourceCard({
   onExpandedChange,
   onEdit,
   onDelete,
-  onDetails
+  onDetails,
+  footer
 }: ResourceCardProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(() => localeManager.registerComponentStrings(ResourceCard.name, RESOURCE_CARD_TEXTS), [])
   const strings = localeManager.componentStrings(ResourceCard.name) as ResourceCardTexts
 
-  const tags = Object.values(resource.tags)
+  const tags = Object.values(resource.tags ?? {})
   const hasPreview = Boolean(resource.url)
 
   return (
@@ -220,6 +223,10 @@ export default function ResourceCard({
           <Button size="small" onClick={() => onRemove(resource)}>
             {strings.remove}
           </Button>
+        ) : onDetails ? (
+          <Button size="small" onClick={() => onDetails(resource)}>
+            {strings.details}
+          </Button>
         ) : (
           resource.url && (
             <Button size="small" component="a" href={resource.url} target="_blank" rel="noreferrer">
@@ -239,6 +246,7 @@ export default function ResourceCard({
           </Box>
         )}
       </CardActions>
+      {footer && <Box sx={{ borderTop: 1, borderColor: 'divider', px: 2, py: 1.5 }}>{footer}</Box>}
     </Card>
   )
 }
