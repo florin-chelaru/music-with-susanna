@@ -9,3 +9,5 @@ export const onValue = jest.fn((_, callback: (snap: { val: () => unknown }) => v
   callback({ val: () => null })
   return jest.fn() // unsubscribe no-op
 })
+export const push = jest.fn(() => ({ key: 'mock-push-key' }))
+export const update = jest.fn(() => Promise.resolve())

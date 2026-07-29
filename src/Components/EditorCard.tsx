@@ -19,8 +19,17 @@ import {
   FileUploadProgress,
   QUILL_FORMATS,
   QUILL_MODULES,
-  handleFileUpload
+  handleFileUpload,
+  insertResource
 } from '../util/quill'
+import {
+  Resource,
+  ResourceType,
+  UploadConfirmData,
+  addYouTubeResource,
+  uploadResource
+} from '../util/resources'
+import InsertMediaDialog from './InsertMediaDialog'
 import MultiActionDialog from './MultiActionDialog'
 
 interface EditorCardTexts {
@@ -30,6 +39,12 @@ interface EditorCardTexts {
   uploading: string
   uploadingDescription: (fileName: string) => string
   cancel: string
+  discardConfirmTitle: string
+  discardConfirmBody: string
+  discardConfirm: string
+  youtubeAlreadyExistsTitle: string
+  youtubeAlreadyExistsBody: string
+  ok: string
   homeworkTemplateTitle: string
   homeworkTemplateBody: string
 }
@@ -41,6 +56,13 @@ const EN_US: EditorCardTexts = {
   uploading: 'Uploading...',
   uploadingDescription: (fileName: string) => `Uploading file ${fileName} to the server`,
   cancel: 'Cancel',
+  discardConfirmTitle: 'Discard changes?',
+  discardConfirmBody: 'Any unsaved edits will be lost.',
+  discardConfirm: 'Discard',
+  youtubeAlreadyExistsTitle: 'Video already in library',
+  youtubeAlreadyExistsBody:
+    'This video is already in your library. Please insert it from the existing resources tab.',
+  ok: 'OK',
   homeworkTemplateTitle: 'Title',
   homeworkTemplateBody: 'Write your notes here...'
 }
@@ -52,6 +74,13 @@ const RO_RO: EditorCardTexts = {
   uploading: 'Se încarcă...',
   uploadingDescription: (fileName: string) => `Se încarcă fișierul ${fileName} pe server`,
   cancel: 'Renunță',
+  discardConfirmTitle: 'Renunți la modificări?',
+  discardConfirmBody: 'Modificările nesalvate vor fi pierdute.',
+  discardConfirm: 'Renunță',
+  youtubeAlreadyExistsTitle: 'Videoclip deja în bibliotecă',
+  youtubeAlreadyExistsBody:
+    'Acest videoclip este deja în biblioteca ta. Inserează-l din fila cu resurse existente.',
+  ok: 'OK',
   homeworkTemplateTitle: 'Titlu',
   homeworkTemplateBody: 'Introdu aici notițele...'
 }
@@ -72,6 +101,10 @@ interface EditorCardProps extends CardProps {
   onPublish?(): void
   onDiscard?(): void
   onSave?(): void
+  resources?: Resource[]
+  teacherId?: string
+  studentId?: string
+  onInsertResource?: (resource: Resource) => void
 }
 
 export default function EditorCard({
@@ -80,6 +113,10 @@ export default function EditorCard({
   onPublish,
   onSave,
   onDiscard,
+  resources,
+  teacherId,
+  studentId,
+  onInsertResource,
   ...props
 }: EditorCardProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
@@ -89,6 +126,9 @@ export default function EditorCard({
   const quillRef = useRef<ReactQuill | null>(null)
   const { user } = useUser()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false)
+  const [insertDialogOpen, setInsertDialogOpen] = useState(false)
+  const [youtubeDupDialogOpen, setYoutubeDupDialogOpen] = useState(false)
   const dialogCloseAction = useRef<(() => void) | null>(null)
   const handleDialogClose = () => {
     setDialogOpen(false)
@@ -97,14 +137,14 @@ export default function EditorCard({
   const [uploadProgress, setUploadProgress] = useState<number>(0)
   const [uploadFileName, setUploadFileName] = useState<string>('')
 
-  const fileUploadHandlerRef = useRef<() => any>(() => {})
+  const fileSelectedHandlerRef = useRef<(file: File) => Promise<void>>(async () => {})
 
   const modules: any = _.cloneDeep(QUILL_MODULES)
-  modules.toolbar.handlers = { image: () => fileUploadHandlerRef.current() }
+  modules.toolbar.handlers = { image: () => setInsertDialogOpen(true) }
   const editorModules = useRef(modules)
 
   useEffect(() => {
-    const fileUploadHandler = async () => {
+    fileSelectedHandlerRef.current = async (file: File) => {
       if (!quillRef.current) {
         return
       }
@@ -114,6 +154,7 @@ export default function EditorCard({
         await handleFileUpload({
           quill: quillRef.current,
           user,
+          file,
           progressHandler: ({ fileName, progress }: FileUploadProgress) => {
             if (progress < 100 && !dialogOpen) {
               setDialogOpen(true)
@@ -129,8 +170,6 @@ export default function EditorCard({
       dialogCloseAction.current = null
       handleDialogClose()
     }
-
-    fileUploadHandlerRef.current = fileUploadHandler
   }, [user])
 
   return (
@@ -156,8 +195,8 @@ export default function EditorCard({
           }}
         />
 
-        <CardActions sx={{ justifyContent: 'flex-end' }}>
-          <Button size="small" onClick={() => onDiscard?.()}>
+        <CardActions>
+          <Button size="small" onClick={() => setDiscardConfirmOpen(true)}>
             {componentStrings.trash}
           </Button>
           <Button size="small" onClick={() => onSave?.()}>
@@ -168,6 +207,98 @@ export default function EditorCard({
           </Button>
         </CardActions>
       </Card>
+      <MultiActionDialog
+        open={discardConfirmOpen}
+        onClose={() => setDiscardConfirmOpen(false)}
+        title={componentStrings.discardConfirmTitle}
+        actions={[
+          { label: componentStrings.cancel, onClick: () => setDiscardConfirmOpen(false) },
+          {
+            label: componentStrings.discardConfirm,
+            onClick: () => {
+              setDiscardConfirmOpen(false)
+              onDiscard?.()
+            },
+            autoFocus: true
+          }
+        ]}>
+        <DialogContent>
+          <DialogContentText>{componentStrings.discardConfirmBody}</DialogContentText>
+        </DialogContent>
+      </MultiActionDialog>
+      <MultiActionDialog
+        open={youtubeDupDialogOpen}
+        onClose={() => setYoutubeDupDialogOpen(false)}
+        title={componentStrings.youtubeAlreadyExistsTitle}
+        actions={[
+          {
+            label: componentStrings.ok,
+            onClick: () => {
+              setYoutubeDupDialogOpen(false)
+              setInsertDialogOpen(true)
+            }
+          }
+        ]}>
+        <DialogContent>
+          <DialogContentText>{componentStrings.youtubeAlreadyExistsBody}</DialogContentText>
+        </DialogContent>
+      </MultiActionDialog>
+      <InsertMediaDialog
+        open={insertDialogOpen}
+        resources={resources ?? []}
+        onClose={() => setInsertDialogOpen(false)}
+        onInsert={(resource) => {
+          if (quillRef.current) insertResource(quillRef.current, resource)
+          onInsertResource?.(resource)
+          setInsertDialogOpen(false)
+        }}
+        onUpload={(data: UploadConfirmData) => {
+          setInsertDialogOpen(false)
+          if (!teacherId) return
+          if (data.mode === 'youtube') {
+            void addYouTubeResource(
+              teacherId,
+              data.url,
+              { title: data.title, tags: data.tags },
+              resources
+            )
+              .then((resourceId) => {
+                const existing = resources?.find((r) => r.id === resourceId)
+                if (existing) {
+                  setYoutubeDupDialogOpen(true)
+                  return
+                }
+                const resource: Resource = {
+                  id: resourceId,
+                  title: data.title,
+                  type: ResourceType.YOUTUBE,
+                  url: data.url,
+                  tags: data.tags,
+                  createdAt: new Date().toISOString()
+                }
+                if (quillRef.current) insertResource(quillRef.current, resource)
+                onInsertResource?.(resource)
+              })
+              .catch(console.error)
+          } else {
+            setUploadFileName(data.file.name)
+            setUploadProgress(0)
+            setDialogOpen(true)
+            void uploadResource({
+              teacherId,
+              file: data.file,
+              metadata: { title: data.title, tags: data.tags },
+              onProgress: (p) => setUploadProgress(p)
+            })
+              .then((resource) => {
+                if (quillRef.current) insertResource(quillRef.current, resource)
+                onInsertResource?.(resource)
+              })
+              .catch(console.error)
+              .finally(() => handleDialogClose())
+          }
+        }}
+      />
       <MultiActionDialog
         open={dialogOpen}
         onClose={handleDialogClose}

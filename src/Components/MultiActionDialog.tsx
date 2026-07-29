@@ -4,6 +4,7 @@ export interface DialogAction {
   label: string
   onClick?: () => any
   autoFocus?: boolean
+  disabled?: boolean
 }
 
 export interface MultiActionDialogProps extends DialogProps {
@@ -29,7 +30,8 @@ export default function MultiActionDialog({
             <Button
               key={`action-${i}`}
               onClick={() => action.onClick?.()}
-              autoFocus={!!action.autoFocus}>
+              autoFocus={!!action.autoFocus}
+              disabled={!!action.disabled}>
               {action.label}
             </Button>
           )

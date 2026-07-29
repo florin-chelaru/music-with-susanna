@@ -20,6 +20,8 @@ import HomeworkInfo, {
 import { SupportedLocale } from '../util/SupportedLocale'
 import { UserRole } from '../util/User'
 import { convertHtmlStringToPlain } from '../util/string'
+import { useTeacherResources } from '../util/resources'
+import { toYouTubeEmbedUrl } from '../util/youtube'
 import { scrollToTop } from '../util/window'
 
 interface HomeworkTexts {
@@ -63,6 +65,7 @@ export default function Homework({}: HomeworkProps) {
 
   const { teacherId, studentId } = useParams()
   const { user } = useUser()
+  const { resources } = useTeacherResources(teacherId)
   const homework = useRef<Map<string, HomeworkInfo>>(new Map())
   const drafts = useRef<Map<string, HomeworkInfo>>(new Map())
   const [homeworkChanged, setHomeworkChanged] = useState<number>(0)
@@ -197,6 +200,7 @@ export default function Homework({}: HomeworkProps) {
               localHw.updatedAt = hw.updatedAt
               localHw.deletedAt = hw.deletedAt
               localHw.title = hw.title
+              localHw.resources = hw.resources
             }
           }
 
@@ -367,6 +371,7 @@ export default function Homework({}: HomeworkProps) {
                     {hw.status === HomeworkStatus.PUBLISHED && (
                       <HomeworkCard
                         homework={hw}
+                        resources={resources.filter((r) => r.id in (hw.resources ?? {}))}
                         onDelete={() => {
                           dialogYesActionRef.current = () => {
                             void deleteHomework(hw)
@@ -383,8 +388,29 @@ export default function Homework({}: HomeworkProps) {
                     {user.role === UserRole.TEACHER && hw.status !== HomeworkStatus.PUBLISHED && (
                       <EditorCard
                         value={hw.editContent}
+                        resources={resources}
+                        teacherId={teacherId}
+                        studentId={studentId}
+                        onInsertResource={(resource) => {
+                          if (!hw.resources) hw.resources = {}
+                          hw.resources[resource.id] = resource.url
+                          homeworkDraftsToSave.current.add(hw.id)
+                        }}
                         onValueChange={(v) => {
                           hw.editContent = v
+                          if (hw.resources) {
+                            const kept: Record<string, string> = {}
+                            for (const [id, url] of Object.entries(hw.resources)) {
+                              const contentUrl = toYouTubeEmbedUrl(url)
+                              if (
+                                v.includes(contentUrl) ||
+                                v.includes(contentUrl.replace(/&/g, '&amp;'))
+                              ) {
+                                kept[id] = url
+                              }
+                            }
+                            hw.resources = Object.keys(kept).length > 0 ? kept : undefined
+                          }
                           homeworkDraftsToSave.current.add(hw.id)
                           setHomeworkChanged(++homeworkChangedRef.current)
                         }}

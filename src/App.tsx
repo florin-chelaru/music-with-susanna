@@ -19,6 +19,10 @@ import Lessons from './pages/Lessons'
 import Login from './pages/Login'
 import StudentsPage from './pages/StudentsPage'
 import SubjectsPage from './pages/SubjectsPage'
+import ResourceDetailsPage from './pages/ResourceDetailsPage'
+import StudentResourcesPage from './pages/StudentResourcesPage'
+import StudentViewResourcesPage from './pages/StudentViewResourcesPage'
+import TeacherResourcesPage from './pages/TeacherResourcesPage'
 import VideoChannel from './pages/VideoChannel'
 import AnnouncementProvider from './store/AnnouncementProvider'
 import FabPositionProvider from './store/FabPositionProvider'
@@ -61,6 +65,16 @@ function App() {
                         <Route path="/students" element={<StudentsPage />} />
                         <Route path="/subjects" element={<SubjectsPage />} />
                         <Route path="/homework/:teacherId/:studentId" element={<Homework />} />
+                        <Route path="/resources" element={<TeacherResourcesPage />} />
+                        <Route
+                          path="/resources/student/:studentId"
+                          element={<StudentResourcesPage />}
+                        />
+                        <Route
+                          path="/resources/teacher/:teacherId"
+                          element={<StudentViewResourcesPage />}
+                        />
+                        <Route path="/resources/:resourceId" element={<ResourceDetailsPage />} />
                         <Route path="/privacy" element={<Privacy />} />
                       </Routes>
                     </Grid2>

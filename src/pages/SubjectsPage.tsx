@@ -1,4 +1,6 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
+import MenuBookIcon from '@mui/icons-material/MenuBook'
 import {
   Accordion,
   AccordionDetails,
@@ -22,18 +24,21 @@ import { scrollToTop } from '../util/window'
 
 interface TeachersPageTexts {
   homework: string
+  resources: string
   violin: string
   computerScience: string
 }
 
 const EN_US: TeachersPageTexts = {
   homework: 'Homework',
+  resources: 'Resources',
   violin: 'Violin',
   computerScience: 'Computer Science'
 }
 
 const RO_RO: TeachersPageTexts = {
   homework: 'Teme pe acasă',
+  resources: 'Resurse',
   violin: 'Vioară',
   computerScience: 'Informatică'
 }
@@ -151,9 +156,28 @@ export default function SubjectsPage({}: TeachersPageProps) {
                     navigate(`/homework/${teacher.uid}/${user.uid}`)
                     scrollToTop()
                   }}>
-                  <Typography variant="body1" gutterBottom component="h2">
-                    {componentStrings.homework}
-                  </Typography>
+                  <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                    <MenuBookIcon />
+                    <Typography variant="body1" gutterBottom component="h2">
+                      {componentStrings.homework}
+                    </Typography>
+                  </Stack>
+                </Link>
+                <Link
+                  underline="hover"
+                  color="inherit"
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    navigate(`/resources/teacher/${teacher.uid}`)
+                    scrollToTop()
+                  }}>
+                  <Stack direction="row" spacing={1}>
+                    <LibraryBooksIcon />
+                    <Typography variant="body1" gutterBottom component="h2">
+                      {componentStrings.resources}
+                    </Typography>
+                  </Stack>
                 </Link>
               </AccordionDetails>
             </Accordion>

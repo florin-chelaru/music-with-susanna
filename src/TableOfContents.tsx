@@ -23,9 +23,29 @@ const TEXTS = new Map<SupportedLocale, LocalizedData>([
 
 export interface TocEntry {
   key: string
-  ref: React.RefObject<HTMLDivElement | null>
+  ref?: React.RefObject<HTMLDivElement | null>
   primaryLabel?: string
   secondaryLabel?: string
+  children?: TocEntry[]
+}
+
+function TocItem({ entry, depth = 0 }: { entry: TocEntry; depth?: number }) {
+  return (
+    <>
+      <ListItemButton
+        sx={{ py: 0, minHeight: 32, pl: 2 + depth * 2 }}
+        onClick={() => entry.ref && scrollToElement(entry.ref.current, 64)}>
+        <ListItemText
+          primary={depth === 0 ? entry.primaryLabel : undefined}
+          secondary={depth === 0 ? entry.secondaryLabel : entry.primaryLabel}
+          primaryTypographyProps={{ fontWeight: 'medium' }}
+        />
+      </ListItemButton>
+      {entry.children?.map((child) => (
+        <TocItem key={child.key} entry={child} depth={depth + 1} />
+      ))}
+    </>
+  )
 }
 
 export interface TableOfContentsProps {
@@ -51,17 +71,8 @@ export default function TableOfContents({ entries = [] }: TableOfContentsProps) 
         <Typography variant="overline" sx={{ pl: 2 }}>
           <b>{componentStrings.contents}</b>
         </Typography>
-        {entries.map((entry: TocEntry, i) => (
-          <ListItemButton
-            key={entry.key}
-            sx={{ py: 0, minHeight: 32 }}
-            onClick={() => scrollToElement(entry.ref?.current, 64)}>
-            <ListItemText
-              primary={entry.primaryLabel}
-              secondary={entry.secondaryLabel}
-              primaryTypographyProps={{ fontWeight: 'medium' }}
-            />
-          </ListItemButton>
+        {entries.map((entry) => (
+          <TocItem key={entry.key} entry={entry} />
         ))}
       </Box>
     </Box>

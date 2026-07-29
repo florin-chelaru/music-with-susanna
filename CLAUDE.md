@@ -31,7 +31,7 @@ Commits follow **conventional commits** (`feat:`, `fix:`, `chore:` etc.) — `st
 - Prettier (full config): `semi: false`, `singleQuote: true`, `printWidth: 100`, `tabWidth: 2`, `trailingComma: "none"`, `jsxBracketSameLine: true`
   - No trailing commas anywhere — not in objects, arrays, or function params
   - JSX closing `>` always goes on the same line as the last attribute/prop
-  - Run `npm run format` to auto-fix, or `npm run lint:fix` (which also applies Prettier via the ESLint plugin)
+  - **Never run `npm run format` (or `npm run lint:fix`) on the whole codebase** — it reformats hundreds of pre-existing files and introduces `jsxBracketSameLine` violations because `npm run format` uses Prettier directly (which ignores the deprecated setting) while the ESLint plugin enforces it. Only run targeted fixes on files you actually changed: `npx prettier --write src/path/to/file.tsx`
   - Note: `jsxBracketSameLine` is deprecated in Prettier 3+; the project still uses it and the ESLint plugin enforces it, so always confirm with `npm run lint` after editing JSX
 - ESLint extends `standard-with-typescript` + `plugin:prettier/recommended`
   - `no-void` rule (from `standard`): `void expr` is **not** allowed as a return expression in concise arrow functions — use a block body: `(x) => { void asyncFn(x) }` ✓ vs `(x) => void asyncFn(x)` ✗
