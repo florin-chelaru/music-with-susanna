@@ -882,7 +882,8 @@ export async function importExistingUploads(
 export async function findResourceUsageInHomework(
   teacherId: string,
   resourceId: string,
-  resourceUrl?: string
+  resourceUrl?: string,
+  studentId?: string
 ): Promise<ResourceHomeworkReference[]> {
   const references: ResourceHomeworkReference[] = []
   const videoId = resourceUrl ? extractYouTubeVideoId(resourceUrl) : null
@@ -903,32 +904,29 @@ export async function findResourceUsageInHomework(
     return false
   }
 
-  async function scanPath(basePath: string, isDraft: boolean) {
+  interface HwRecord {
+    resources?: Record<string, string>
+    content?: string
+    editContent?: string
+    title?: string
+  }
+
+  // Scan all students under a parent path (teacher-only access)
+  async function scanAllStudentsPath(basePath: string, isDraft: boolean) {
     const snap = await get(ref(database, basePath))
     if (!snap.exists()) return
-    const students = snap.val() as Record<
-      string,
-      Record<
-        string,
-        {
-          resources?: Record<string, string>
-          content?: string
-          editContent?: string
-          title?: string
-        }
-      >
-    >
+    const students = snap.val() as Record<string, Record<string, HwRecord>>
     const studentIds = Object.keys(students)
     const nameSnaps = await Promise.all(
       studentIds.map((id) => get(ref(database, `users/${id}/name`)))
     )
     for (let i = 0; i < studentIds.length; i++) {
-      const studentId = studentIds[i]
-      const studentName = (nameSnaps[i].val() as string | null) ?? studentId
-      for (const [homeworkId, hw] of Object.entries(students[studentId])) {
+      const sid = studentIds[i]
+      const studentName = (nameSnaps[i].val() as string | null) ?? sid
+      for (const [homeworkId, hw] of Object.entries(students[sid])) {
         if (isReferencedInHw(hw)) {
           references.push({
-            studentId,
+            studentId: sid,
             studentName,
             homeworkId,
             homeworkTitle: hw.title ?? (isDraft ? 'Draft' : 'Untitled'),
@@ -939,10 +937,36 @@ export async function findResourceUsageInHomework(
     }
   }
 
-  await Promise.all([
-    scanPath(`homework/teachers/${teacherId}/students`, false),
-    scanPath(`homework/teachers/${teacherId}/drafts/students`, true)
-  ])
+  // Scan a single student's homework path (accessible to that student)
+  async function scanSingleStudentPath(sid: string) {
+    const [nameSnap, hwSnap] = await Promise.all([
+      get(ref(database, `users/${sid}/name`)),
+      get(ref(database, `homework/teachers/${teacherId}/students/${sid}`))
+    ])
+    if (!hwSnap.exists()) return
+    const studentName = (nameSnap.val() as string | null) ?? sid
+    const homeworks = hwSnap.val() as Record<string, HwRecord>
+    for (const [homeworkId, hw] of Object.entries(homeworks)) {
+      if (isReferencedInHw(hw)) {
+        references.push({
+          studentId: sid,
+          studentName,
+          homeworkId,
+          homeworkTitle: hw.title ?? 'Untitled',
+          isDraft: false
+        })
+      }
+    }
+  }
+
+  if (studentId) {
+    await scanSingleStudentPath(studentId)
+  } else {
+    await Promise.all([
+      scanAllStudentsPath(`homework/teachers/${teacherId}/students`, false),
+      scanAllStudentsPath(`homework/teachers/${teacherId}/drafts/students`, true)
+    ])
+  }
 
   return references
 }

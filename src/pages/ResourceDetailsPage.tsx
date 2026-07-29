@@ -187,7 +187,12 @@ export default function ResourceDetailsPage() {
   const loadReferences = useCallback(() => {
     if (!teacherId || !resourceId) return
     setRefsLoading(true)
-    findResourceUsageInHomework(teacherId, resourceId, resource?.url)
+    findResourceUsageInHomework(
+      teacherId,
+      resourceId,
+      resource?.url,
+      isTeacher ? undefined : user?.uid
+    )
       .then((refs) => {
         setReferences(refs)
         setRefsLoading(false)

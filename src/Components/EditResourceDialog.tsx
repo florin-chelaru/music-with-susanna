@@ -93,7 +93,7 @@ export default function EditResourceDialog({
         { label: strings.save, onClick: handleConfirm, autoFocus: true }
       ]}>
       <DialogContent>
-        <Stack spacing={2.5}>
+        <Stack spacing={2.5} sx={{ mt: 1 }}>
           <TextField
             label={strings.title}
             placeholder={strings.titlePlaceholder}

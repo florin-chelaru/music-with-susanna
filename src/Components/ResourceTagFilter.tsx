@@ -1,23 +1,40 @@
+import AudiotrackIcon from '@mui/icons-material/Audiotrack'
 import ClearIcon from '@mui/icons-material/Clear'
+import ImageIcon from '@mui/icons-material/Image'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import SearchIcon from '@mui/icons-material/Search'
+import YouTubeIcon from '@mui/icons-material/YouTube'
 import { Chip, IconButton, InputAdornment, Stack, TextField } from '@mui/material'
 import { useContext, useMemo } from 'react'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
+import { ResourceType } from '../util/resources'
 
 interface ResourceTagFilterTexts {
   searchPlaceholder: string
   all: string
+  typePdf: string
+  typeAudio: string
+  typeImage: string
+  typeYoutube: string
 }
 
 const EN_US: ResourceTagFilterTexts = {
   searchPlaceholder: 'Search resources…',
-  all: 'All'
+  all: 'All',
+  typePdf: 'PDF',
+  typeAudio: 'Audio',
+  typeImage: 'Image',
+  typeYoutube: 'YouTube'
 }
 
 const RO_RO: ResourceTagFilterTexts = {
   searchPlaceholder: 'Caută resurse…',
-  all: 'Toate'
+  all: 'Toate',
+  typePdf: 'PDF',
+  typeAudio: 'Audio',
+  typeImage: 'Imagine',
+  typeYoutube: 'YouTube'
 }
 
 const RESOURCE_TAG_FILTER_TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -29,16 +46,20 @@ export interface ResourceTagFilterProps {
   tags: Array<{ slug: string; label: string }>
   searchQuery: string
   selectedTags: Set<string>
+  selectedTypes?: Set<ResourceType>
   onSearchChange: (query: string) => void
   onTagToggle: (slug: string) => void
+  onTypeToggle?: (type: ResourceType) => void
 }
 
 export default function ResourceTagFilter({
   tags,
   searchQuery,
   selectedTags,
+  selectedTypes,
   onSearchChange,
-  onTagToggle
+  onTagToggle,
+  onTypeToggle
 }: ResourceTagFilterProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(
@@ -47,11 +68,27 @@ export default function ResourceTagFilter({
   )
   const strings = localeManager.componentStrings(ResourceTagFilter.name) as ResourceTagFilterTexts
 
-  const allSelected = selectedTags.size === 0
+  const allSelected = selectedTags.size === 0 && (selectedTypes?.size ?? 0) === 0
 
   const handleAllClick = () => {
     selectedTags.forEach((slug) => onTagToggle(slug))
+    selectedTypes?.forEach((type) => onTypeToggle?.(type))
   }
+
+  const typeChips = [
+    {
+      type: ResourceType.YOUTUBE,
+      label: strings.typeYoutube,
+      icon: <YouTubeIcon fontSize="small" />
+    },
+    { type: ResourceType.PDF, label: strings.typePdf, icon: <PictureAsPdfIcon fontSize="small" /> },
+    { type: ResourceType.IMAGE, label: strings.typeImage, icon: <ImageIcon fontSize="small" /> },
+    {
+      type: ResourceType.AUDIO,
+      label: strings.typeAudio,
+      icon: <AudiotrackIcon fontSize="small" />
+    }
+  ]
 
   return (
     <Stack spacing={1}>
@@ -84,6 +121,20 @@ export default function ResourceTagFilter({
           variant={allSelected ? 'filled' : 'outlined'}
           onClick={handleAllClick}
         />
+        {typeChips.map(({ type, label, icon }) => {
+          const selected = selectedTypes?.has(type) ?? false
+          return (
+            <Chip
+              key={type}
+              icon={icon}
+              label={label}
+              size="small"
+              color={selected ? 'secondary' : 'default'}
+              variant="filled"
+              onClick={() => onTypeToggle?.(type)}
+            />
+          )
+        })}
         {tags.map(({ slug, label }) => {
           const selected = selectedTags.has(slug)
           return (

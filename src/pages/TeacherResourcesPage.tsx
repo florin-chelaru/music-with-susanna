@@ -20,14 +20,14 @@ import {
 } from '@mui/material'
 import MultiActionDialog from '../Components/MultiActionDialog'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import InfiniteScroll from 'react-infinite-scroller'
+import React, { useContext, useEffect, useMemo, useState } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import FabCreate from '../Components/FabCreate'
 import ResourceCard from '../Components/ResourceCard'
 import ResourceTagFilter from '../Components/ResourceTagFilter'
 import EditResourceDialog from '../Components/EditResourceDialog'
 import ResourceUploadDialog, { UploadConfirmData } from '../Components/ResourceUploadDialog'
-import TableOfContents, { TocEntry } from '../TableOfContents'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { useUser } from '../store/UserProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
@@ -168,17 +168,14 @@ const TEACHER_RESOURCES_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData>([
   [SupportedLocale.RO_RO, RO_RO]
 ])
 
-/** Unique tags in order of first appearance, each mapped to the first resource that has it. */
-function buildTagIndex(
-  resources: Resource[]
-): Array<{ slug: string; label: string; firstResourceId: string }> {
+function buildTagIndex(resources: Resource[]): Array<{ slug: string; label: string }> {
   const seen = new Set<string>()
-  const result: Array<{ slug: string; label: string; firstResourceId: string }> = []
+  const result: Array<{ slug: string; label: string }> = []
   for (const resource of resources) {
     for (const [slug, label] of Object.entries(resource.tags)) {
       if (!seen.has(slug)) {
         seen.add(slug)
-        result.push({ slug, label, firstResourceId: resource.id })
+        result.push({ slug, label })
       }
     }
   }
@@ -215,7 +212,7 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     }
   }, [user, navigate])
 
-  const { resources } = useTeacherResources(user?.uid)
+  const { resources, loading: resourcesLoading } = useTeacherResources(user?.uid)
 
   // Expand map: new resources start expanded
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({})
@@ -229,16 +226,9 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     })
   }, [resources])
 
-  // Stable ref map that grows as resources arrive
-  const resourceRefsMap = useRef<Map<string, React.RefObject<HTMLDivElement | null>>>(new Map())
-  for (const r of resources) {
-    if (!resourceRefsMap.current.has(r.id)) {
-      resourceRefsMap.current.set(r.id, React.createRef<HTMLDivElement>())
-    }
-  }
-
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
+  const [selectedTypes, setSelectedTypes] = useState<Set<ResourceType>>(new Set())
   const [sortBy, setSortBy] = useState<SortOption>('date-desc')
   const [uploadOpen, setUploadOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Resource | null>(null)
@@ -330,6 +320,18 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     })
   }
 
+  const handleTypeToggle = (type: ResourceType) => {
+    setSelectedTypes((prev) => {
+      const next = new Set(prev)
+      if (next.has(type)) {
+        next.delete(type)
+      } else {
+        next.add(type)
+      }
+      return next
+    })
+  }
+
   const handleUploadConfirm = (data: UploadConfirmData) => {
     const teacherId = user?.uid
     if (!teacherId) return
@@ -364,6 +366,7 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
       if (searchQuery && !r.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
       if (selectedTags.size > 0 && !Array.from(selectedTags).some((slug) => slug in r.tags))
         return false
+      if (selectedTypes.size > 0 && !selectedTypes.has(r.type)) return false
       return true
     })
     .sort((a, b) => {
@@ -372,6 +375,14 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     })
+
+  const PAGE_SIZE = 5
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE)
+  }, [searchQuery, selectedTags, selectedTypes, sortBy])
+  const pagedResources = visibleResources.slice(0, visibleCount)
+  const hasMore = visibleCount < visibleResources.length
 
   const allExpanded = resources.every((r) => expandedMap[r.id])
 
@@ -386,145 +397,127 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
 
   const tagIndex = useMemo(() => buildTagIndex(resources), [resources])
 
-  const tocEntries: TocEntry[] = tagIndex.map(({ slug, label, firstResourceId }) => ({
-    key: slug,
-    ref: resourceRefsMap.current.get(firstResourceId) as React.RefObject<HTMLDivElement | null>,
-    primaryLabel: label,
-    children: resources
-      .filter((r) => slug in r.tags)
-      .map((r) => ({
-        key: `${slug}-${r.id}`,
-        ref: resourceRefsMap.current.get(r.id) as React.RefObject<HTMLDivElement | null>,
-        primaryLabel: r.title
-      }))
-  }))
-
-  const toc = <TableOfContents entries={tocEntries} />
-
   return (
-    <Container maxWidth="lg" sx={{ pt: 3 }}>
+    <Container maxWidth="md" sx={{ pt: 3 }}>
       <Toolbar />
-      <Grid2 container spacing={2}>
-        {/* Mobile-only TOC at top */}
-        <Grid2 xs={12} display={{ xs: 'block', sm: 'none' }}>
-          {toc}
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+        <Typography variant="h5">{strings.resources}</Typography>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Typography variant="caption" color="text.secondary" component="span">
+            {strings.sortBy}
+          </Typography>
+          <Select
+            size="small"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            sx={{ fontSize: '0.8125rem' }}>
+            <MenuItem value="name">{strings.sortName}</MenuItem>
+            <MenuItem value="date-desc">{strings.sortDateNewest}</MenuItem>
+            <MenuItem value="date-asc">{strings.sortDateOldest}</MenuItem>
+          </Select>
+          <Button size="small" onClick={toggleAll}>
+            {allExpanded ? strings.collapseAll : strings.expandAll}
+          </Button>
+          <Button
+            sx={{ display: { xs: 'none', lg: 'block' } }}
+            size="small"
+            disabled={importing}
+            onClick={() => {
+              void handleImport()
+            }}>
+            {importing ? strings.importing : strings.importUploads}
+          </Button>
+        </Stack>
+      </Stack>
+      {importMessage !== null && (
+        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+          {importMessage}
+        </Typography>
+      )}
+      <ResourceTagFilter
+        tags={tagIndex.map(({ slug, label }) => ({ slug, label }))}
+        searchQuery={searchQuery}
+        selectedTags={selectedTags}
+        selectedTypes={selectedTypes}
+        onSearchChange={setSearchQuery}
+        onTagToggle={handleTagToggle}
+        onTypeToggle={handleTypeToggle}
+      />
+      {resourcesLoading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+          <CircularProgress />
+        </Box>
+      )}
+      <InfiniteScroll
+        pageStart={0}
+        loadMore={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+        hasMore={hasMore}
+        loader={
+          <Box key="loader" sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+            <CircularProgress size={28} />
+          </Box>
+        }
+        useWindow>
+        <Grid2 container spacing={2} sx={{ mt: 1 }}>
+          {pagedResources.map((resource) => (
+            <Grid2 xs={12} key={resource.id}>
+              <ResourceCard
+                resource={resource}
+                editable
+                expanded={expandedMap[resource.id] ?? false}
+                onExpandedChange={(v) => setExpanded(resource.id, v)}
+                onEdit={(r) => setEditTarget(r)}
+                onDelete={(r) => setDeleteTarget(r)}
+                onDetails={(r) => navigate(`/resources/${r.id}`)}
+                footer={(() => {
+                  const group = canonicalGroupMap.get(resource.id)
+                  if (!group) return undefined
+                  return (
+                    <>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ px: 2, pt: 1.25, pb: 0.5, display: 'block' }}>
+                        {strings.duplicateLinks}
+                      </Typography>
+                      {group.duplicates.map((dup, i) => (
+                        <React.Fragment key={dup.id}>
+                          {i > 0 && <Divider />}
+                          <ButtonBase
+                            onClick={() => navigate(`/resources/${dup.id}`)}
+                            sx={{
+                              width: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1.5,
+                              px: 2,
+                              py: 1.25,
+                              justifyContent: 'flex-start',
+                              '&:hover': { bgcolor: 'action.hover' }
+                            }}>
+                            {resourceTypeIcon(dup.type)}
+                            <Typography variant="body2" noWrap>
+                              {dup.title}
+                            </Typography>
+                          </ButtonBase>
+                        </React.Fragment>
+                      ))}
+                      <Box sx={{ px: 2, py: 1 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => setDeduplicateTarget(group)}>
+                          {strings.mergeGroup}
+                        </Button>
+                      </Box>
+                    </>
+                  )
+                })()}
+              />
+            </Grid2>
+          ))}
         </Grid2>
-
-        {/* Header, filter, and resource cards — constrained to cards column width */}
-        <Grid2 xs={12} sm={9} md={10}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-            <Typography variant="h5">{strings.resources}</Typography>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Typography variant="caption" color="text.secondary" component="span">
-                {strings.sortBy}
-              </Typography>
-              <Select
-                size="small"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                sx={{ fontSize: '0.8125rem' }}>
-                <MenuItem value="name">{strings.sortName}</MenuItem>
-                <MenuItem value="date-desc">{strings.sortDateNewest}</MenuItem>
-                <MenuItem value="date-asc">{strings.sortDateOldest}</MenuItem>
-              </Select>
-              <Button size="small" onClick={toggleAll}>
-                {allExpanded ? strings.collapseAll : strings.expandAll}
-              </Button>
-              <Button
-                size="small"
-                disabled={importing}
-                onClick={() => {
-                  void handleImport()
-                }}>
-                {importing ? strings.importing : strings.importUploads}
-              </Button>
-            </Stack>
-          </Stack>
-          {importMessage !== null && (
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-              {importMessage}
-            </Typography>
-          )}
-          <ResourceTagFilter
-            tags={tagIndex.map(({ slug, label }) => ({ slug, label }))}
-            searchQuery={searchQuery}
-            selectedTags={selectedTags}
-            onSearchChange={setSearchQuery}
-            onTagToggle={handleTagToggle}
-          />
-          <Grid2 container spacing={2} sx={{ mt: 1 }}>
-            {visibleResources.map((resource) => (
-              <Grid2
-                xs={12}
-                key={resource.id}
-                ref={
-                  resourceRefsMap.current.get(
-                    resource.id
-                  ) as React.MutableRefObject<HTMLDivElement | null>
-                }>
-                <ResourceCard
-                  resource={resource}
-                  editable
-                  expanded={expandedMap[resource.id] ?? false}
-                  onExpandedChange={(v) => setExpanded(resource.id, v)}
-                  onEdit={(r) => setEditTarget(r)}
-                  onDelete={(r) => setDeleteTarget(r)}
-                  onDetails={(r) => navigate(`/resources/${r.id}`)}
-                  footer={(() => {
-                    const group = canonicalGroupMap.get(resource.id)
-                    if (!group) return undefined
-                    return (
-                      <>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ px: 2, pt: 1.25, pb: 0.5, display: 'block' }}>
-                          {strings.duplicateLinks}
-                        </Typography>
-                        {group.duplicates.map((dup, i) => (
-                          <React.Fragment key={dup.id}>
-                            {i > 0 && <Divider />}
-                            <ButtonBase
-                              onClick={() => navigate(`/resources/${dup.id}`)}
-                              sx={{
-                                width: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1.5,
-                                px: 2,
-                                py: 1.25,
-                                justifyContent: 'flex-start',
-                                '&:hover': { bgcolor: 'action.hover' }
-                              }}>
-                              {resourceTypeIcon(dup.type)}
-                              <Typography variant="body2" noWrap>
-                                {dup.title}
-                              </Typography>
-                            </ButtonBase>
-                          </React.Fragment>
-                        ))}
-                        <Box sx={{ px: 2, py: 1 }}>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => setDeduplicateTarget(group)}>
-                            {strings.mergeGroup}
-                          </Button>
-                        </Box>
-                      </>
-                    )
-                  })()}
-                />
-              </Grid2>
-            ))}
-          </Grid2>
-        </Grid2>
-
-        {/* Sticky TOC sidebar */}
-        <Grid2 xs={12} sm={3} md={2} display={{ xs: 'none', sm: 'block' }}>
-          {toc}
-        </Grid2>
-      </Grid2>
+      </InfiniteScroll>
 
       <FabCreate onClick={() => setUploadOpen(true)} />
 

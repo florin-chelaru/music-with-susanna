@@ -1,10 +1,9 @@
 import { Button, Container, MenuItem, Select, Stack, Toolbar, Typography } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import ResourceCard from '../Components/ResourceCard'
 import ResourceTagFilter from '../Components/ResourceTagFilter'
-import TableOfContents, { TocEntry } from '../TableOfContents'
 import { database } from '../store/Firebase'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { useUser } from '../store/UserProvider'
@@ -52,16 +51,14 @@ const STUDENT_VIEW_RESOURCES_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData
   [SupportedLocale.RO_RO, RO_RO]
 ])
 
-function buildTagIndex(
-  resources: Resource[]
-): Array<{ slug: string; label: string; firstResourceId: string }> {
+function buildTagIndex(resources: Resource[]): Array<{ slug: string; label: string }> {
   const seen = new Set<string>()
-  const result: Array<{ slug: string; label: string; firstResourceId: string }> = []
+  const result: Array<{ slug: string; label: string }> = []
   for (const resource of resources) {
     for (const [slug, label] of Object.entries(resource.tags)) {
       if (!seen.has(slug)) {
         seen.add(slug)
-        result.push({ slug, label, firstResourceId: resource.id })
+        result.push({ slug, label })
       }
     }
   }
@@ -118,13 +115,6 @@ export default function StudentViewResourcesPage() {
     })
   }, [resources])
 
-  const resourceRefsMap = useRef<Map<string, React.RefObject<HTMLDivElement | null>>>(new Map())
-  for (const r of resources) {
-    if (!resourceRefsMap.current.has(r.id)) {
-      resourceRefsMap.current.set(r.id, React.createRef<HTMLDivElement>())
-    }
-  }
-
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
   const [sortBy, setSortBy] = useState<SortOption>('date-desc')
@@ -162,90 +152,56 @@ export default function StudentViewResourcesPage() {
 
   const tagIndex = useMemo(() => buildTagIndex(resources), [resources])
 
-  const tocEntries: TocEntry[] = tagIndex.map(({ slug, label, firstResourceId }) => ({
-    key: slug,
-    ref: resourceRefsMap.current.get(firstResourceId) as React.RefObject<HTMLDivElement | null>,
-    primaryLabel: label,
-    children: resources
-      .filter((r) => slug in r.tags)
-      .map((r) => ({
-        key: `${slug}-${r.id}`,
-        ref: resourceRefsMap.current.get(r.id) as React.RefObject<HTMLDivElement | null>,
-        primaryLabel: r.title
-      }))
-  }))
-
-  const toc = <TableOfContents entries={tocEntries} />
-
   return (
-    <Container maxWidth="lg" sx={{ pt: 3 }}>
+    <Container maxWidth="md" sx={{ pt: 3 }}>
       <Toolbar />
-      <Grid2 container spacing={2}>
-        <Grid2 xs={12} display={{ xs: 'block', sm: 'none' }}>
-          {toc}
-        </Grid2>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Button size="small" onClick={() => navigate(-1)}>
+            {strings.back}
+          </Button>
+          <Typography variant="h5">
+            {strings.resourcesFrom}: <strong>{teacherName}</strong>
+          </Typography>
+        </Stack>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Typography variant="caption" color="text.secondary" component="span">
+            {strings.sortBy}
+          </Typography>
+          <Select
+            size="small"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            sx={{ fontSize: '0.8125rem' }}>
+            <MenuItem value="name">{strings.sortName}</MenuItem>
+            <MenuItem value="date-desc">{strings.sortDateNewest}</MenuItem>
+            <MenuItem value="date-asc">{strings.sortDateOldest}</MenuItem>
+          </Select>
+          <Button size="small" onClick={toggleAll}>
+            {allExpanded ? strings.collapseAll : strings.expandAll}
+          </Button>
+        </Stack>
+      </Stack>
 
-        <Grid2 xs={12} sm={9} md={10}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Button size="small" onClick={() => navigate(-1)}>
-                {strings.back}
-              </Button>
-              <Typography variant="h5">
-                {strings.resourcesFrom}: <strong>{teacherName}</strong>
-              </Typography>
-            </Stack>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Typography variant="caption" color="text.secondary" component="span">
-                {strings.sortBy}
-              </Typography>
-              <Select
-                size="small"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                sx={{ fontSize: '0.8125rem' }}>
-                <MenuItem value="name">{strings.sortName}</MenuItem>
-                <MenuItem value="date-desc">{strings.sortDateNewest}</MenuItem>
-                <MenuItem value="date-asc">{strings.sortDateOldest}</MenuItem>
-              </Select>
-              <Button size="small" onClick={toggleAll}>
-                {allExpanded ? strings.collapseAll : strings.expandAll}
-              </Button>
-            </Stack>
-          </Stack>
+      <ResourceTagFilter
+        tags={tagIndex.map(({ slug, label }) => ({ slug, label }))}
+        searchQuery={searchQuery}
+        selectedTags={selectedTags}
+        onSearchChange={setSearchQuery}
+        onTagToggle={handleTagToggle}
+      />
 
-          <ResourceTagFilter
-            tags={tagIndex.map(({ slug, label }) => ({ slug, label }))}
-            searchQuery={searchQuery}
-            selectedTags={selectedTags}
-            onSearchChange={setSearchQuery}
-            onTagToggle={handleTagToggle}
-          />
-
-          <Grid2 container spacing={2} sx={{ mt: 1 }}>
-            {visibleResources.map((resource) => (
-              <Grid2
-                xs={12}
-                key={resource.id}
-                ref={
-                  resourceRefsMap.current.get(
-                    resource.id
-                  ) as React.MutableRefObject<HTMLDivElement | null>
-                }>
-                <ResourceCard
-                  resource={resource}
-                  expanded={expandedMap[resource.id] ?? false}
-                  onExpandedChange={(v) => setExpanded(resource.id, v)}
-                  onDetails={(r) => navigate(`/resources/${r.id}`)}
-                />
-              </Grid2>
-            ))}
+      <Grid2 container spacing={2} sx={{ mt: 1 }}>
+        {visibleResources.map((resource) => (
+          <Grid2 xs={12} key={resource.id}>
+            <ResourceCard
+              resource={resource}
+              expanded={expandedMap[resource.id] ?? false}
+              onExpandedChange={(v) => setExpanded(resource.id, v)}
+              onDetails={(r) => navigate(`/resources/${r.id}`)}
+            />
           </Grid2>
-        </Grid2>
-
-        <Grid2 xs={12} sm={3} md={2} display={{ xs: 'none', sm: 'block' }}>
-          {toc}
-        </Grid2>
+        ))}
       </Grid2>
     </Container>
   )
