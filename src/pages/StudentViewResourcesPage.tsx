@@ -1,13 +1,16 @@
 import { Button, Container, Stack, Toolbar, Typography } from '@mui/material'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import React, { useContext, useMemo, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import ResourceCard from '../Components/ResourceCard'
 import ResourceTagFilter from '../Components/ResourceTagFilter'
 import TableOfContents, { TocEntry } from '../TableOfContents'
+import { database } from '../store/Firebase'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
+import { useUser } from '../store/UserProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
-import { Resource, ResourceType } from '../util/resources'
+import { Resource, useHomeworkResources } from '../util/resources'
+import { get, ref } from 'firebase/database'
 
 interface StudentViewResourcesPageTexts {
   resourcesFrom: string
@@ -32,28 +35,6 @@ const STUDENT_VIEW_RESOURCES_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData
   [SupportedLocale.RO_RO, RO_RO]
 ])
 
-const MOCK_TEACHER_NAME = 'Susanna Johnson-Chelaru'
-
-const MOCK_SHARED_RESOURCES: Resource[] = [
-  {
-    id: '1',
-    title: 'Invoice — Sample PDF',
-    type: ResourceType.PDF,
-    url: 'https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F2026-07-27%20-%20Twinfog%20QC%20Ware%20Invoice_DkCHGYPUfD.pdf?alt=media&token=98aaf657-49b0-40b4-84cd-11919e2b9da8',
-    fileName: 'invoice.pdf',
-    tags: { scales: 'Scales', beginner: 'Beginner' },
-    createdAt: 0
-  },
-  {
-    id: '2',
-    title: 'Minuet 3 — J. S. Bach',
-    type: ResourceType.AUDIO,
-    url: 'https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F20%20Minuet%203%20%5BJ.%20S.%20Bach%5D_UAw3qRRVIN.mp3?alt=media&token=25c51400-6ed1-44f9-bfab-fe23f86d7c88',
-    tags: { scales: 'Scales' },
-    createdAt: 0
-  }
-]
-
 function buildTagIndex(
   resources: Resource[]
 ): Array<{ slug: string; label: string; firstResourceId: string }> {
@@ -71,7 +52,16 @@ function buildTagIndex(
 }
 
 export default function StudentViewResourcesPage() {
-  const { teacherId: _teacherId } = useParams<{ teacherId: string }>()
+  const { teacherId } = useParams<{ teacherId: string }>()
+  const navigate = useNavigate()
+  const { user } = useUser()
+
+  useEffect(() => {
+    if (user.loading) return
+    if (!user.uid) {
+      navigate('/login')
+    }
+  }, [user, navigate])
 
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(
@@ -86,9 +76,38 @@ export default function StudentViewResourcesPage() {
     StudentViewResourcesPage.name
   ) as StudentViewResourcesPageTexts
 
-  const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(MOCK_SHARED_RESOURCES.map((r) => [r.id, false]))
-  )
+  const [teacherName, setTeacherName] = useState<string>(teacherId ?? '')
+
+  useEffect(() => {
+    if (!teacherId) return
+    get(ref(database, `users/${teacherId}/name`))
+      .then((snapshot) => {
+        const name = snapshot.val()
+        if (name) setTeacherName(name as string)
+      })
+      .catch(() => {})
+  }, [teacherId])
+
+  const { resources } = useHomeworkResources(teacherId, user?.uid)
+
+  const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({})
+  useEffect(() => {
+    setExpandedMap((prev) => {
+      const newEntries = resources
+        .filter((r) => !(r.id in prev))
+        .map((r): [string, boolean] => [r.id, false])
+      if (newEntries.length === 0) return prev
+      return { ...prev, ...Object.fromEntries(newEntries) }
+    })
+  }, [resources])
+
+  const resourceRefsMap = useRef<Map<string, React.RefObject<HTMLDivElement | null>>>(new Map())
+  for (const r of resources) {
+    if (!resourceRefsMap.current.has(r.id)) {
+      resourceRefsMap.current.set(r.id, React.createRef<HTMLDivElement>())
+    }
+  }
+
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
 
@@ -101,36 +120,34 @@ export default function StudentViewResourcesPage() {
     })
   }
 
-  const visibleResources = MOCK_SHARED_RESOURCES.filter((r) => {
+  const visibleResources = resources.filter((r) => {
     if (searchQuery && !r.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
     if (selectedTags.size > 0 && !Array.from(selectedTags).some((slug) => slug in r.tags))
       return false
     return true
   })
 
-  const allExpanded = MOCK_SHARED_RESOURCES.every((r) => expandedMap[r.id])
+  const allExpanded = resources.every((r) => expandedMap[r.id])
   const toggleAll = () => {
     const next = !allExpanded
-    setExpandedMap(Object.fromEntries(MOCK_SHARED_RESOURCES.map((r) => [r.id, next])))
+    setExpandedMap(Object.fromEntries(resources.map((r) => [r.id, next])))
   }
   const setExpanded = (id: string, value: boolean) =>
     setExpandedMap((prev) => ({ ...prev, [id]: value }))
 
-  const resourceRefsMap = useRef<Map<string, React.RefObject<HTMLDivElement | null>>>(
-    new Map(MOCK_SHARED_RESOURCES.map((r) => [r.id, React.createRef<HTMLDivElement>()]))
-  )
-
-  const tagIndex = useMemo(() => buildTagIndex(MOCK_SHARED_RESOURCES), [])
+  const tagIndex = useMemo(() => buildTagIndex(resources), [resources])
 
   const tocEntries: TocEntry[] = tagIndex.map(({ slug, label, firstResourceId }) => ({
     key: slug,
     ref: resourceRefsMap.current.get(firstResourceId) as React.RefObject<HTMLDivElement | null>,
     primaryLabel: label,
-    children: MOCK_SHARED_RESOURCES.filter((r) => slug in r.tags).map((r) => ({
-      key: `${slug}-${r.id}`,
-      ref: resourceRefsMap.current.get(r.id) as React.RefObject<HTMLDivElement | null>,
-      primaryLabel: r.title
-    }))
+    children: resources
+      .filter((r) => slug in r.tags)
+      .map((r) => ({
+        key: `${slug}-${r.id}`,
+        ref: resourceRefsMap.current.get(r.id) as React.RefObject<HTMLDivElement | null>,
+        primaryLabel: r.title
+      }))
   }))
 
   const toc = <TableOfContents entries={tocEntries} />
@@ -146,7 +163,7 @@ export default function StudentViewResourcesPage() {
         <Grid2 xs={12} sm={9} md={10}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
             <Typography variant="h5">
-              {strings.resourcesFrom}: <strong>{MOCK_TEACHER_NAME}</strong>
+              {strings.resourcesFrom}: <strong>{teacherName}</strong>
             </Typography>
             <Button size="small" onClick={toggleAll}>
               {allExpanded ? strings.collapseAll : strings.expandAll}

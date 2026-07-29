@@ -1,6 +1,4 @@
-import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
 import {
-  Box,
   Button,
   Card,
   CardActions,
@@ -21,8 +19,17 @@ import {
   FileUploadProgress,
   QUILL_FORMATS,
   QUILL_MODULES,
-  handleFileUpload
+  handleFileUpload,
+  insertResource
 } from '../util/quill'
+import {
+  Resource,
+  ResourceType,
+  UploadConfirmData,
+  addYouTubeResource,
+  uploadResource
+} from '../util/resources'
+import InsertMediaDialog from './InsertMediaDialog'
 import MultiActionDialog from './MultiActionDialog'
 
 interface EditorCardTexts {
@@ -34,7 +41,6 @@ interface EditorCardTexts {
   cancel: string
   homeworkTemplateTitle: string
   homeworkTemplateBody: string
-  insertFromLibrary: string
 }
 
 const EN_US: EditorCardTexts = {
@@ -45,8 +51,7 @@ const EN_US: EditorCardTexts = {
   uploadingDescription: (fileName: string) => `Uploading file ${fileName} to the server`,
   cancel: 'Cancel',
   homeworkTemplateTitle: 'Title',
-  homeworkTemplateBody: 'Write your notes here...',
-  insertFromLibrary: 'Insert from Library'
+  homeworkTemplateBody: 'Write your notes here...'
 }
 
 const RO_RO: EditorCardTexts = {
@@ -57,8 +62,7 @@ const RO_RO: EditorCardTexts = {
   uploadingDescription: (fileName: string) => `Se încarcă fișierul ${fileName} pe server`,
   cancel: 'Renunță',
   homeworkTemplateTitle: 'Titlu',
-  homeworkTemplateBody: 'Introdu aici notițele...',
-  insertFromLibrary: 'Inserează din Bibliotecă'
+  homeworkTemplateBody: 'Introdu aici notițele...'
 }
 
 const TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -77,7 +81,10 @@ interface EditorCardProps extends CardProps {
   onPublish?(): void
   onDiscard?(): void
   onSave?(): void
-  onPickFromLibrary?(): void
+  resources?: Resource[]
+  teacherId?: string
+  studentId?: string
+  onInsertResource?: (resource: Resource) => void
 }
 
 export default function EditorCard({
@@ -86,7 +93,10 @@ export default function EditorCard({
   onPublish,
   onSave,
   onDiscard,
-  onPickFromLibrary,
+  resources,
+  teacherId,
+  studentId,
+  onInsertResource,
   ...props
 }: EditorCardProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
@@ -96,6 +106,7 @@ export default function EditorCard({
   const quillRef = useRef<ReactQuill | null>(null)
   const { user } = useUser()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [insertDialogOpen, setInsertDialogOpen] = useState(false)
   const dialogCloseAction = useRef<(() => void) | null>(null)
   const handleDialogClose = () => {
     setDialogOpen(false)
@@ -104,14 +115,14 @@ export default function EditorCard({
   const [uploadProgress, setUploadProgress] = useState<number>(0)
   const [uploadFileName, setUploadFileName] = useState<string>('')
 
-  const fileUploadHandlerRef = useRef<() => any>(() => {})
+  const fileSelectedHandlerRef = useRef<(file: File) => Promise<void>>(async () => {})
 
   const modules: any = _.cloneDeep(QUILL_MODULES)
-  modules.toolbar.handlers = { image: () => fileUploadHandlerRef.current() }
+  modules.toolbar.handlers = { image: () => setInsertDialogOpen(true) }
   const editorModules = useRef(modules)
 
   useEffect(() => {
-    const fileUploadHandler = async () => {
+    fileSelectedHandlerRef.current = async (file: File) => {
       if (!quillRef.current) {
         return
       }
@@ -121,6 +132,7 @@ export default function EditorCard({
         await handleFileUpload({
           quill: quillRef.current,
           user,
+          file,
           progressHandler: ({ fileName, progress }: FileUploadProgress) => {
             if (progress < 100 && !dialogOpen) {
               setDialogOpen(true)
@@ -136,8 +148,6 @@ export default function EditorCard({
       dialogCloseAction.current = null
       handleDialogClose()
     }
-
-    fileUploadHandlerRef.current = fileUploadHandler
   }, [user])
 
   return (
@@ -163,27 +173,67 @@ export default function EditorCard({
           }}
         />
 
-        <CardActions sx={{ justifyContent: 'space-between' }}>
-          {onPickFromLibrary ? (
-            <Button size="small" startIcon={<LibraryBooksIcon />} onClick={onPickFromLibrary}>
-              {componentStrings.insertFromLibrary}
-            </Button>
-          ) : (
-            <Box />
-          )}
-          <Box>
-            <Button size="small" onClick={() => onDiscard?.()}>
-              {componentStrings.trash}
-            </Button>
-            <Button size="small" onClick={() => onSave?.()}>
-              {componentStrings.saveDraft}
-            </Button>
-            <Button size="small" onClick={() => onPublish?.()}>
-              {componentStrings.publish}
-            </Button>
-          </Box>
+        <CardActions>
+          <Button size="small" onClick={() => onDiscard?.()}>
+            {componentStrings.trash}
+          </Button>
+          <Button size="small" onClick={() => onSave?.()}>
+            {componentStrings.saveDraft}
+          </Button>
+          <Button size="small" onClick={() => onPublish?.()}>
+            {componentStrings.publish}
+          </Button>
         </CardActions>
       </Card>
+      <InsertMediaDialog
+        open={insertDialogOpen}
+        resources={resources ?? []}
+        onClose={() => setInsertDialogOpen(false)}
+        onInsert={(resource) => {
+          if (quillRef.current) insertResource(quillRef.current, resource)
+          onInsertResource?.(resource)
+          setInsertDialogOpen(false)
+        }}
+        onUpload={(data: UploadConfirmData) => {
+          setInsertDialogOpen(false)
+          if (!teacherId) return
+          if (data.mode === 'youtube') {
+            void addYouTubeResource(teacherId, data.url, {
+              title: data.title,
+              tags: data.tags
+            })
+              .then((resourceId) => {
+                const resource: Resource = {
+                  id: resourceId,
+                  title: data.title,
+                  type: ResourceType.YOUTUBE,
+                  url: data.url,
+                  tags: data.tags,
+                  createdAt: new Date().toISOString()
+                }
+                if (quillRef.current) insertResource(quillRef.current, resource)
+                onInsertResource?.(resource)
+              })
+              .catch(console.error)
+          } else {
+            setUploadFileName(data.file.name)
+            setUploadProgress(0)
+            setDialogOpen(true)
+            void uploadResource({
+              teacherId,
+              file: data.file,
+              metadata: { title: data.title, tags: data.tags },
+              onProgress: (p) => setUploadProgress(p)
+            })
+              .then((resource) => {
+                if (quillRef.current) insertResource(quillRef.current, resource)
+                onInsertResource?.(resource)
+              })
+              .catch(console.error)
+              .finally(() => handleDialogClose())
+          }
+        }}
+      />
       <MultiActionDialog
         open={dialogOpen}
         onClose={handleDialogClose}

@@ -1,23 +1,17 @@
 import AudiotrackIcon from '@mui/icons-material/Audiotrack'
-import DeleteIcon from '@mui/icons-material/Delete'
-import EditIcon from '@mui/icons-material/Edit'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import LinkOffIcon from '@mui/icons-material/LinkOff'
 import ImageIcon from '@mui/icons-material/Image'
-import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
-import ShareIcon from '@mui/icons-material/Share'
 import YouTubeIcon from '@mui/icons-material/YouTube'
 import {
   Box,
+  Button,
   Card,
   CardActions,
   CardContent,
   Chip,
   Collapse,
-  IconButton,
   Stack,
-  Tooltip,
   Typography
 } from '@mui/material'
 import { useContext, useMemo } from 'react'
@@ -27,25 +21,25 @@ import { SupportedLocale } from '../util/SupportedLocale'
 import { Resource, ResourceType } from '../util/resources'
 
 interface ResourceCardTexts {
-  share: string
   edit: string
   delete: string
+  details: string
   openInNewTab: string
   remove: string
 }
 
 const EN_US: ResourceCardTexts = {
-  share: 'Share',
   edit: 'Edit',
   delete: 'Delete',
+  details: 'Details',
   openInNewTab: 'Open in new tab',
   remove: 'Remove from student'
 }
 
 const RO_RO: ResourceCardTexts = {
-  share: 'Distribuie',
   edit: 'Editează',
   delete: 'Șterge',
+  details: 'Detalii',
   openInNewTab: 'Deschide în tab nou',
   remove: 'Elimină de la student'
 }
@@ -139,15 +133,16 @@ function ResourcePreview({ resource }: { resource: Resource }) {
 
 export interface ResourceCardProps {
   resource: Resource
-  /** When true, shows share/edit/delete actions. When false, shows only open-in-new-tab. */
+  /** When true, shows edit/delete/details actions. When false, shows only open-in-new-tab. */
   editable?: boolean
-  /** When set, shows a remove/unshare button (used in the per-student teacher view). */
+  /** When set, shows a remove button (used in the per-student teacher view). */
   onRemove?: (resource: Resource) => void
   expanded: boolean
   onExpandedChange: (expanded: boolean) => void
-  onShare?: (resource: Resource) => void
   onEdit?: (resource: Resource) => void
   onDelete?: (resource: Resource) => void
+  /** When provided, shows a Details button in editable mode. Omit to hide it. */
+  onDetails?: (resource: Resource) => void
 }
 
 export default function ResourceCard({
@@ -156,9 +151,9 @@ export default function ResourceCard({
   onRemove,
   expanded,
   onExpandedChange,
-  onShare,
   onEdit,
-  onDelete
+  onDelete,
+  onDetails
 }: ResourceCardProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(() => localeManager.registerComponentStrings(ResourceCard.name, RESOURCE_CARD_TEXTS), [])
@@ -169,75 +164,71 @@ export default function ResourceCard({
 
   return (
     <Card variant="outlined">
-      <CardContent sx={{ pb: hasPreview ? 0 : undefined }}>
-        <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1}>
-          <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ minWidth: 0 }}>
-            <Stack sx={{ pt: 0.25, flexShrink: 0 }}>{typeIcon(resource.type)}</Stack>
-            <Stack spacing={0.75} sx={{ minWidth: 0 }}>
+      <CardContent sx={{ pb: 0 }}>
+        <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ minWidth: 0 }}>
+          <Stack sx={{ pt: 0.25, flexShrink: 0 }}>{typeIcon(resource.type)}</Stack>
+          <Stack spacing={0.75} sx={{ minWidth: 0, flex: 1 }}>
+            <Stack direction="row" alignItems="baseline" spacing={1.5} sx={{ minWidth: 0 }}>
               <Typography variant="body1" fontWeight={500} sx={{ wordBreak: 'break-word' }}>
                 {resource.title}
               </Typography>
-              {tags.length > 0 && (
-                <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.5 }}>
-                  {tags.map((tag) => (
-                    <Chip key={tag} label={tag} size="small" variant="outlined" />
-                  ))}
-                </Stack>
+              {resource.createdAt && (
+                <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+                  {localeManager.formatLongDate(resource.createdAt, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </Typography>
               )}
             </Stack>
-          </Stack>
-
-          <Stack direction="row" sx={{ flexShrink: 0 }}>
-            {editable ? (
-              <>
-                <Tooltip title={strings.share}>
-                  <IconButton size="small" onClick={() => onShare?.(resource)}>
-                    <ShareIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title={strings.edit}>
-                  <IconButton size="small" onClick={() => onEdit?.(resource)}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title={strings.delete}>
-                  <IconButton size="small" onClick={() => onDelete?.(resource)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </>
-            ) : onRemove ? (
-              <Tooltip title={strings.remove}>
-                <IconButton size="small" onClick={() => onRemove(resource)}>
-                  <LinkOffIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            ) : (
-              resource.url && (
-                <Tooltip title={strings.openInNewTab}>
-                  <IconButton
-                    size="small"
-                    component="a"
-                    href={resource.url}
-                    target="_blank"
-                    rel="noreferrer">
-                    <OpenInNewIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )
+            {tags.length > 0 && (
+              <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+                {tags.map((tag) => (
+                  <Chip key={tag} label={tag} size="small" />
+                ))}
+              </Stack>
             )}
           </Stack>
         </Stack>
       </CardContent>
 
       {hasPreview && (
-        <>
-          <Collapse in={expanded} timeout="auto">
-            <CardContent sx={{ pt: 0 }}>
-              <ResourcePreview resource={resource} />
-            </CardContent>
-          </Collapse>
-          <CardActions disableSpacing sx={{ pt: 0 }}>
+        <Collapse in={expanded} timeout="auto">
+          <CardContent sx={{ pt: 0 }}>
+            <ResourcePreview resource={resource} />
+          </CardContent>
+        </Collapse>
+      )}
+
+      <CardActions sx={{ pt: 0 }}>
+        {editable ? (
+          <>
+            <Button size="small" onClick={() => onEdit?.(resource)}>
+              {strings.edit}
+            </Button>
+            <Button size="small" onClick={() => onDelete?.(resource)}>
+              {strings.delete}
+            </Button>
+            {onDetails && (
+              <Button size="small" onClick={() => onDetails(resource)}>
+                {strings.details}
+              </Button>
+            )}
+          </>
+        ) : onRemove ? (
+          <Button size="small" onClick={() => onRemove(resource)}>
+            {strings.remove}
+          </Button>
+        ) : (
+          resource.url && (
+            <Button size="small" component="a" href={resource.url} target="_blank" rel="noreferrer">
+              {strings.openInNewTab}
+            </Button>
+          )
+        )}
+        {hasPreview && (
+          <Box sx={{ ml: 'auto' }}>
             <ExpandMoreButton
               expand={expanded}
               onClick={() => onExpandedChange(!expanded)}
@@ -245,9 +236,9 @@ export default function ResourceCard({
               aria-label="show preview">
               <ExpandMoreIcon />
             </ExpandMoreButton>
-          </CardActions>
-        </>
-      )}
+          </Box>
+        )}
+      </CardActions>
     </Card>
   )
 }

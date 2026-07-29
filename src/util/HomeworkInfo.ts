@@ -13,6 +13,8 @@ export default interface HomeworkInfo {
   updatedAt?: string
   deletedAt?: string
   title?: string
+  /** Library resource IDs embedded in this homework entry, keyed by resourceId → download URL */
+  resources?: Record<string, string>
 }
 
 export function removeUndefinedKeys(hw: HomeworkInfo): HomeworkInfo {
@@ -21,6 +23,7 @@ export function removeUndefinedKeys(hw: HomeworkInfo): HomeworkInfo {
   hw.updatedAt ?? delete hw.updatedAt
   hw.deletedAt ?? delete hw.deletedAt
   hw.title ?? delete hw.title
+  hw.resources ?? delete hw.resources
   return hw
 }
 

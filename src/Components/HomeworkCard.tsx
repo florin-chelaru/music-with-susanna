@@ -1,23 +1,33 @@
+import AudiotrackIcon from '@mui/icons-material/Audiotrack'
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever'
 import EditIcon from '@mui/icons-material/Edit'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ImageIcon from '@mui/icons-material/Image'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import YouTubeIcon from '@mui/icons-material/YouTube'
 import {
+  Box,
+  ButtonBase,
   Card,
   CardActions,
   CardContent,
   CardHeader,
   Collapse,
+  Divider,
   IconButton,
   ListItemIcon,
   Menu,
-  MenuItem
+  MenuItem,
+  Typography
 } from '@mui/material'
 import React, { useContext, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import ExpandMoreButton from '../Components/ExpandMoreButton'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import HomeworkInfo from '../util/HomeworkInfo'
 import { SupportedLocale } from '../util/SupportedLocale'
+import { Resource, ResourceType } from '../util/resources'
 
 interface HomeworkCardTexts {
   edit: string
@@ -39,8 +49,22 @@ const TEXTS = new Map<SupportedLocale, LocalizedData>([
   [SupportedLocale.RO_RO, RO_RO]
 ])
 
+function resourceChipIcon(type: ResourceType) {
+  switch (type) {
+    case ResourceType.PDF:
+      return <PictureAsPdfIcon color="error" fontSize="small" />
+    case ResourceType.AUDIO:
+      return <AudiotrackIcon color="primary" fontSize="small" />
+    case ResourceType.IMAGE:
+      return <ImageIcon color="success" fontSize="small" />
+    case ResourceType.YOUTUBE:
+      return <YouTubeIcon sx={{ color: '#FF0000' }} fontSize="small" />
+  }
+}
+
 interface HomeworkCardProps {
   homework: HomeworkInfo
+  resources?: Resource[]
   onEdit?(): void
   onDelete?(): void
   defaultExpanded?: boolean
@@ -48,10 +72,19 @@ interface HomeworkCardProps {
 }
 
 const HomeworkCard = React.memo(
-  ({ homework, onEdit, onDelete, defaultExpanded = false, readonly }: HomeworkCardProps) => {
+  ({
+    homework,
+    resources,
+    onEdit,
+    onDelete,
+    defaultExpanded = false,
+    readonly
+  }: HomeworkCardProps) => {
     const localeManager = useContext<LocaleHandler>(LocaleContext)
     useMemo(() => localeManager.registerComponentStrings(HomeworkCard.name, TEXTS), [])
     const componentStrings = localeManager.componentStrings(HomeworkCard.name) as HomeworkCardTexts
+
+    const navigate = useNavigate()
 
     const [expanded, setExpanded] = React.useState(defaultExpanded)
     const handleExpandClick = () => {
@@ -98,6 +131,32 @@ const HomeworkCard = React.memo(
               />
             </CardContent>
           </Collapse>
+          {resources && resources.length > 0 && (
+            <Box sx={{ borderTop: 1, borderBottom: 1, borderColor: 'divider' }}>
+              {resources.map((r, i) => (
+                <React.Fragment key={r.id}>
+                  {i > 0 && <Divider />}
+                  <ButtonBase
+                    onClick={() => navigate(`/resources/${r.id}`)}
+                    sx={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      px: 2,
+                      py: 1.25,
+                      justifyContent: 'flex-start',
+                      '&:hover': { bgcolor: 'action.hover' }
+                    }}>
+                    {resourceChipIcon(r.type)}
+                    <Typography variant="body2" noWrap>
+                      {r.title}
+                    </Typography>
+                  </ButtonBase>
+                </React.Fragment>
+              ))}
+            </Box>
+          )}
           {needsExpansion && (
             <CardActions disableSpacing>
               <ExpandMoreButton

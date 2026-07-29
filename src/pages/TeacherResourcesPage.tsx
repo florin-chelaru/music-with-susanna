@@ -1,84 +1,99 @@
-import { Button, Container, Stack, Toolbar, Typography } from '@mui/material'
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  DialogContent,
+  DialogContentText,
+  MenuItem,
+  Select,
+  Stack,
+  Toolbar,
+  Typography
+} from '@mui/material'
+import MultiActionDialog from '../Components/MultiActionDialog'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import React, { useContext, useMemo, useRef, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import FabCreate from '../Components/FabCreate'
 import ResourceCard from '../Components/ResourceCard'
 import ResourceTagFilter from '../Components/ResourceTagFilter'
-import ResourceUploadDialog from '../Components/ResourceUploadDialog'
-import ShareResourceDialog, { MockStudent } from '../Components/ShareResourceDialog'
+import EditResourceDialog from '../Components/EditResourceDialog'
+import ResourceUploadDialog, { UploadConfirmData } from '../Components/ResourceUploadDialog'
 import TableOfContents, { TocEntry } from '../TableOfContents'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
+import { useUser } from '../store/UserProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
-import { Resource, ResourceType } from '../util/resources'
+import { UserRole } from '../util/User'
+import {
+  Resource,
+  addYouTubeResource,
+  deleteResource,
+  findResourceUsageInHomework,
+  updateResourceMetadata,
+  uploadResource,
+  useTeacherResources
+} from '../util/resources'
 
-export const MOCK_STUDENTS: MockStudent[] = [
-  { id: 'student-1', name: 'Ana Pop' },
-  { id: 'student-2', name: 'Mihai Ionescu' },
-  { id: 'student-3', name: 'Elena Dumitrescu' }
-]
+type SortOption = 'name' | 'date-desc' | 'date-asc'
 
 interface TeacherResourcesPageTexts {
   resources: string
   expandAll: string
   collapseAll: string
+  sortBy: string
+  sortName: string
+  sortDateNewest: string
+  sortDateOldest: string
+  deleteConfirmTitle: string
+  deleteConfirmBody: string
+  deleteBlockedTitle: string
+  deleteBlockedBody: string
+  viewDetails: string
+  yes: string
+  no: string
 }
 
 const EN_US: TeacherResourcesPageTexts = {
   resources: 'Resources',
   expandAll: 'Expand All',
-  collapseAll: 'Collapse All'
+  collapseAll: 'Collapse All',
+  sortBy: 'Sort',
+  sortName: 'Name',
+  sortDateNewest: 'Newest first',
+  sortDateOldest: 'Oldest first',
+  deleteConfirmTitle: 'Delete resource?',
+  deleteConfirmBody: 'This will permanently delete the resource and remove it from all students.',
+  deleteBlockedTitle: 'Cannot delete resource',
+  deleteBlockedBody:
+    'This resource is still referenced in homework assignments. Please remove it from there first and then try again.',
+  viewDetails: 'View details',
+  yes: 'Delete',
+  no: 'Cancel'
 }
 
 const RO_RO: TeacherResourcesPageTexts = {
   resources: 'Resurse',
   expandAll: 'Extinde Toate',
-  collapseAll: 'Restrânge Toate'
+  collapseAll: 'Restrânge Toate',
+  sortBy: 'Sortare',
+  sortName: 'Nume',
+  sortDateNewest: 'Recente',
+  sortDateOldest: 'Vechi',
+  deleteConfirmTitle: 'Ștergi resursa?',
+  deleteConfirmBody: 'Resursa va fi ștearsă definitiv și eliminată de la toți elevii.',
+  deleteBlockedTitle: 'Resursa nu poate fi ștearsă',
+  deleteBlockedBody:
+    'Această resursă este încă referențiată în teme. Elimină-o mai întâi de acolo și încearcă din nou.',
+  viewDetails: 'Vezi detalii',
+  yes: 'Șterge',
+  no: 'Anulează'
 }
 
 const TEACHER_RESOURCES_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData>([
   [SupportedLocale.EN_US, EN_US],
   [SupportedLocale.RO_RO, RO_RO]
 ])
-
-const MOCK_RESOURCES: Resource[] = [
-  {
-    id: '1',
-    title: 'Invoice — Sample PDF',
-    type: ResourceType.PDF,
-    url: 'https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F2026-07-27%20-%20Twinfog%20QC%20Ware%20Invoice_DkCHGYPUfD.pdf?alt=media&token=98aaf657-49b0-40b4-84cd-11919e2b9da8',
-    fileName: 'invoice.pdf',
-    tags: { scales: 'Scales', beginner: 'Beginner' },
-    createdAt: 0
-  },
-  {
-    id: '2',
-    title: 'Minuet 3 — J. S. Bach',
-    type: ResourceType.AUDIO,
-    url: 'https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F20%20Minuet%203%20%5BJ.%20S.%20Bach%5D_UAw3qRRVIN.mp3?alt=media&token=25c51400-6ed1-44f9-bfab-fe23f86d7c88',
-    tags: { scales: 'Scales' },
-    createdAt: 0
-  },
-  {
-    id: '3',
-    title: 'Lesson Photo',
-    type: ResourceType.IMAGE,
-    url: 'https://firebasestorage.googleapis.com/v0/b/music-with-susanna.appspot.com/o/users%2FCgOaIwnaE5TPVsiRrsB9krTaC092%2Ffiles%2F20240912_135617_BtXFvayhEC.jpg?alt=media&token=9d0899d1-e189-404c-bee6-a86649a08af5',
-    tags: { technique: 'Technique', beginner: 'Beginner' },
-    createdAt: 0
-  },
-  {
-    id: '4',
-    title: 'Violin Lesson — YouTube Demo',
-    type: ResourceType.YOUTUBE,
-    url: 'https://www.youtube.com/watch?v=FiZEZuCRTZI',
-    tags: { suzuki: 'Suzuki', beginner: 'Beginner' },
-    createdAt: 0
-  }
-]
-
-function initExpandedMap(resources: Resource[]): Record<string, boolean> {
-  return Object.fromEntries(resources.map((r) => [r.id, false]))
-}
 
 /** Unique tags in order of first appearance, each mapped to the first resource that has it. */
 function buildTagIndex(
@@ -113,20 +128,74 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     TeacherResourcesPage.name
   ) as TeacherResourcesPageTexts
 
-  const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>(() =>
-    initExpandedMap(MOCK_RESOURCES)
-  )
+  const navigate = useNavigate()
+  const { user } = useUser()
+
+  useEffect(() => {
+    if (user.loading) return
+    if (!user.uid) {
+      navigate('/login')
+      return
+    }
+    if (user.role !== UserRole.TEACHER) {
+      navigate('/')
+    }
+  }, [user, navigate])
+
+  const { resources } = useTeacherResources(user?.uid)
+
+  // Expand map: new resources start expanded
+  const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({})
+  useEffect(() => {
+    setExpandedMap((prev) => {
+      const newEntries = resources
+        .filter((r) => !(r.id in prev))
+        .map((r): [string, boolean] => [r.id, true])
+      if (newEntries.length === 0) return prev
+      return { ...prev, ...Object.fromEntries(newEntries) }
+    })
+  }, [resources])
+
+  // Stable ref map that grows as resources arrive
+  const resourceRefsMap = useRef<Map<string, React.RefObject<HTMLDivElement | null>>>(new Map())
+  for (const r of resources) {
+    if (!resourceRefsMap.current.has(r.id)) {
+      resourceRefsMap.current.set(r.id, React.createRef<HTMLDivElement>())
+    }
+  }
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
+  const [sortBy, setSortBy] = useState<SortOption>('date-desc')
   const [uploadOpen, setUploadOpen] = useState(false)
-  const [shareResource, setShareResource] = useState<Resource | null>(null)
-  const [sharedMap, setSharedMap] = useState<Record<string, Set<string>>>(() =>
-    Object.fromEntries(MOCK_RESOURCES.map((r) => [r.id, new Set<string>()]))
-  )
+  const [editTarget, setEditTarget] = useState<Resource | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Resource | null>(null)
+  const [deleteRefsLoading, setDeleteRefsLoading] = useState(false)
+  const [deleteBlocked, setDeleteBlocked] = useState(false)
 
-  const handleShareConfirm = (resourceId: string, selectedIds: Set<string>) => {
-    setSharedMap((prev) => ({ ...prev, [resourceId]: selectedIds }))
+  useEffect(() => {
+    if (!deleteTarget || !user?.uid) return
+    setDeleteRefsLoading(true)
+    setDeleteBlocked(false)
+    findResourceUsageInHomework(user.uid, deleteTarget.id)
+      .then((refs) => {
+        setDeleteBlocked(refs.length > 0)
+        setDeleteRefsLoading(false)
+      })
+      .catch(() => setDeleteRefsLoading(false))
+  }, [deleteTarget, user?.uid])
+
+  const handleEditConfirm = (patch: { title: string; tags: Record<string, string> }) => {
+    const teacherId = user?.uid
+    if (!teacherId || !editTarget) return
+    void updateResourceMetadata(teacherId, editTarget.id, patch).catch(console.error)
+  }
+
+  const handleDeleteConfirm = () => {
+    const teacherId = user?.uid
+    if (!teacherId || !deleteTarget) return
+    void deleteResource(teacherId, deleteTarget.id).catch(console.error)
+    setDeleteTarget(null)
   }
 
   const handleTagToggle = (slug: string) => {
@@ -141,40 +210,58 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     })
   }
 
-  const visibleResources = MOCK_RESOURCES.filter((r) => {
-    if (searchQuery && !r.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
-    if (selectedTags.size > 0 && !Array.from(selectedTags).some((slug) => slug in r.tags))
-      return false
-    return true
-  })
+  const handleUploadConfirm = (data: UploadConfirmData) => {
+    const teacherId = user?.uid
+    if (!teacherId) return
+    const { title, tags } = data
+    if (data.mode === 'youtube') {
+      void addYouTubeResource(teacherId, data.url, { title, tags }).catch(console.error)
+    } else {
+      void uploadResource({ teacherId, file: data.file, metadata: { title, tags } }).catch(
+        console.error
+      )
+    }
+    setUploadOpen(false)
+  }
 
-  const allExpanded = MOCK_RESOURCES.every((r) => expandedMap[r.id])
+  const visibleResources = resources
+    .filter((r) => {
+      if (searchQuery && !r.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
+      if (selectedTags.size > 0 && !Array.from(selectedTags).some((slug) => slug in r.tags))
+        return false
+      return true
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name') return a.title.localeCompare(b.title)
+      if (sortBy === 'date-desc')
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    })
+
+  const allExpanded = resources.every((r) => expandedMap[r.id])
 
   const toggleAll = () => {
     const next = !allExpanded
-    setExpandedMap(Object.fromEntries(MOCK_RESOURCES.map((r) => [r.id, next])))
+    setExpandedMap(Object.fromEntries(resources.map((r) => [r.id, next])))
   }
 
   const setExpanded = (id: string, value: boolean) => {
     setExpandedMap((prev) => ({ ...prev, [id]: value }))
   }
 
-  // One ref per resource card, initialised once
-  const resourceRefsMap = useRef<Map<string, React.RefObject<HTMLDivElement | null>>>(
-    new Map(MOCK_RESOURCES.map((r) => [r.id, React.createRef<HTMLDivElement>()]))
-  )
-
-  const tagIndex = useMemo(() => buildTagIndex(MOCK_RESOURCES), [])
+  const tagIndex = useMemo(() => buildTagIndex(resources), [resources])
 
   const tocEntries: TocEntry[] = tagIndex.map(({ slug, label, firstResourceId }) => ({
     key: slug,
     ref: resourceRefsMap.current.get(firstResourceId) as React.RefObject<HTMLDivElement | null>,
     primaryLabel: label,
-    children: MOCK_RESOURCES.filter((r) => slug in r.tags).map((r) => ({
-      key: `${slug}-${r.id}`,
-      ref: resourceRefsMap.current.get(r.id) as React.RefObject<HTMLDivElement | null>,
-      primaryLabel: r.title
-    }))
+    children: resources
+      .filter((r) => slug in r.tags)
+      .map((r) => ({
+        key: `${slug}-${r.id}`,
+        ref: resourceRefsMap.current.get(r.id) as React.RefObject<HTMLDivElement | null>,
+        primaryLabel: r.title
+      }))
   }))
 
   const toc = <TableOfContents entries={tocEntries} />
@@ -192,9 +279,23 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
         <Grid2 xs={12} sm={9} md={10}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
             <Typography variant="h5">{strings.resources}</Typography>
-            <Button size="small" onClick={toggleAll}>
-              {allExpanded ? strings.collapseAll : strings.expandAll}
-            </Button>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography variant="caption" color="text.secondary" component="span">
+                {strings.sortBy}
+              </Typography>
+              <Select
+                size="small"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                sx={{ fontSize: '0.8125rem' }}>
+                <MenuItem value="name">{strings.sortName}</MenuItem>
+                <MenuItem value="date-desc">{strings.sortDateNewest}</MenuItem>
+                <MenuItem value="date-asc">{strings.sortDateOldest}</MenuItem>
+              </Select>
+              <Button size="small" onClick={toggleAll}>
+                {allExpanded ? strings.collapseAll : strings.expandAll}
+              </Button>
+            </Stack>
           </Stack>
           <ResourceTagFilter
             tags={tagIndex.map(({ slug, label }) => ({ slug, label }))}
@@ -218,9 +319,9 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
                   editable
                   expanded={expandedMap[resource.id] ?? false}
                   onExpandedChange={(v) => setExpanded(resource.id, v)}
-                  onShare={(r) => setShareResource(r)}
-                  onEdit={(r) => console.log('edit', r.id)}
-                  onDelete={(r) => console.log('delete', r.id)}
+                  onEdit={(r) => setEditTarget(r)}
+                  onDelete={(r) => setDeleteTarget(r)}
+                  onDetails={(r) => navigate(`/resources/${r.id}`)}
                 />
               </Grid2>
             ))}
@@ -239,16 +340,53 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}
         existingTags={tagIndex.map(({ label }) => label)}
+        onConfirm={handleUploadConfirm}
       />
 
-      <ShareResourceDialog
-        open={shareResource !== null}
-        resource={shareResource}
-        students={MOCK_STUDENTS}
-        sharedWithIds={shareResource ? sharedMap[shareResource.id] ?? new Set() : new Set()}
-        onClose={() => setShareResource(null)}
-        onConfirm={handleShareConfirm}
+      <EditResourceDialog
+        open={editTarget !== null}
+        resource={editTarget}
+        existingTags={tagIndex.map(({ label }) => label)}
+        onClose={() => setEditTarget(null)}
+        onConfirm={handleEditConfirm}
       />
+
+      <MultiActionDialog
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        title={deleteBlocked ? strings.deleteBlockedTitle : strings.deleteConfirmTitle}
+        actions={
+          deleteRefsLoading
+            ? [{ label: strings.no, onClick: () => setDeleteTarget(null) }]
+            : deleteBlocked
+            ? [
+                { label: strings.no, onClick: () => setDeleteTarget(null) },
+                {
+                  label: strings.viewDetails,
+                  onClick: () => {
+                    if (deleteTarget) navigate(`/resources/${deleteTarget.id}`)
+                    setDeleteTarget(null)
+                  },
+                  autoFocus: true
+                }
+              ]
+            : [
+                { label: strings.no, onClick: () => setDeleteTarget(null) },
+                { label: strings.yes, onClick: handleDeleteConfirm, autoFocus: true }
+              ]
+        }>
+        <DialogContent>
+          {deleteRefsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : (
+            <DialogContentText>
+              {deleteBlocked ? strings.deleteBlockedBody : strings.deleteConfirmBody}
+            </DialogContentText>
+          )}
+        </DialogContent>
+      </MultiActionDialog>
     </Container>
   )
 }

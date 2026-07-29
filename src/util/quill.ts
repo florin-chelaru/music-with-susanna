@@ -1,9 +1,11 @@
 import ReactQuill, { Quill } from 'react-quill'
 import { extractFileNameAndExtension, generateRandomAlphanumericString } from './string'
 import { User } from './User'
+import { toYouTubeEmbedUrl } from './youtube'
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage'
 import { storage } from '../store/Firebase'
 import { ImageResize } from 'quill-image-resize-module-ts'
+import { Resource, ResourceType } from './resources'
 
 const BlockEmbed = ReactQuill.Quill.import('blots/block/embed')
 class PdfBlot extends BlockEmbed {
@@ -93,6 +95,7 @@ export interface CancelToken {
 export interface FileUploadParams {
   quill: ReactQuill
   user: User
+  file?: File
   fileTypes?: string[]
   progressHandler?: (fileUploadProgress: FileUploadProgress) => void
   cancelToken?: CancelToken
@@ -101,6 +104,7 @@ export interface FileUploadParams {
 export function handleFileUpload({
   quill,
   user,
+  file,
   fileTypes = ALLOWED_UPLOAD_FILE_TYPES,
   progressHandler,
   cancelToken
@@ -120,31 +124,12 @@ export function handleFileUpload({
     }
   }
 
-  const input = document.createElement('input')
-
-  input.setAttribute('type', 'file')
-  input.setAttribute('accept', fileTypes.join(', '))
-  input.click()
-
-  input.onchange = async () => {
-    if (shouldCancel) {
-      promiseReject('cancelled')
-      return
-    }
-
-    const file: any = input?.files?.[0]
-    if (file == null) {
-      promiseReject('no file')
-      return
-    }
-
-    const { name, extension } = extractFileNameAndExtension(file.name)
-
+  const processFile = (selectedFile: File) => {
+    const { name, extension } = extractFileNameAndExtension(selectedFile.name)
     const uniqueSuffix = generateRandomAlphanumericString(10)
     const cloudStoragePath = `users/${user.uid}/files/${name}_${uniqueSuffix}.${extension}`
-
     const fileRef = ref(storage, cloudStoragePath)
-    const uploadTask = uploadBytesResumable(fileRef, file)
+    const uploadTask = uploadBytesResumable(fileRef, selectedFile)
 
     if (cancelToken) {
       cancelToken.cancel = () => {
@@ -154,7 +139,7 @@ export function handleFileUpload({
       }
     }
 
-    progressHandler?.({ fileName: file.name, progress: 0 })
+    progressHandler?.({ fileName: selectedFile.name, progress: 0 })
 
     uploadTask.on(
       'state_changed',
@@ -163,39 +148,32 @@ export function handleFileUpload({
           return
         }
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-        progressHandler?.({ fileName: file.name, progress })
-        switch (snapshot.state) {
-          case 'paused':
-            break
-          case 'running':
-            break
-        }
+        progressHandler?.({ fileName: selectedFile.name, progress })
       },
       (error) => {
-        // TODO: Modal with message and try again.
         console.error(error)
       },
       () => {
         if (shouldCancel) {
           return
         }
-        // Handle successful uploads on complete
-        // For instance, get the download URL: https://firebasestorage.googleapis.com/...
         getDownloadURL(uploadTask.snapshot.ref)
           .then((downloadUrl) => {
             if (shouldCancel) {
               return
             }
             const range = quill.selection
-
             if (range?.index != null) {
-              if (file.type.startsWith('image')) {
+              if (selectedFile.type.startsWith('image')) {
                 quill.editor?.insertEmbed(range.index, 'image', downloadUrl)
-              } else if (file.type.startsWith('audio') || file.type.startsWith('video')) {
+              } else if (
+                selectedFile.type.startsWith('audio') ||
+                selectedFile.type.startsWith('video')
+              ) {
                 quill.editor?.insertEmbed(range.index, 'audio', {
                   url: downloadUrl
                 })
-              } else if (file.type === 'application/pdf') {
+              } else if (selectedFile.type === 'application/pdf') {
                 quill.editor?.insertEmbed(range.index, 'pdf', {
                   url: downloadUrl
                 })
@@ -210,7 +188,48 @@ export function handleFileUpload({
     )
   }
 
+  if (file) {
+    processFile(file)
+    return result
+  }
+
+  const input = document.createElement('input')
+  input.setAttribute('type', 'file')
+  input.setAttribute('accept', fileTypes.join(', '))
+  input.click()
+
+  input.onchange = () => {
+    if (shouldCancel) {
+      promiseReject('cancelled')
+      return
+    }
+    const selectedFile = input?.files?.[0]
+    if (selectedFile == null) {
+      promiseReject('no file')
+      return
+    }
+    processFile(selectedFile)
+  }
+
   return result
+}
+
+export function insertResource(quill: ReactQuill, resource: Resource): void {
+  const index = quill.selection?.index ?? 0
+  switch (resource.type) {
+    case ResourceType.PDF:
+      quill.editor?.insertEmbed(index, 'pdf', { url: resource.url })
+      break
+    case ResourceType.AUDIO:
+      quill.editor?.insertEmbed(index, 'audio', { url: resource.url })
+      break
+    case ResourceType.IMAGE:
+      quill.editor?.insertEmbed(index, 'image', resource.url)
+      break
+    case ResourceType.YOUTUBE:
+      quill.editor?.insertEmbed(index, 'video', toYouTubeEmbedUrl(resource.url))
+      break
+  }
 }
 
 export const QUILL_FORMATS = [
@@ -252,7 +271,7 @@ export const QUILL_MODULES = {
       [{ color: [] as string[] }, { background: [] as string[] }],
       [{ align: [false, 'center', 'right', 'justify'] }],
       [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
-      ['link', 'image', 'video'],
+      ['link', 'image'],
       ['clean']
     ]
   },

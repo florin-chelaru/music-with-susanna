@@ -12,66 +12,62 @@ import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProv
 import { SupportedLocale } from '../util/SupportedLocale'
 import { Resource } from '../util/resources'
 
-interface ShareResourceDialogTexts {
-  shareResource: string
+interface AddResourcesToStudentDialogTexts {
+  addResources: string
   cancel: string
-  share: string
+  save: string
 }
 
-const EN_US: ShareResourceDialogTexts = {
-  shareResource: 'Share Resource',
+const EN_US: AddResourcesToStudentDialogTexts = {
+  addResources: 'Manage Shared Resources',
   cancel: 'Cancel',
-  share: 'Share'
+  save: 'Save'
 }
 
-const RO_RO: ShareResourceDialogTexts = {
-  shareResource: 'Partajează Resursă',
+const RO_RO: AddResourcesToStudentDialogTexts = {
+  addResources: 'Gestionează Resurse Partajate',
   cancel: 'Anulează',
-  share: 'Partajează'
+  save: 'Salvează'
 }
 
-const SHARE_RESOURCE_DIALOG_TEXTS = new Map<SupportedLocale, LocalizedData>([
+const ADD_RESOURCES_TO_STUDENT_DIALOG_TEXTS = new Map<SupportedLocale, LocalizedData>([
   [SupportedLocale.EN_US, EN_US],
   [SupportedLocale.RO_RO, RO_RO]
 ])
 
-export interface MockStudent {
-  id: string
-  name: string
-}
-
-export interface ShareResourceDialogProps {
+export interface AddResourcesToStudentDialogProps {
   open: boolean
-  resource: Resource | null
-  students: MockStudent[]
-  sharedWithIds: Set<string>
+  allResources: Resource[]
+  sharedResourceIds: Set<string>
   onClose: () => void
-  onConfirm: (resourceId: string, selectedIds: Set<string>) => void
+  onConfirm: (selectedIds: Set<string>) => void
 }
 
-export default function ShareResourceDialog({
+export default function AddResourcesToStudentDialog({
   open,
-  resource,
-  students,
-  sharedWithIds,
+  allResources,
+  sharedResourceIds,
   onClose,
   onConfirm
-}: ShareResourceDialogProps) {
+}: AddResourcesToStudentDialogProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(
     () =>
-      localeManager.registerComponentStrings(ShareResourceDialog.name, SHARE_RESOURCE_DIALOG_TEXTS),
+      localeManager.registerComponentStrings(
+        AddResourcesToStudentDialog.name,
+        ADD_RESOURCES_TO_STUDENT_DIALOG_TEXTS
+      ),
     []
   )
   const strings = localeManager.componentStrings(
-    ShareResourceDialog.name
-  ) as ShareResourceDialogTexts
+    AddResourcesToStudentDialog.name
+  ) as AddResourcesToStudentDialogTexts
 
-  const [selected, setSelected] = useState<Set<string>>(new Set(sharedWithIds))
+  const [selected, setSelected] = useState<Set<string>>(new Set(sharedResourceIds))
 
   useEffect(() => {
-    if (open) setSelected(new Set(sharedWithIds))
-  }, [open, sharedWithIds])
+    if (open) setSelected(new Set(sharedResourceIds))
+  }, [open])
 
   const handleToggle = (id: string) => {
     setSelected((prev) => {
@@ -86,7 +82,7 @@ export default function ShareResourceDialog({
   }
 
   const handleConfirm = () => {
-    if (resource) onConfirm(resource.id, selected)
+    onConfirm(selected)
     onClose()
   }
 
@@ -94,26 +90,26 @@ export default function ShareResourceDialog({
     <MultiActionDialog
       open={open}
       onClose={onClose}
-      title={strings.shareResource}
+      title={strings.addResources}
       fullWidth
       maxWidth="xs"
       actions={[
         { label: strings.cancel, onClick: onClose },
-        { label: strings.share, onClick: handleConfirm, autoFocus: true }
+        { label: strings.save, onClick: handleConfirm, autoFocus: true }
       ]}>
       <DialogContent sx={{ pt: 0 }}>
         <List dense disablePadding>
-          {students.map((student) => (
-            <ListItem key={student.id} disablePadding>
-              <ListItemButton onClick={() => handleToggle(student.id)} dense>
+          {allResources.map((resource) => (
+            <ListItem key={resource.id} disablePadding>
+              <ListItemButton onClick={() => handleToggle(resource.id)} dense>
                 <Checkbox
                   edge="start"
-                  checked={selected.has(student.id)}
+                  checked={selected.has(resource.id)}
                   tabIndex={-1}
                   disableRipple
                   size="small"
                 />
-                <ListItemText primary={student.name} />
+                <ListItemText primary={resource.title} />
               </ListItemButton>
             </ListItem>
           ))}

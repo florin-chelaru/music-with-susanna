@@ -3,20 +3,24 @@ import UploadFileIcon from '@mui/icons-material/UploadFile'
 import YouTubeIcon from '@mui/icons-material/YouTube'
 import {
   Autocomplete,
+  Box,
   Button,
   Chip,
   DialogContent,
+  LinearProgress,
   Stack,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography
 } from '@mui/material'
-import { useContext, useMemo, useRef, useState } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import MultiActionDialog from './MultiActionDialog'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
+import { useUser } from '../store/UserProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
-import { ResourceType } from '../util/resources'
+import { UploadConfirmData } from '../util/resources'
+import { useYouTubeMetadata } from '../util/youtube'
 
 interface ResourceUploadDialogTexts {
   addResource: string
@@ -70,22 +74,20 @@ const RESOURCE_UPLOAD_DIALOG_TEXTS = new Map<SupportedLocale, LocalizedData>([
 
 const FILE_ACCEPT = 'application/pdf,audio/*,image/*'
 
-function inferFileType(file: File): ResourceType {
-  if (file.type === 'application/pdf') return ResourceType.PDF
-  if (file.type.startsWith('audio/')) return ResourceType.AUDIO
-  return ResourceType.IMAGE
-}
+export type { UploadConfirmData }
 
 export interface ResourceUploadDialogProps {
   open: boolean
   onClose: () => void
   existingTags: string[]
+  onConfirm?: (data: UploadConfirmData) => void
 }
 
 export default function ResourceUploadDialog({
   open,
   onClose,
-  existingTags
+  existingTags,
+  onConfirm
 }: ResourceUploadDialogProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(
@@ -100,6 +102,8 @@ export default function ResourceUploadDialog({
     ResourceUploadDialog.name
   ) as ResourceUploadDialogTexts
 
+  const { user } = useUser()
+
   const [mode, setMode] = useState<'file' | 'youtube'>('file')
   const [file, setFile] = useState<File | null>(null)
   const [url, setUrl] = useState('')
@@ -107,7 +111,14 @@ export default function ResourceUploadDialog({
   const [tags, setTags] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const type = mode === 'youtube' ? ResourceType.YOUTUBE : file ? inferFileType(file) : null
+  const { data: youtubeData, loading: youtubeLoading } = useYouTubeMetadata(
+    mode === 'youtube' ? url : '',
+    user?.accessToken
+  )
+
+  useEffect(() => {
+    if (youtubeData) setTitle(youtubeData.snippet.title)
+  }, [youtubeData])
 
   const handleModeChange = (_: React.MouseEvent, next: 'file' | 'youtube' | null) => {
     if (next) {
@@ -134,6 +145,20 @@ export default function ResourceUploadDialog({
     onClose()
   }
 
+  const handleConfirm = () => {
+    const tagsRecord: Record<string, string> = Object.fromEntries(
+      tags.map((t) => [t.toLowerCase().replace(/\s+/g, '-'), t])
+    )
+    if (mode === 'youtube') {
+      onConfirm?.({ mode: 'youtube', url, title, tags: tagsRecord })
+    } else if (file) {
+      onConfirm?.({ mode: 'file', file, title, tags: tagsRecord })
+    } else {
+      return
+    }
+    handleClose()
+  }
+
   return (
     <MultiActionDialog
       open={open}
@@ -145,7 +170,7 @@ export default function ResourceUploadDialog({
         { label: strings.cancel, onClick: handleClose },
         {
           label: strings.upload,
-          onClick: () => console.log('upload', { type, file, url, title, tags })
+          onClick: handleConfirm
         }
       ]}>
       <DialogContent>
@@ -201,6 +226,42 @@ export default function ResourceUploadDialog({
                 {file ? file.name : strings.noFileChosen}
               </Typography>
             </Stack>
+          )}
+
+          {/* YouTube preview */}
+          {mode === 'youtube' && (youtubeLoading || youtubeData) && (
+            <Box
+              sx={{
+                borderRadius: 1,
+                overflow: 'hidden',
+                border: '1px solid',
+                borderColor: 'divider'
+              }}>
+              {youtubeLoading && <LinearProgress />}
+              {youtubeData && (
+                <>
+                  <Box sx={{ position: 'relative', paddingTop: '56.25%' }}>
+                    <Box
+                      component="iframe"
+                      src={`https://www.youtube.com/embed/${youtubeData.videoId}`}
+                      title={youtubeData.snippet.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        border: 0
+                      }}
+                    />
+                  </Box>
+                  <Typography variant="body2" sx={{ px: 1.5, py: 1 }}>
+                    {youtubeData.snippet.title}
+                  </Typography>
+                </>
+              )}
+            </Box>
           )}
 
           {/* Title */}
