@@ -970,3 +970,17 @@ export async function findResourceUsageInHomework(
 
   return references
 }
+
+export function buildTagIndex(resources: Resource[]): Array<{ slug: string; label: string }> {
+  const seen = new Set<string>()
+  const result: Array<{ slug: string; label: string }> = []
+  for (const resource of resources) {
+    for (const [slug, label] of Object.entries(resource.tags)) {
+      if (!seen.has(slug)) {
+        seen.add(slug)
+        result.push({ slug, label })
+      }
+    }
+  }
+  return result
+}

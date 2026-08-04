@@ -20,11 +20,10 @@ import {
 } from '@mui/material'
 import MultiActionDialog from '../Components/MultiActionDialog'
 import Grid2 from '@mui/material/Unstable_Grid2'
-import InfiniteScroll from 'react-infinite-scroller'
 import React, { useContext, useEffect, useMemo, useState } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import FabCreate from '../Components/FabCreate'
-import ResourceCard from '../Components/ResourceCard'
+import ResourceList from '../Components/ResourceList'
 import ResourceTagFilter from '../Components/ResourceTagFilter'
 import EditResourceDialog from '../Components/EditResourceDialog'
 import ResourceUploadDialog, { UploadConfirmData } from '../Components/ResourceUploadDialog'
@@ -47,6 +46,7 @@ import {
   uploadResource,
   useTeacherResources
 } from '../util/resources'
+import { SortOption, useResourcePageState } from './useResourcePageState'
 
 function resourceTypeIcon(type: ResourceType) {
   switch (type) {
@@ -60,8 +60,6 @@ function resourceTypeIcon(type: ResourceType) {
       return <YouTubeIcon sx={{ color: '#FF0000' }} />
   }
 }
-
-type SortOption = 'name' | 'date-desc' | 'date-asc'
 
 interface TeacherResourcesPageTexts {
   resources: string
@@ -168,20 +166,6 @@ const TEACHER_RESOURCES_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData>([
   [SupportedLocale.RO_RO, RO_RO]
 ])
 
-function buildTagIndex(resources: Resource[]): Array<{ slug: string; label: string }> {
-  const seen = new Set<string>()
-  const result: Array<{ slug: string; label: string }> = []
-  for (const resource of resources) {
-    for (const [slug, label] of Object.entries(resource.tags)) {
-      if (!seen.has(slug)) {
-        seen.add(slug)
-        result.push({ slug, label })
-      }
-    }
-  }
-  return result
-}
-
 export interface TeacherResourcesPageProps {}
 
 export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
@@ -214,7 +198,6 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
 
   const { resources, loading: resourcesLoading } = useTeacherResources(user?.uid)
 
-  // Expand map: new resources start expanded
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({})
   useEffect(() => {
     setExpandedMap((prev) => {
@@ -226,10 +209,6 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     })
   }, [resources])
 
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
-  const [selectedTypes, setSelectedTypes] = useState<Set<ResourceType>>(new Set())
-  const [sortBy, setSortBy] = useState<SortOption>('date-desc')
   const [uploadOpen, setUploadOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Resource | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Resource | null>(null)
@@ -308,30 +287,6 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     setDeleteTarget(null)
   }
 
-  const handleTagToggle = (slug: string) => {
-    setSelectedTags((prev) => {
-      const next = new Set(prev)
-      if (next.has(slug)) {
-        next.delete(slug)
-      } else {
-        next.add(slug)
-      }
-      return next
-    })
-  }
-
-  const handleTypeToggle = (type: ResourceType) => {
-    setSelectedTypes((prev) => {
-      const next = new Set(prev)
-      if (next.has(type)) {
-        next.delete(type)
-      } else {
-        next.add(type)
-      }
-      return next
-    })
-  }
-
   const handleUploadConfirm = (data: UploadConfirmData) => {
     const teacherId = user?.uid
     if (!teacherId) return
@@ -360,29 +315,29 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
     [duplicateGroups]
   )
 
-  const visibleResources = resources
-    .filter((r) => {
-      if (duplicateIds.has(r.id)) return false
-      if (searchQuery && !r.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
-      if (selectedTags.size > 0 && !Array.from(selectedTags).some((slug) => slug in r.tags))
-        return false
-      if (selectedTypes.size > 0 && !selectedTypes.has(r.type)) return false
-      return true
-    })
-    .sort((a, b) => {
-      if (sortBy === 'name') return a.title.localeCompare(b.title)
-      if (sortBy === 'date-desc')
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    })
+  // Pre-filter duplicates before passing to hook so they are excluded from
+  // visibleResources and tagIndex. Canonical resources (the kept copies) are
+  // still shown; only the duplicate entries are hidden.
+  const nonDuplicateResources = useMemo(
+    () => resources.filter((r) => !duplicateIds.has(r.id)),
+    [resources, duplicateIds]
+  )
 
-  const PAGE_SIZE = 5
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE)
-  }, [searchQuery, selectedTags, selectedTypes, sortBy])
-  const pagedResources = visibleResources.slice(0, visibleCount)
-  const hasMore = visibleCount < visibleResources.length
+  const {
+    searchQuery,
+    setSearchQuery,
+    selectedTags,
+    handleTagToggle,
+    selectedTypes,
+    handleTypeToggle,
+    sortBy,
+    setSortBy,
+    pagedResources,
+    hasMore,
+    loadMore,
+    tagIndex,
+    bookmarkResource
+  } = useResourcePageState(nonDuplicateResources, 'resources-state:teacher')
 
   const allExpanded = resources.every((r) => expandedMap[r.id])
 
@@ -394,8 +349,6 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
   const setExpanded = (id: string, value: boolean) => {
     setExpandedMap((prev) => ({ ...prev, [id]: value }))
   }
-
-  const tagIndex = useMemo(() => buildTagIndex(resources), [resources])
 
   return (
     <Container maxWidth="md" sx={{ pt: 3 }}>
@@ -448,76 +401,61 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
           <CircularProgress />
         </Box>
       )}
-      <InfiniteScroll
-        pageStart={0}
-        loadMore={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+      <ResourceList
+        resources={pagedResources}
         hasMore={hasMore}
-        loader={
-          <Box key="loader" sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-            <CircularProgress size={28} />
-          </Box>
-        }
-        useWindow>
-        <Grid2 container spacing={2} sx={{ mt: 1 }}>
-          {pagedResources.map((resource) => (
-            <Grid2 xs={12} key={resource.id}>
-              <ResourceCard
-                resource={resource}
-                editable
-                expanded={expandedMap[resource.id] ?? false}
-                onExpandedChange={(v) => setExpanded(resource.id, v)}
-                onEdit={(r) => setEditTarget(r)}
-                onDelete={(r) => setDeleteTarget(r)}
-                onDetails={(r) => navigate(`/resources/${r.id}`)}
-                footer={(() => {
-                  const group = canonicalGroupMap.get(resource.id)
-                  if (!group) return undefined
-                  return (
-                    <>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ px: 2, pt: 1.25, pb: 0.5, display: 'block' }}>
-                        {strings.duplicateLinks}
-                      </Typography>
-                      {group.duplicates.map((dup, i) => (
-                        <React.Fragment key={dup.id}>
-                          {i > 0 && <Divider />}
-                          <ButtonBase
-                            onClick={() => navigate(`/resources/${dup.id}`)}
-                            sx={{
-                              width: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1.5,
-                              px: 2,
-                              py: 1.25,
-                              justifyContent: 'flex-start',
-                              '&:hover': { bgcolor: 'action.hover' }
-                            }}>
-                            {resourceTypeIcon(dup.type)}
-                            <Typography variant="body2" noWrap>
-                              {dup.title}
-                            </Typography>
-                          </ButtonBase>
-                        </React.Fragment>
-                      ))}
-                      <Box sx={{ px: 2, py: 1 }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => setDeduplicateTarget(group)}>
-                          {strings.mergeGroup}
-                        </Button>
-                      </Box>
-                    </>
-                  )
-                })()}
-              />
-            </Grid2>
-          ))}
-        </Grid2>
-      </InfiniteScroll>
+        loadMore={loadMore}
+        expandedMap={expandedMap}
+        onExpandedChange={setExpanded}
+        editable
+        onEdit={(r) => setEditTarget(r)}
+        onDelete={(r) => setDeleteTarget(r)}
+        onDetails={(r) => {
+          bookmarkResource(r.id)
+          navigate(`/resources/${r.id}`)
+        }}
+        getFooter={(resource) => {
+          const group = canonicalGroupMap.get(resource.id)
+          if (!group) return undefined
+          return (
+            <>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ px: 2, pt: 1.25, pb: 0.5, display: 'block' }}>
+                {strings.duplicateLinks}
+              </Typography>
+              {group.duplicates.map((dup, i) => (
+                <React.Fragment key={dup.id}>
+                  {i > 0 && <Divider />}
+                  <ButtonBase
+                    onClick={() => navigate(`/resources/${dup.id}`)}
+                    sx={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      px: 2,
+                      py: 1.25,
+                      justifyContent: 'flex-start',
+                      '&:hover': { bgcolor: 'action.hover' }
+                    }}>
+                    {resourceTypeIcon(dup.type)}
+                    <Typography variant="body2" noWrap>
+                      {dup.title}
+                    </Typography>
+                  </ButtonBase>
+                </React.Fragment>
+              ))}
+              <Box sx={{ px: 2, py: 1 }}>
+                <Button size="small" variant="outlined" onClick={() => setDeduplicateTarget(group)}>
+                  {strings.mergeGroup}
+                </Button>
+              </Box>
+            </>
+          )
+        }}
+      />
 
       <FabCreate onClick={() => setUploadOpen(true)} />
 
