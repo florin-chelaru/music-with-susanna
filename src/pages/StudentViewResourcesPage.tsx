@@ -1,8 +1,7 @@
 import { Button, Container, MenuItem, Select, Stack, Toolbar, Typography } from '@mui/material'
-import Grid2 from '@mui/material/Unstable_Grid2'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import ResourceCard from '../Components/ResourceCard'
+import ResourceList from '../Components/ResourceList'
 import ResourceTagFilter from '../Components/ResourceTagFilter'
 import { database } from '../store/Firebase'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
@@ -10,8 +9,7 @@ import { useUser } from '../store/UserProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { Resource, useHomeworkResources } from '../util/resources'
 import { get, ref } from 'firebase/database'
-
-type SortOption = 'name' | 'date-desc' | 'date-asc'
+import { SortOption, useResourcePageState } from './useResourcePageState'
 
 interface StudentViewResourcesPageTexts {
   resourcesFrom: string
@@ -50,20 +48,6 @@ const STUDENT_VIEW_RESOURCES_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData
   [SupportedLocale.EN_US, EN_US],
   [SupportedLocale.RO_RO, RO_RO]
 ])
-
-function buildTagIndex(resources: Resource[]): Array<{ slug: string; label: string }> {
-  const seen = new Set<string>()
-  const result: Array<{ slug: string; label: string }> = []
-  for (const resource of resources) {
-    for (const [slug, label] of Object.entries(resource.tags)) {
-      if (!seen.has(slug)) {
-        seen.add(slug)
-        result.push({ slug, label })
-      }
-    }
-  }
-  return result
-}
 
 export default function StudentViewResourcesPage() {
   const { teacherId } = useParams<{ teacherId: string }>()
@@ -115,32 +99,22 @@ export default function StudentViewResourcesPage() {
     })
   }, [resources])
 
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
-  const [sortBy, setSortBy] = useState<SortOption>('date-desc')
-
-  const handleTagToggle = (slug: string) => {
-    setSelectedTags((prev) => {
-      const next = new Set(prev)
-      if (next.has(slug)) next.delete(slug)
-      else next.add(slug)
-      return next
-    })
-  }
-
-  const visibleResources = resources
-    .filter((r) => {
-      if (searchQuery && !r.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
-      if (selectedTags.size > 0 && !Array.from(selectedTags).some((slug) => slug in r.tags))
-        return false
-      return true
-    })
-    .sort((a, b) => {
-      if (sortBy === 'name') return a.title.localeCompare(b.title)
-      if (sortBy === 'date-desc')
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    })
+  const storageKey = `resources-state:teacher-view:${teacherId ?? ''}`
+  const {
+    searchQuery,
+    setSearchQuery,
+    selectedTags,
+    handleTagToggle,
+    selectedTypes,
+    handleTypeToggle,
+    sortBy,
+    setSortBy,
+    pagedResources,
+    hasMore,
+    loadMore,
+    tagIndex,
+    bookmarkResource
+  } = useResourcePageState(resources, storageKey)
 
   const allExpanded = resources.every((r) => expandedMap[r.id])
   const toggleAll = () => {
@@ -149,8 +123,6 @@ export default function StudentViewResourcesPage() {
   }
   const setExpanded = (id: string, value: boolean) =>
     setExpandedMap((prev) => ({ ...prev, [id]: value }))
-
-  const tagIndex = useMemo(() => buildTagIndex(resources), [resources])
 
   return (
     <Container maxWidth="md" sx={{ pt: 3 }}>
@@ -187,22 +159,23 @@ export default function StudentViewResourcesPage() {
         tags={tagIndex.map(({ slug, label }) => ({ slug, label }))}
         searchQuery={searchQuery}
         selectedTags={selectedTags}
+        selectedTypes={selectedTypes}
         onSearchChange={setSearchQuery}
         onTagToggle={handleTagToggle}
+        onTypeToggle={handleTypeToggle}
       />
 
-      <Grid2 container spacing={2} sx={{ mt: 1 }}>
-        {visibleResources.map((resource) => (
-          <Grid2 xs={12} key={resource.id}>
-            <ResourceCard
-              resource={resource}
-              expanded={expandedMap[resource.id] ?? false}
-              onExpandedChange={(v) => setExpanded(resource.id, v)}
-              onDetails={(r) => navigate(`/resources/${r.id}`)}
-            />
-          </Grid2>
-        ))}
-      </Grid2>
+      <ResourceList
+        resources={pagedResources}
+        hasMore={hasMore}
+        loadMore={loadMore}
+        expandedMap={expandedMap}
+        onExpandedChange={setExpanded}
+        onDetails={(r) => {
+          bookmarkResource(r.id)
+          navigate(`/resources/${r.id}`)
+        }}
+      />
     </Container>
   )
 }
