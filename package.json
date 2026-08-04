@@ -1,6 +1,6 @@
 {
   "name": "music-with-susanna",
-  "version": "2.0.32",
+  "version": "2.0.33",
   "homepage": "https://vioara-cu-susanna.ro",
   "private": true,
   "dependencies": {
@@ -35,6 +35,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "prebuild": "rm -f node_modules/.cache/.eslintcache",
     "build": "react-scripts build",
     "test": "jest",
     "eject": "react-scripts eject",
