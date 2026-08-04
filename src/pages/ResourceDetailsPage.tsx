@@ -1,10 +1,16 @@
+import AudiotrackIcon from '@mui/icons-material/Audiotrack'
+import ImageIcon from '@mui/icons-material/Image'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import YouTubeIcon from '@mui/icons-material/YouTube'
 import {
   Box,
   Button,
+  Chip,
   CircularProgress,
   Container,
   DialogContent,
   DialogContentText,
+  Divider,
   Stack,
   Toolbar,
   Tooltip,
@@ -18,7 +24,6 @@ import EditResourceDialog from '../Components/EditResourceDialog'
 import EditorCard from '../Components/EditorCard'
 import HomeworkCard from '../Components/HomeworkCard'
 import MultiActionDialog from '../Components/MultiActionDialog'
-import ResourceCard from '../Components/ResourceCard'
 import TableOfContents, { TocEntry } from '../TableOfContents'
 import { database } from '../store/Firebase'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
@@ -30,6 +35,7 @@ import { UserRole } from '../util/User'
 import {
   Resource,
   ResourceHomeworkReference,
+  ResourceType,
   deleteResource,
   findResourceUsageInHomework,
   updateResourceMetadata,
@@ -50,6 +56,7 @@ interface ResourceDetailsPageTexts {
   confirm: string
   back: string
   draft: string
+  edit: string
 }
 
 const EN_US: ResourceDetailsPageTexts = {
@@ -64,7 +71,8 @@ const EN_US: ResourceDetailsPageTexts = {
   cancel: 'Cancel',
   confirm: 'Delete',
   back: 'Back',
-  draft: 'Draft'
+  draft: 'Draft',
+  edit: 'Edit'
 }
 
 const RO_RO: ResourceDetailsPageTexts = {
@@ -79,7 +87,8 @@ const RO_RO: ResourceDetailsPageTexts = {
   cancel: 'Anulează',
   confirm: 'Șterge',
   back: 'Înapoi',
-  draft: 'Ciornă'
+  draft: 'Ciornă',
+  edit: 'Editează'
 }
 
 const RESOURCE_DETAILS_PAGE_TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -91,6 +100,89 @@ interface StudentGroup {
   studentId: string
   studentName: string
   refs: ResourceHomeworkReference[]
+}
+
+function resourceTypeIcon(type: ResourceType) {
+  switch (type) {
+    case ResourceType.PDF:
+      return <PictureAsPdfIcon color="error" fontSize="large" />
+    case ResourceType.AUDIO:
+      return <AudiotrackIcon color="primary" fontSize="large" />
+    case ResourceType.IMAGE:
+      return <ImageIcon color="success" fontSize="large" />
+    case ResourceType.YOUTUBE:
+      return <YouTubeIcon sx={{ color: '#FF0000', fontSize: '2rem' }} />
+  }
+}
+
+function ResourcePreview({ resource }: { resource: Resource }) {
+  switch (resource.type) {
+    case ResourceType.AUDIO:
+      return (
+        <Box component="audio" controls sx={{ width: '100%', mt: 1.5, display: 'block' }}>
+          <source src={resource.url} />
+        </Box>
+      )
+    case ResourceType.PDF:
+      return (
+        <Box
+          component="object"
+          data={resource.url}
+          type="application/pdf"
+          sx={{ width: '100%', height: 500, mt: 1.5, display: 'block' }}>
+          <Typography variant="body2" color="text.secondary">
+            <a href={resource.url} target="_blank" rel="noreferrer">
+              Download PDF
+            </a>
+          </Typography>
+        </Box>
+      )
+    case ResourceType.IMAGE:
+      return (
+        <Box
+          component="img"
+          src={resource.url}
+          alt={resource.title}
+          sx={{
+            width: '100%',
+            maxWidth: { md: '60%' },
+            mt: 1.5,
+            display: 'block',
+            borderRadius: 1,
+            mx: 'auto'
+          }}
+        />
+      )
+    case ResourceType.YOUTUBE: {
+      try {
+        const urlObj = new URL(resource.url)
+        let videoId: string | null = null
+        if (urlObj.hostname === 'youtu.be') {
+          videoId = urlObj.pathname.slice(1)
+        } else if (urlObj.hostname.includes('youtube.com')) {
+          if (urlObj.pathname === '/watch') {
+            videoId = urlObj.searchParams.get('v')
+          } else if (urlObj.pathname.startsWith('/embed/')) {
+            videoId = urlObj.pathname.split('/embed/')[1]
+          }
+        }
+        if (!videoId) return null
+        const embedUrl = `https://www.youtube.com/embed/${videoId}`
+        return (
+          <Box
+            component="iframe"
+            src={embedUrl}
+            title={resource.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            sx={{ width: '100%', height: 400, mt: 1.5, display: 'block', border: 'none' }}
+          />
+        )
+      } catch {
+        return null
+      }
+    }
+  }
 }
 
 export default function ResourceDetailsPage() {
@@ -151,7 +243,6 @@ export default function ResourceDetailsPage() {
   // ── Resource card state ────────────────────────────────────────────────────
   const [resource, setResource] = useState<Resource | null>(null)
   const [resourceLoading, setResourceLoading] = useState(true)
-  const [resourceExpanded, setResourceExpanded] = useState(true)
   const [editResourceTarget, setEditResourceTarget] = useState<Resource | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteHomeworkTarget, setDeleteHomeworkTarget] =
@@ -444,14 +535,46 @@ export default function ResourceDetailsPage() {
             </Box>
           ) : resource ? (
             <Box sx={{ mb: 3 }}>
-              <ResourceCard
-                resource={resource}
-                editable={isTeacher}
-                expanded={resourceExpanded}
-                onExpandedChange={setResourceExpanded}
-                onEdit={isTeacher ? (r) => setEditResourceTarget(r) : undefined}
-                onDelete={isTeacher && canDelete ? () => setDeleteOpen(true) : undefined}
-              />
+              <Stack direction="row" alignItems="flex-start" spacing={2} sx={{ mb: 1.5 }}>
+                <Box sx={{ flexShrink: 0, mt: 0.5 }}>{resourceTypeIcon(resource.type)}</Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Stack
+                    direction="row"
+                    alignItems="flex-start"
+                    justifyContent="space-between"
+                    spacing={1}>
+                    <Typography variant="h5" sx={{ wordBreak: 'break-word' }}>
+                      {resource.title}
+                    </Typography>
+                    {isTeacher && (
+                      <Button
+                        size="small"
+                        sx={{ flexShrink: 0 }}
+                        onClick={() => setEditResourceTarget(resource)}>
+                        {strings.edit}
+                      </Button>
+                    )}
+                  </Stack>
+                  {resource.createdAt && (
+                    <Typography variant="caption" color="text.secondary">
+                      {localeManager.formatLongDate(resource.createdAt, {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </Typography>
+                  )}
+                  {Object.values(resource.tags ?? {}).length > 0 && (
+                    <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.5, mt: 0.75 }}>
+                      {Object.values(resource.tags ?? {}).map((tag) => (
+                        <Chip key={tag} label={tag} size="small" />
+                      ))}
+                    </Stack>
+                  )}
+                </Box>
+              </Stack>
+              {resource.url && <ResourcePreview resource={resource} />}
+              <Divider sx={{ mt: 3 }} />
             </Box>
           ) : null}
 
