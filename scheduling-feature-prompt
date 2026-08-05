@@ -1,0 +1,364 @@
+We're going to design a scheduling feature for this website. We're not making any code changes yet. We're trying to design the feature in detail. You're going to create a new file under .claude/plans, using the same naming pattern. You can create an empty file at the beginning, and then, as the plan cristalizes, we'll add more details to it. 
+
+I'm going to describe what I want to accomplish in general lines. Then, you're going to ask questions about every aspect of the design, until everything is cristal clear.
+
+So the scheduling feature is available to signed in users. Some context, not necessarily in a specific order, just as it comes to me:
+
+- there are two types of users: teachers and students.
+- a teacher wants to schedule the lessons with her students for the next semester for example
+- some lessons are individual, some are group lessons
+- the teacher has some available days / times, but also has some times / days that she prefers not to teach, but may decide to, if there's no other option; and then there are days/times when she won't teach no matter what
+- the same goes for students.
+- but the teacher's schedule has priority
+- cancelation: 
+  - the teacher can cancel any lesson, with the option to schedule a make-up lesson
+  - the student has a cancelation window; for example, if they cancel more than 24h or 48h in advance, then they don't get charged; but they don't get a make-up lesson. if they don't cancel outside that window, then they lose their money for the lesson, and don't get a make-up lesson.
+  - when a student cancels a lesson, they get an email notification saying what's going to happen
+- the student and the teacher pre-set their availability
+- group class cancelations — these ones are trickier, because when a student cancels, then the whole lesson needs to be canceled / rescheduled. we need to talk through this one
+- email notifications: we'll create a firebase cloud function that allows us to send emails. we'll design this separately. for now, we'll just use a no-op function that can later call the cloud function
+
+- i'm not sure how to model the schedule, and also the flow of negotiating a time. part of the problem is that when the teacher asks the students to tell their availability, they don't offer all actually available spots. they just reply with maybe one or two slots that are not terribly convenient for the teacher. so we need to think about that. also, how do the teacher and students communicate during this negotiation? currently, the teacher sends a whatsapp message to all students, and then follows up. some forget to respond, some respond with too few slots, or they don't take into account the days that the teacher gave them. so we need to find ways to remind them to respond, and pressure them to pick slots that are more convenient to the teacher. maybe different periods of time have different scores for the teacher? for example, a score between 0 and 10, where 0 is not available, 10 is fully available, and then some things in the middle? none of this is set in stone, just spitballing. 
+
+- group classes:
+  - a class can have multiple students, but always a single teacher. the teacher chooses ahead of time the students for that class — so they don't just sign up. but then, we need a flow that allows everyone to select their availability.
+
+one use case i can think of (not exhaustive, so please ask for other use case scenarios you think may be relevant)
+
+
+- teacher has 3 students: Ana, Barbara and Chris
+- one has 45 minute lessons, one 30 minute, one 1h
+- the lessons are regular: every monday, tuesday and wednesday respectively, at 10, 11 and 12.
+- in order to schedule the lessons, the teacher outlines her availability
+  - the availability is between 9 and 15 on Mon and Tu, and between 11 and 17 on Wed and Thu
+- students are assigned lesson durations:
+  - Ana has 45 min lessons
+  - Barbara has 30m
+  - Chris 1h
+- they are also each assigned a number of lessons. Ana has 1 lesson per week; Barbara has 2, Chris has 3
+- what about group lessons?
+  - each student may receive one or multiple group lessons. the teacher creates the lesson with everything except the exact time. for example: Ana and Barbara are in the group lesson, which takes 45 minutes once every 2 weeks
+
+let's start from here. please start asking clarifying questions before we start creating data structures and designing the feature.
+
+====
+
+Scope & Users
+Q1. Single teacher or multi-teacher?
+The app currently has a single primary teacher (SUSANNA_USER_ID). Is this scheduling feature built for Susanna specifically, or should it be generic enough for any teacher who signs up?
+
+Q2. Student self-service or teacher-managed enrollment?
+Can students sign themselves up for a lesson type (individual/group), or does the teacher always create the relationship first (assign duration, lesson count, group membership)?
+
+The Scheduling Period ("Semester")
+Q3. What triggers a new scheduling cycle?
+Does the teacher manually kick off a "let's schedule the next semester" event? Or does it happen on a fixed calendar cadence (e.g., every September and January)? Can multiple cycles be active at once (e.g., re-scheduling one student while the semester is already running for others)?
+
+Q4. What does a "semester" contain?
+Is it a fixed date range (Sep 1 – Dec 20), a fixed number of lessons, or something else? Who sets the start/end?
+
+Q5. Are lessons strictly recurring, or can they be ad-hoc?
+The use case you described sounds like fixed weekly slots. But can the teacher also add one-off lessons outside the regular cadence?
+
+Availability & Scoring
+Q6. Is the teacher's availability set once per semester, or is it a rolling/permanent preference that persists across semesters?
+Can she have a "default weekly template" she adjusts per semester?
+
+Q7. On the scoring scale (0–10) — who assigns the score, and to what granularity?
+Does the teacher draw blocks on a calendar (e.g., Mon 9–12 = 8, Mon 12–15 = 5) or does she pick from a small set of labels (Preferred / OK / Last Resort / Unavailable)?
+
+Q8. Do students also score their availability, or do they just mark Available / Unavailable?
+If they also score, is the final slot score a function of teacher score × student score, or does teacher score simply dominate?
+
+Q9. What's the minimum granularity for availability slots?
+15 minutes? 30 minutes? Or is it free-form (teacher draws a block from 9:40 to 11:25)?
+
+The Negotiation Flow
+Q10. Who sees whose availability?
+Can students see the teacher's availability scores (so they know which slots the teacher prefers)? Or does the teacher keep her scores private and just presents students with a set of options?
+
+Q11. How many slots must a student submit?
+Is there a minimum enforced by the system (e.g., "you must pick at least 3 slots before you can submit")? Does the minimum vary by lesson count per week?
+
+Q12. What happens after students submit availability?
+Does the system auto-propose an optimal schedule, or does the teacher review all responses and make the final call manually? Or some hybrid (system suggests, teacher confirms)?
+
+Q13. Reminders for non-responders — who controls them?
+Does the teacher hit "Send reminder" manually, or does the system fire automatic reminders on a schedule (e.g., 48h after the request, then again 24h before the deadline)?
+
+Q14. Is there a submission deadline for students?
+Can the teacher set a deadline ("respond by Aug 15") after which the system locks student input and the teacher proceeds with what she has?
+
+Group Lessons & Cancellations
+Q15. For group lesson cancellations — what's the decision model?
+A few options:
+
+If any student cancels → whole lesson is canceled/rescheduled (you hinted at this)
+If all students cancel → lesson is canceled; if some cancel → lesson still runs for those who show
+Teacher decides case-by-case after seeing who canceled
+Which is closest to what you want, or is it something else?
+
+Q16. For group makeup lessons — does every student in the group get a makeup, or only those who attended the original (canceled) session?
+
+Q17. When a group lesson is rescheduled, does the availability negotiation restart, or does the teacher just pick a new time unilaterally?
+
+Cancellation Policy
+Q18. Is the cancellation window configurable per student, or is it a global setting?
+E.g., Ana has 48h, Barbara has 24h?
+
+Q19. "Losing the money" — is billing tracked inside this app, or is payment handled externally (bank transfer, cash)?
+If external, does the app just record "lesson lost / charged" as a status, or does it need to integrate with a payment system?
+
+Q20. Can students cancel directly in the app, or do they message the teacher and she marks it?
+
+Notifications
+Q21. What events trigger email notifications, and to whom?
+Beyond cancellations, do you want notifications for: new availability request sent, schedule confirmed, upcoming lesson reminder (e.g., 24h before), makeup lesson proposed?
+
+Q22. Are notifications sent to both teacher and student on every event, or are some teacher-only / student-only?
+
+These cover most of the surface area I can see. A few more will probably surface once we nail down the data model, but this should get us pretty far.
+
+====
+
+Before I answer, I also want to point something out: I'd like to schedule this feature in layers: i.e. Phase 1 (MVP, fewer features, just the must-haves), Phase 2, more things, etc. So we develop it in small increments. So let's design it this way. For example, in Phase 1, only recurrent lessons are possible, later on, ad-hoc lessons are also possible — just an example, i don't necessarily mean this specific thing in Phases 1/2.
+
+Q1. any teacher who signs up. not just Susanna.
+Q2. tge teacher always creates the relationship — duration, lesson count, group membership
+Q3. the teacher triggers the scheduling cycle manually, and decides how long it will be (i.e. 7 weeks, 9 weeks, or based on a start-end date etc.). but during that cycle, it's not necessary that all students will be doing lessons every week. for example, Ana has lessons from Jan 1st to April 30th, but Tom has lessons from Feb 1st to May 31st. also, Ana has a spring break between March 10-17, so she won't come to lessons. Tom celebrates Easter between April 1 and 5 and he also can't come to lessons. i'm thinking, for simplicity, cycles==semesters, and they don't overlap.
+Q4. i'm thinking a semester is a fixed date range. the teacher sets the start-end. it's all driven by the teacher. there isn't a fixed number of lessons, for the reasons in Q3. so we need to take it week by week. but most lessons are recurring — for example Ana has her one weekly lesson every Wednesday between 5-5:45 pm, while Tom has his between 4-4:45 pm on Thursday. So that's kind of the baseline. But then there are exceptions. for example, between April 7-14, Tom's lessons will be at different times, because of reasons negotiated in the scheduling phase. 
+Q5. The lessons are in general recurring, but they can be ad-hoc as well. Like make-up lessons, or just extra lessons the teacher decides to do. 
+Q6. Availability is set once per semester; the next semester the new availability will populate from last semester's one, and then the teacher can change it. Default weekly template sounds like a good idea. The teacher can choose to use the weekly template for a specific week, or to customize that week.
+Q7. The teacher assigns the scores. The student also assigns their own scores i'm thinking, for their own schedules. A small set of labels sounds like a better idea, because it's easier to grasp. So let's go with that. 
+Q8. I'm thinking students should also score their availability — this may be a good way to encourage them to offer more slots. Teacher scores are more important than student scores though. But yeah, that's the gist — the slot score is a combination of the teacher and student score. 
+Q9. This one is tricky. I'm leaning towards free-form. 
+Q10. this one i think we need to discuss — what's best? for example, if the teacher shows all her availability — including the OK/Last resort slots, the students might just think they can pick those like any others. but if she doesn't show them, then the student may think that there's no match with their schedule. So what should we do? I'm slightly leaning towards just sharing all scores. But when a student picks an OK/Last resort spot, they get a message along the lines of "you picked a slot that may not ultimately be available; to ensure maximum likelyhood of picking a secure spot, pick one of the green/Preferred spots". Thoughts?
+Q11. It's probably a good idea to have a minimum number of slots per student, with at least one Preferred. say, 3? i'm not sure what's best for this one. 
+Q12. I'd go for hybrid: system suggests the best schedule, teacher confirms/ makes changes manually. But i'm worried that there can't just be a one-off flow (i.e. teacher proposes, student chooses, teacher confirms). It might have to be a multi-pass flow: the teacher hasn't been able to finalize the schedule after the first pass. and there has to be another pass, where she adjusts availability, and so do the students. 
+Q13. the system fires automatic reminders on a schedule. we'll have cloud functions for this, but no need to design them right now.
+Q14. Yes, submission deadline.
+Q15. Teacher decides case-by-case. 
+by the way, the teacher has to be notified regarding a cancelation, and she has to acknowledge it before the lesson is fully canceled. That way, we don't just have lessons disappear from the calendar. and same with teachers canceling: the student also has to acknowledge, and they get notified via email (cloud functions).
+Q16. Group make-up lessons: the lesson will be done at a new time with the same students that were supposed to attend the original lesson.
+Q17. When a (group) lesson is rescheduled, the availability negotiation restarts. but we have a baseline — the original availability of the teacher/students, so we can start there.
+Q18. There's a default cancellation window, but it's also configurable per student.
+Q19. For now, billing is not tracked in the app. But messages should be explicit - the lesson money will not be returned no matter what, but when the window is respected, a make-up may be scheduled if the student wants it.
+Q20. The students cancel in the app. 
+Q21. Yes, notifications for all those things. And maybe we'll make them configurable, so the teacher/student can turn some notifications off (or all). 
+Q22. Both the teacher and the student, also based on their settings.
+
+====
+
+Great answers — this is getting clearer. Before I go deeper on individual pieces, let me ask a round of follow-up questions organized by theme.
+
+Phases / MVP
+Q23. Can we try to define Phase 1 together right now?
+My instinct for an MVP would be: recurring individual lessons only (no group lessons), single-pass negotiation (no multi-pass), teacher-confirms-only (no student acknowledgment of confirmed schedule), and no notification configurability. Group lessons, multi-pass, and configurable notifications would be Phase 2+. Does that feel right, or do you see it differently?
+
+Negotiation Flow (the most complex part)
+I want to make sure I understand the full sequence of one "pass." Let me propose a strawman — correct wherever it's wrong:
+
+Teacher creates a semester (date range), sets her weekly availability template with scores/labels
+Teacher creates lesson assignments per student (duration, frequency, group membership)
+Teacher opens a "scheduling round" — system notifies each student to submit their availability by a deadline
+Students log in, see the teacher's availability (all labels visible), and mark their own blocks with labels
+System enforces minimum: e.g., at least 3 blocks with at least 1 Preferred
+After deadline (or once all students submit), system suggests an optimal schedule
+Teacher reviews suggestion, adjusts manually if needed, then "proposes" the schedule
+Does the student then confirm their specific slot, or does the teacher just finalize?
+Confirmed schedule generates recurring lesson instances across the semester
+Q24. Step 8 — is student confirmation needed after the teacher proposes?
+
+Q25. What triggers a second pass? Teacher manually says "this didn't work, let's do another round"? Or does it happen automatically if the system can't find a valid schedule?
+
+Q26. In a second pass, do students re-submit from scratch, or do they amend their previous availability?
+
+Availability & Scoring
+Q27. Let's pin down the labels. Proposal:
+
+Preferred — teacher/student actively wants this slot
+Available — works fine, no preference
+Last Resort — would rather not, but could if needed
+Unavailable — not possible
+Do these four work, or do you want fewer/different ones?
+
+Q28. Free-form blocks and lesson fitting.
+When the teacher draws a "Preferred" block from 9:00–15:00 on Monday, does the system treat that as a continuous window from which it can place any lesson (of the right duration) anywhere inside it? Or does she need to explicitly mark each potential slot (e.g., 9:00–9:45, 9:45–10:30, …)?
+
+Continuous window is more flexible but means the system has to figure out packing. Explicit slots are simpler but tedious to enter.
+
+Cancellation Flow
+Q29. Cancellation scope — instance or series?
+When a student cancels, is it always a single lesson instance ("I can't make it this Wednesday"), or can they also say "I'm done from March onwards"? Same question for the teacher.
+
+Q30. Acknowledgment timeout.
+If the teacher doesn't acknowledge a student's cancellation within, say, 48 hours, what should happen? Does it auto-cancel? Does the lesson stay on the calendar as ambiguous? Should there be a deadline for acknowledgment?
+
+Q31. Teacher-initiated cancellation acknowledgment.
+When the teacher cancels, and the student has to acknowledge — what exactly are they acknowledging? Just "I've seen this"? Or are they choosing between options (e.g., "yes, schedule a makeup" vs. "no, I don't need a makeup")?
+
+Confirmed Schedule
+Q32. What does the confirmed schedule look like day-to-day?
+Once finalized, does the system generate individual lesson records for every occurrence in the semester (e.g., 16 Wednesdays at 5pm)? Or does it store the recurrence rule and generate instances on the fly?
+
+Q33. Calendar export — Phase 1 or later?
+.ics / Google Calendar sync. Not asking you to commit to it now, just want to know if it's on the radar at all.
+
+Group Lessons (even if Phase 2)
+Q34. When a group lesson is rescheduled and negotiation restarts — does the teacher send a new availability request to the whole group simultaneously, same as the initial flow?
+
+Q35. If the group lesson is mid-semester and one student has since changed their availability (e.g., they have a new constraint on Tuesdays), does the system pick that up, or does the student need to re-enter?
+
+These are the remaining open questions. Once we nail these down — especially Q23 (phase boundary) and Q24–Q26 (negotiation flow) — I think we'll have enough to write the first full draft of the plan.
+
+
+====
+
+Q23. MVP sounds good. But i want to plan the other phases as well after we finish planning the MVP/Phase 1.
+
+Negotiation flow:
+
+Q24. 8. for MVP, the teacher just finalizes the schedule. Phase 2+, student has to confirm their final slot.
+
+Q25. the teacher triggers the next round if they're unsatisfied.
+Q26. students amend their previous availability
+Q27. sounds good. but let's design in a way where we can add more later. maybe a label to number mapping so we can use intermediate scores later? what do you think?
+Q28. leaning towards continuous window from which it can place any lesson anywhere inside it. but if the implementation is too complicated, we can do slots.
+Q29. I think cancelation will be a single lesson, but with the option to say "cancel all lessons going forward", in which case, multiple requests for canceling a single lesson are processed.
+Q30. The lesson is canceled when the student/teacher cancels it. But until acknowledgement/ or the actual lesson time, the system sends notifications as reminders.
+Q31. They are just confirming they have seen the cancellation.
+Q32. I'm leaning towards generating individual lesson records for every occurrence. There are not that many in a semester.
+Q33. Calendar export: Phase 1.
+
+Q34. Yes.
+Q35. I think maybe the user may change their availability at any time. And when a lesson needs to be rescheduled, it takes the latest availability into account.
+
+====
+
+Labels & Scoring
+Q36. Proposed label-to-number mapping:
+
+Label	Score	Rationale
+Preferred	10	Actively want this
+Available	6	Fine, no preference
+Last Resort	2	Would rather not
+Unavailable	0	Hard block
+Gaps between values leave room to insert intermediate labels later (e.g., a "Preferred but not ideal" at 8). Does this feel right?
+
+Q37. Proposed combined score formula:
+Teacher Unavailable → combined = 0 (hard block, regardless of student).
+Otherwise: combined = (teacher_score × 7 + student_score × 3) / 10
+
+This gives teacher 70% weight. Student Unavailable → combined = 0.6 (still schedulable but the system would strongly deprioritize it). Thoughts on the weighting?
+
+Q38. What does "optimal schedule" mean to you?
+Maximize the sum of combined scores across all scheduled lessons? Or something else — e.g., maximize the number of students who got a Preferred slot, even if that means some get a lower combined score?
+
+Q39. Slot granularity for placement.
+Even if availability is free-form, the system needs to snap lesson start times to something. Proposal: 15-minute intervals (so a lesson can start at 9:00, 9:15, 9:30… but not 9:07). Does that work, or do you want 30-minute snapping?
+
+Q40. Breaks between lessons.
+Does the teacher need buffer time between consecutive lessons? E.g., 10 minutes between every lesson? Is this configurable, or always zero?
+
+Cancellation State Machine
+Q41. Is the lesson immediately canceled, or does it enter a "pending cancellation" state?
+You said "the lesson is canceled when the student/teacher cancels it, but reminders are sent until acknowledgment." I want to confirm: from the moment of cancellation, the lesson is gone from the active calendar — acknowledgment is just informational (confirming receipt), not a gate that holds the cancellation?
+
+Q42. "Cancel all going forward" — one acknowledgment or per-lesson?
+If a student cancels 8 remaining lessons, does the teacher get 8 separate notifications to acknowledge, or one bundled one ("student X has canceled all remaining lessons from date Y")?
+
+Confirmed Schedule & Live Updates
+Q43. When a student changes their availability mid-semester, does it affect already-confirmed lessons?
+My assumption: no. Changes only affect unscheduled or rescheduled lessons. Confirmed recurring lessons are frozen unless explicitly canceled. Is that correct?
+
+Q44. Once the teacher finalizes the schedule, how do students learn about it?
+Email notification + visible in-app calendar? Or just in-app?
+
+Minimum Submissions
+Q45. The "at least 3 slots, at least 1 Preferred" minimum — is this per round total, or per week of the semester?
+For a 16-week semester, "3 total" feels very thin. "3 per week" feels excessive for a fixed recurring slot. Maybe: "3 distinct time windows (day + time range), at least 1 Preferred" — meaning they're expressing recurring preferences, not per-week slots?
+
+Multi-teacher
+Q46. Can a student have lessons with multiple teachers within the same app?
+E.g., violin with Susanna and theory with another teacher? Or is a student always tied to one teacher?
+
+Time zones
+Q47. Safe to assume all users are in the same time zone (Romania / EET)?
+Or do we need to design for students who are abroad?
+
+That should be the last batch. Once you answer these, I'll draft the full plan including Phase 1 spec and Phase 2/3 outlines.
+
+====
+
+Q36. sounds good
+Q37. looks good, but let's make those weights configurable in the code, so we can change them easily
+Q38. good question. maybe when the system makes a suggestion, it allows the teacher to choose:
+- best schedule for the teacher (most teacher preferred scores)
+- most/all students included; i think actually, all the students should always be included unless no option exists for that, in which case the system just generates the next best thing, and notifies the teacher that students X,Y,Z were not included.
+- most students with preferred scores
+
+Q39. 15 minute snapping is reasonable. maybe we can also make this configurable in the code? like a constant somewhere.
+
+Q40. yes. at least 10 minute breaks between lessons. but large gaps are not great.
+
+oh and unfortunately i realized one more kink: the teacher may teach at multiple locations. so: we want them to be able to create semester schedules for each location. so not a single per teacher, but multiple.
+
+Q41. correct — not a gate. 
+Q42. 8 separate notifications. i just think it's simpler to implement, but correct me if i'm wrong. obviously, the UX is better if there's a single notification.
+
+Q43. no.
+Q44. email notification + in-app calendar.
+Q45. good question. so i would say 3 recurring preferrences. but on top of those, they can add individual preferences for each week. for example, in week 3, we can't come at all. 
+Q46. a student can have lessons with multiple teachers. but we don't need to worry about synchronizing teacher schedules. 
+Q47. i would say, design for a single time zone, but store all times with full time zone info, so we can later expand to multiple timezones. 
+
+
+====
+
+
+Teaching Locations
+This is a meaningful addition. A few quick questions:
+
+Q48. Is a semester tied to exactly one location, or can a teacher mix locations within a semester?
+E.g., "Mondays I teach at home, Wednesdays at the music school" — is that one semester or two?
+
+Q49. Is a student tied to a location, or can they follow the teacher across locations?
+E.g., Ana always comes to the home studio, but Barbara might come wherever.
+
+Q50. Does location affect student availability scoring?
+E.g., if a location is far from a student, they might not be available on short notice. Or is location just metadata on the lesson (address, notes) with no bearing on scheduling logic?
+
+Algorithm & Optimization
+Q51. I'd propose reframing the three strategies slightly:
+
+All strategies try to include every student as a hard constraint first. Only if a student genuinely can't be fit in does the system notify the teacher. The strategies then differ in what they optimize within that constraint:
+
+Best for teacher — maximize sum of teacher scores across all slots
+Best for students — maximize number of students placed in their Preferred slots
+Balanced — weighted combination of both (weights configurable in code)
+Does that framing feel right, or did you have a different vision for what "all students included" means as its own strategy?
+
+Q52. How many candidate schedules does the teacher see?
+Option A: Teacher picks a strategy → sees one suggested schedule, then edits manually.
+Option B: System always shows all three strategies side by side → teacher picks one as a starting point, then edits.
+
+Gap Penalty
+Q53. "Large gaps are not great" — how should the algorithm handle this?
+Proposal: after satisfying the minimum 10-minute break constraint, the algorithm adds a penalty for gaps longer than, say, 30 minutes between lessons in the same day, making compact schedules score higher. The gap threshold would be a configurable constant. Does that capture what you meant?
+
+Notification Bundling (Q42 revisited)
+My proposal: internally create one cancellation record per lesson (simpler to implement, correct audit trail), but send a single bundled notification — "Student X has canceled all remaining lessons from [date]." The teacher acknowledges once. This is both simpler to implement and better UX than 8 separate notifications. Does that work?
+
+Once you answer these I'll draft the full plan — Phase 1 spec + Phase 2/3 outlines. We're close.
+
+
+====
+
+Q48. "Mondays I teach at home, Wednesdays at the music school" — this is exactly right.
+Q49. students are tied to locations.
+Q50. I would say, just treat locations as different partitions. for example, the teacher creates one cycle/semester for Music School, sets her availability, finalizes the plan. then for Home, she sets separate availability (but the system doesn't have to validate that), separate students, and separate negotiation. what do you think? it feels easier to implement like this, because you simply use the same system multiple times, once per location.
+
+Q51. yes.
+Q52. Option B.
+Q53. yes.
+Q42 revisited. sounds good.
