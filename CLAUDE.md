@@ -105,6 +105,24 @@ File uploads go to Firebase Storage at `users/{uid}/files/{name}_{randomSuffix}.
 
 - **CRA (Create React App)** — Webpack is managed by `react-scripts`; no custom webpack config
 - **Deployed via `gh-pages`** to the `build/` directory; `build/CNAME` sets the custom domain
-- YouTube video metadata is fetched via a Firebase Cloud Function at `europe-west1-music-with-susanna.cloudfunctions.net/fetchYoutubeVideo`
 - Firebase config lives in [src/store/Firebase.ts](src/store/Firebase.ts) (app init, exports `auth`, `database`, `storage`, `analytics`)
 - DB snapshots for version history are kept in [db-snapshots/](db-snapshots/)
+
+### Cloud Functions
+
+Source: `/Users/florinc/dev/music-with-susanna-functions/functions/src`
+All functions are HTTP `onRequest` triggers deployed to `europe-west1`. Base URL: `https://europe-west1-music-with-susanna.cloudfunctions.net/`
+
+All functions require `Authorization: Bearer <idToken>` (Firebase ID token). The three Facebook/YouTube functions are **teacher-only** (via `authenticateAndAuthorizeTeacher`). `sendEmail` allows **both teachers and students** but enforces that the `to` address belongs to a known related user (teacher's student or student's teacher).
+
+| Function | Caller | Description |
+|---|---|---|
+| `sendEmail` | Teacher or student | Sends a Gmail email to a verified related user. Body: `{ to, subject, html?, text?, calendarEvent? }`. When `calendarEvent` is provided, attaches an iCalendar invite or cancellation. Used for all scheduling notifications. |
+| `fetchYoutubeVideo` | Teacher only | Takes `?videoId=` query param, returns YouTube snippet metadata via the Data API v3. |
+| `fetchFacebookPosts` | Teacher only | Fetches and prettifies the Facebook page feed. |
+| `saveFacebookPostPhotos` | Teacher only | Downloads FB post images, uploads to Firebase Storage, saves records to RTDB. |
+
+**`sendEmail` — `calendarEvent` field:**
+- `uid`: stable lesson ID — lets calendar apps recognize updates/cancellations across emails
+- `method`: `"request"` for invites/reminders, `"cancel"` for cancellations
+- `sequence`: increment each time a calendar message is sent for the same lesson (tracked as `calendarSequence` on the lesson record in RTDB)
