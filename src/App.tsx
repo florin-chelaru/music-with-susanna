@@ -24,6 +24,8 @@ import StudentResourcesPage from './pages/StudentResourcesPage'
 import StudentViewResourcesPage from './pages/StudentViewResourcesPage'
 import TeacherResourcesPage from './pages/TeacherResourcesPage'
 import VideoChannel from './pages/VideoChannel'
+import SchedulingPage from './pages/scheduling/SchedulingPage'
+import AvailabilityCalendarTest from './pages/scheduling/AvailabilityCalendarTest'
 import AnnouncementProvider from './store/AnnouncementProvider'
 import FabPositionProvider from './store/FabPositionProvider'
 import LocaleProvider from './store/LocaleProvider'
@@ -76,6 +78,24 @@ function App() {
                         />
                         <Route path="/resources/:resourceId" element={<ResourceDetailsPage />} />
                         <Route path="/privacy" element={<Privacy />} />
+                        <Route path="/scheduling" element={<SchedulingPage />} />
+                        <Route
+                          path="/scheduling/availability-test"
+                          element={<AvailabilityCalendarTest />}
+                        />
+                        <Route
+                          path="/scheduling/semesters/:semesterId"
+                          element={<div>Semester — coming soon</div>}
+                        />
+                        <Route
+                          path="/scheduling/semesters/:semesterId/rounds/:roundId"
+                          element={<div>Round — coming soon</div>}
+                        />
+                        <Route path="/schedule" element={<div>My Schedule — coming soon</div>} />
+                        <Route
+                          path="/schedule/rounds/:teacherId/:semesterId/:roundId"
+                          element={<div>Submit Availability — coming soon</div>}
+                        />
                       </Routes>
                     </Grid2>
                   </Grid2>
