@@ -149,6 +149,7 @@ export default function SemesterDialog({ open, initial, onClose, onSave }: Semes
                 setDateError(false)
               }}
               format={DATE_FORMAT}
+              minDate={!initial ? dayjs() : undefined}
               slotProps={{
                 textField: {
                   fullWidth: true,

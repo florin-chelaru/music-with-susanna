@@ -1,6 +1,6 @@
 # Scheduling Feature
 
-> Status: Implementation in progress — Steps A and B complete
+> Status: Implementation in progress — Steps A, B, and C complete
 
 ---
 
@@ -971,13 +971,13 @@ All phases follow the same incremental pattern:
 
 ---
 
-#### Step C — AvailabilityCalendar component
+#### ~~Step C — AvailabilityCalendar component~~ ✅ DONE
 
-- `src/Components/scheduling/AvailabilityCalendar.tsx` — `react-big-calendar` week view + DnD addon; editable mode with label popover on slot select; `overlayBlocks` rendering for read-only teacher layer
-- Develop and review in isolation first: a temporary `/scheduling/availability-test` route that renders `AvailabilityCalendar` with mock blocks so the interaction can be reviewed without the full `SemesterPage` context
-- Remove the test route once approved
-
-*Review: can draw blocks, pick labels, drag to move/resize, see color coding. Overlay mode (student view) shows teacher blocks as background.*
+- `src/Components/scheduling/AvailabilityCalendar.tsx` — `react-big-calendar` week view + DnD addon; editable mode with compact menu-card label popover on slot select/click; `overlayBlocks` rendering for read-only teacher layer
+- Uses `dayjsLocalizer` (not `dateFnsLocalizer` — date-fns v4 is ESM-only and incompatible with CRA)
+- MUI X Scheduler–inspired styling: rounded container, light-tinted events with 3 px left accent bar, theme-aware borders, custom day-column headers
+- Popover positioning: drag → `bounds.top/left - window.scrollY/scrollX` (page→viewport coords); click → `box.clientY/X`; both clamped to container top
+- Test route `/scheduling/availability-test` still present — remove before shipping
 
 ---
 
