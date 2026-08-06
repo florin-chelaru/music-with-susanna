@@ -65,6 +65,8 @@ Weights are configurable constants: `TEACHER_WEIGHT = 0.7`, `STUDENT_WEIGHT = 0.
 SLOT_SNAP_MINUTES = 15          // lesson start times snap to this grid
 MIN_BREAK_MINUTES = 10          // minimum gap between consecutive lessons
 GAP_PENALTY_THRESHOLD_MINUTES = 30  // gaps longer than this are penalized
+GAP_PENALTY_PER_MINUTE = 0.05   // score deducted per minute over the threshold
+                                //   (30min excess → -1.5 pts, comparable to one slot score)
 TEACHER_WEIGHT = 0.7
 STUDENT_WEIGHT = 0.3
 MIN_STUDENT_PREFERENCES = 3     // minimum recurring preferences a student must submit
@@ -175,7 +177,8 @@ Student-initiated writes that need field-level validation (cancellation requests
 
 /studentEnrollments/teachers/{teacherId}/semesters/{semesterId}/students/{studentId}
   lessonDurationMinutes: number
-  lessonsPerWeek: number
+  totalLessons: number              // total for the semester; UI derives from frequency shorthand
+                                    // (Every week / Every 2 weeks / Twice a week) + semester length
   cancellationWindowHours: number (optional — falls back to semester default)
 
 /schedulingRounds/teachers/{teacherId}/semesters/{semesterId}/rounds/{roundId}
@@ -416,30 +419,510 @@ This keeps all authoritative records teacher-write-only while still allowing stu
 
 ## Algorithm Notes (Phase 1)
 
-The scheduling problem for Phase 1 is small enough (typically < 15 students, each needing 1–3 weekly slots) that a greedy or backtracking approach is feasible.
+Up to 20 students, up to 20-week semester. The algorithm schedules **specific dates** across the entire semester — not a recurring weekly template. This allows two students to genuinely share a Monday 10am slot on alternating weeks, handles bi-weekly lessons naturally, and makes week overrides (spring break, holidays) first-class inputs rather than post-processing.
 
-### Input
-- Teacher's continuous availability windows per day, with scores
-- Each student's recurring preference blocks with scores
-- Lesson durations and lessons-per-week counts
+### Types
 
-### Slot generation
-For each (student, dayOfWeek) pair:
-1. Find overlap between teacher's available windows and student's available windows (exclude combined_score = 0)
-2. Enumerate all valid start times at `SLOT_SNAP_MINUTES` granularity where the lesson fits
-3. Compute combined_score for each candidate slot
+```typescript
+// stored in StudentEnrollment
+interface StudentEnrollment {
+  studentId: string
+  lessonDurationMinutes: number
+  totalLessons: number           // UI populates via frequency shorthand + semester length
+  cancellationWindowHours?: number
+}
+
+// one feasible (student, date, time) triple before assignment
+interface CandidateSlot {
+  studentId: string
+  date: string          // "YYYY-MM-DD"
+  startTime: string     // "HH:mm"
+  endTime: string       // "HH:mm"
+  teacherScore: number
+  studentScore: number
+  combinedScore: number
+}
+
+// one assigned lesson after the algorithm runs
+interface LessonSlot {
+  studentId: string
+  date: string
+  startTime: string
+  endTime: string
+  teacherScore: number
+  studentScore: number
+  combinedScore: number
+}
+
+interface SchedulingResult {
+  slots: LessonSlot[]
+  unscheduledStudentIds: string[]
+  totalScore: number
+}
+
+type SuggestionStrategy = 'teacher_best' | 'student_best' | 'balanced'
+
+// week overrides: weekStartDate → blocks (empty array = fully unavailable that week)
+type WeekOverrides = Record<string, AvailabilityBlock[]>
+
+interface SchedulingInput {
+  semesterStart: string                                   // "YYYY-MM-DD"
+  semesterEnd: string                                     // "YYYY-MM-DD"
+  teacherWeeklyBlocks: AvailabilityBlock[]
+  teacherWeekOverrides: WeekOverrides
+  enrollments: StudentEnrollment[]
+  studentWeeklyBlocks: Record<string, AvailabilityBlock[]>    // studentId → blocks
+  studentWeekOverrides: Record<string, WeekOverrides>         // studentId → week overrides
+}
+```
+
+### Helper functions
+
+Date-level operations use `date-fns` (installed with `react-big-calendar`). "HH:mm" time strings use plain arithmetic — `date-fns` works on `Date` objects, so converting "HH:mm" through a Date reference introduces timezone hazards (confirmed: `addMinutes(new Date(0), 570)` formats as "11:30" on a UTC+2 machine). `snapUp` uses `Math.ceil` directly since `roundToNearestMinutes` operates on `Date` objects, not raw minute integers.
+
+```typescript
+import { startOfWeek, getDay, format, eachDayOfInterval, eachWeekOfInterval, differenceInDays } from 'date-fns'
+
+// ─── Time string helpers ───────────────────────────────────────────────────────
+
+// "HH:mm" → total minutes since midnight.  e.g. "09:30" → 570
+function parseMinutes(time: string): number {
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m
+}
+
+// Minutes since midnight → "HH:mm".  e.g. 570 → "09:30"
+function formatMinutes(minutes: number): string {
+  const h = String(Math.floor(minutes / 60)).padStart(2, '0')
+  const m = String(minutes % 60).padStart(2, '0')
+  return `${h}:${m}`
+}
+
+// Round minutes up to the nearest snap-grid point.  e.g. snapUp(67, 15) → 75
+function snapUp(minutes: number, snap: number): number {
+  return Math.ceil(minutes / snap) * snap
+}
+
+// ─── Date helpers ─────────────────────────────────────────────────────────────
+
+// "YYYY-MM-DD" → day-of-week where 0=Mon … 6=Sun (AvailabilityBlock convention).
+// date-fns getDay returns 0=Sun, so we remap.
+function getDayOfWeek(date: string): number {
+  const dow = getDay(new Date(date))   // 0=Sun, 1=Mon … 6=Sat
+  return dow === 0 ? 6 : dow - 1      // remap to 0=Mon … 6=Sun
+}
+
+// ─── Availability queries ─────────────────────────────────────────────────────
+
+// Return the effective availability blocks for a specific date.
+//
+// Finds the Monday of the week containing `date` (via date-fns startOfWeek).
+// If weekOverrides has an entry keyed by that Monday string, returns those blocks
+// filtered to the matching dayOfWeek. An empty override array means the entire
+// week is unavailable → returns [].
+// Otherwise falls back to weeklyBlocks filtered to that dayOfWeek.
+//
+// Example: weeklyBlocks = [{dayOfWeek:0, startTime:"09:00", endTime:"12:00", score:10}]
+//   date = "2026-03-09" (Mon, normal week)    → [{Mon, 09:00-12:00, score:10}]
+//   date = "2026-03-16" (Mon, override = []) → []   ← spring break
+function getEffectiveBlocksForDate(
+  weeklyBlocks: AvailabilityBlock[],
+  weekOverrides: WeekOverrides,
+  date: string
+): AvailabilityBlock[] {
+  const weekStart = format(startOfWeek(new Date(date), { weekStartsOn: 1 }), 'yyyy-MM-dd')
+  const dow = getDayOfWeek(date)
+  if (weekStart in weekOverrides) {
+    return weekOverrides[weekStart].filter(b => b.dayOfWeek === dow)
+  }
+  return weeklyBlocks.filter(b => b.dayOfWeek === dow)
+}
+
+// Return the score of whichever block covers startTime (point lookup).
+// A block covers a point if block.startTime <= t < block.endTime.
+// Returns 0 if no block covers it.
+//
+// Use this when you already know the slot fits within one block.
+// When a slot may span a block boundary, use getScoreForSpan instead.
+function getScoreAtTime(blocks: AvailabilityBlock[], startTime: string): number {
+  const t = parseMinutes(startTime)
+  for (const b of blocks) {
+    if (parseMinutes(b.startTime) <= t && t < parseMinutes(b.endTime)) return b.score
+  }
+  return 0
+}
+
+// Return the duration-weighted average score for a slot [startTime, startTime+duration].
+// Returns 0 if any part of the slot falls outside all blocks (gap = unavailable time).
+//
+// Handles consecutive blocks of different scores (assumes blocks are non-overlapping).
+//
+// Example (two consecutive blocks: 09:00-10:00 score 10, 10:00-11:00 score 6):
+//   getScoreForSpan(blocks, "09:30", 45)
+//   → 30 min × 10 + 15 min × 6 = 390 → 390 / 45 ≈ 8.67
+//
+//   getScoreForSpan(blocks, "09:30", 90)  // slot ends 11:00, no block after 11:00
+//   → gap detected at 11:00 → 0
+function getScoreForSpan(
+  blocks: AvailabilityBlock[],
+  startTime: string,
+  durationMinutes: number
+): number {
+  const start = parseMinutes(startTime)
+  const end = start + durationMinutes
+
+  const relevant = blocks
+    .filter(b => parseMinutes(b.startTime) < end && parseMinutes(b.endTime) > start)
+    .sort((a, b) => parseMinutes(a.startTime) - parseMinutes(b.startTime))
+
+  // any gap in coverage → slot straddles unavailable time → invalid
+  let covered = start
+  for (const b of relevant) {
+    if (parseMinutes(b.startTime) > covered) return 0
+    covered = Math.max(covered, parseMinutes(b.endTime))
+  }
+  if (covered < end) return 0
+
+  let weightedSum = 0
+  for (const b of relevant) {
+    const overlap =
+      Math.min(parseMinutes(b.endTime), end) - Math.max(parseMinutes(b.startTime), start)
+    weightedSum += overlap * b.score
+  }
+  return weightedSum / durationMinutes
+}
+```
+
+### Candidate generation
+
+```typescript
+import { eachDayOfInterval, format } from 'date-fns'
+
+// Generate all feasible (student, date, startTime) triples for the semester.
+// A triple is feasible if both teacher and student are available for the full
+// lesson duration and the combined score > 0.
+//
+// Iteration strategy: loop over teacher blocks (not the full day) because a
+// candidate can only exist where the teacher is available. This is the tightest
+// outer bound. If a future requirement adds student-only time windows not tied
+// to teacher availability, this decision would need revisiting.
+function generateAllCandidates(input: SchedulingInput): CandidateSlot[] {
+  const candidates: CandidateSlot[] = []
+
+  const dates = eachDayOfInterval({
+    start: new Date(input.semesterStart),
+    end: new Date(input.semesterEnd)
+  }).map(d => format(d, 'yyyy-MM-dd'))
+
+  for (const date of dates) {
+    const teacherBlocks = getEffectiveBlocksForDate(
+      input.teacherWeeklyBlocks, input.teacherWeekOverrides, date
+    )
+
+    for (const enrollment of input.enrollments) {
+      const studentBlocks = getEffectiveBlocksForDate(
+        input.studentWeeklyBlocks[enrollment.studentId],
+        input.studentWeekOverrides[enrollment.studentId] ?? {},
+        date
+      )
+
+      for (const tb of teacherBlocks) {
+        let t = snapUp(parseMinutes(tb.startTime), SCHEDULING_CONFIG.SLOT_SNAP_MINUTES)
+        const blockEnd = parseMinutes(tb.endTime)
+
+        while (t + enrollment.lessonDurationMinutes <= blockEnd) {
+          const startTime = formatMinutes(t)
+          const sScore = getScoreForSpan(studentBlocks, startTime, enrollment.lessonDurationMinutes)
+          if (sScore > 0) {
+            candidates.push({
+              studentId: enrollment.studentId,
+              date,
+              startTime,
+              endTime: formatMinutes(t + enrollment.lessonDurationMinutes),
+              teacherScore: tb.score,
+              studentScore: sScore,
+              combinedScore: computeCombinedScore(tb.score, sScore)
+            })
+          }
+          t += SCHEDULING_CONFIG.SLOT_SNAP_MINUTES
+        }
+      }
+    }
+  }
+
+  return candidates
+}
+```
+
+**Computation estimate — 20 students, 20-week semester:**
+- 140 dates × 20 students = 2,800 (date, student) pairs
+- Per pair, ~4 start times on average (teacher available ~5 days/week at ~5 hrs/day; averaged across all 140 days including unavailable ones)
+- → ~11,000 inner iterations; each does a 2-block scan → **well under 1ms**
+
+`computeSchedule` (called 3 times): 20 weeks × 20 students × ~10 candidates per student per week × conflict check against ~10 same-day assignments → ~120,000 comparisons total across all 3 calls → **under 10ms**.
 
 ### Assignment (per strategy)
-- Sort all candidate (student, slot) pairs by their objective score (descending)
-- Greedily assign, checking: no two students overlap + min break respected
-- Apply gap penalty: for each day, if total gap between assigned lessons exceeds `GAP_PENALTY_THRESHOLD_MINUTES`, reduce the schedule's overall score
-- If a student has no feasible slot: flag as unscheduled, continue
 
-### Output
-For each strategy: list of (studentId, dayOfWeek, startTime, endTime) + list of unscheduled students + total score.
+```typescript
+function computeSchedule(
+  input: SchedulingInput,
+  candidates: CandidateSlot[],   // pre-generated; shared across all 3 strategies
+  strategy: SuggestionStrategy
+): SchedulingResult
 
-### Week overrides
-Applied after recurring slots are assigned: for each override week, per-student, substitute or remove the instance based on that week's availability.
+function generateAllSuggestions(
+  input: SchedulingInput
+): Record<SuggestionStrategy, SchedulingResult>
+```
+
+Candidates are generated once and passed into all three `computeSchedule` calls.
+
+**`computeSchedule` — week-by-week greedy:**
+
+```typescript
+import { eachWeekOfInterval, eachDayOfInterval, differenceInDays, format } from 'date-fns'
+
+function computeSchedule(
+  input: SchedulingInput,
+  candidates: CandidateSlot[],
+  strategy: SuggestionStrategy
+): SchedulingResult {
+  const semesterDays = differenceInDays(new Date(input.semesterEnd), new Date(input.semesterStart))
+  const targetSpacing = (e: StudentEnrollment) => semesterDays / e.totalLessons
+
+  const assigned: LessonSlot[] = []
+  const remaining = Object.fromEntries(input.enrollments.map(e => [e.studentId, e.totalLessons]))
+  const lastDate: Record<string, string> = {}   // studentId → most recently assigned date
+
+  const weeks = eachWeekOfInterval(
+    { start: new Date(input.semesterStart), end: new Date(input.semesterEnd) },
+    { weekStartsOn: 1 }
+  )
+
+  for (const weekStart of weeks) {
+    const datesThisWeek = eachDayOfInterval({
+      start: weekStart,
+      end: new Date(Math.min(
+        new Date(input.semesterEnd).getTime(),
+        weekStart.getTime() + 6 * 24 * 60 * 60 * 1000
+      ))
+    }).map(d => format(d, 'yyyy-MM-dd'))
+
+    // students who need a lesson this week
+    const due = input.enrollments.filter(e => {
+      if (remaining[e.studentId] <= 0) return false
+      const last = lastDate[e.studentId]
+      if (!last) return true   // no lesson yet → always due on first opportunity
+      return differenceInDays(new Date(weekStart), new Date(last)) >= targetSpacing(e) * 0.8
+    })
+
+    // most constrained first: fewest candidates this week per remaining lesson
+    due.sort((a, b) => {
+      const countA = candidates.filter(c => c.studentId === a.studentId && datesThisWeek.includes(c.date)).length
+      const countB = candidates.filter(c => c.studentId === b.studentId && datesThisWeek.includes(c.date)).length
+      return (countA / remaining[a.studentId]) - (countB / remaining[b.studentId])
+    })
+
+    for (const enrollment of due) {
+      const weekCandidates = candidates
+        .filter(c => c.studentId === enrollment.studentId && datesThisWeek.includes(c.date))
+        .filter(c => !hasConflict(c, assigned, SCHEDULING_CONFIG.MIN_BREAK_MINUTES))
+        .sort(bySortKey(strategy))
+
+      if (weekCandidates.length > 0) {
+        const pick = weekCandidates[0]
+        assigned.push(pick)
+        remaining[enrollment.studentId]--
+        lastDate[enrollment.studentId] = pick.date
+      }
+      // no candidates this week → student carries to next week automatically
+    }
+  }
+
+  // backfill: students with lessons remaining after all weeks
+  for (const enrollment of input.enrollments) {
+    while (remaining[enrollment.studentId] > 0) {
+      const next = candidates
+        .filter(c => c.studentId === enrollment.studentId)
+        .filter(c => !hasConflict(c, assigned, SCHEDULING_CONFIG.MIN_BREAK_MINUTES))
+        .sort(bySortKey(strategy))[0]
+      if (!next) break
+      assigned.push(next)
+      remaining[enrollment.studentId]--
+    }
+    if (remaining[enrollment.studentId] > 0)
+      result.unscheduledStudentIds.push(enrollment.studentId)
+  }
+
+  // gap penalty
+  const totalScore = computeTotalScore(assigned)
+  return { slots: assigned, unscheduledStudentIds, totalScore }
+}
+
+// Conflict: two lessons conflict if they overlap or their gap is less than minBreak.
+function hasConflict(candidate: CandidateSlot, assigned: LessonSlot[], minBreak: number): boolean {
+  const cs = parseMinutes(candidate.startTime), ce = parseMinutes(candidate.endTime)
+  return assigned
+    .filter(a => a.date === candidate.date)
+    .some(a => {
+      const as = parseMinutes(a.startTime), ae = parseMinutes(a.endTime)
+      return !(ce + minBreak <= as || ae + minBreak <= cs)
+    })
+}
+
+// Score key for sorting candidates by strategy.
+function bySortKey(strategy: SuggestionStrategy) {
+  return (a: CandidateSlot, b: CandidateSlot) => {
+    const score = (c: CandidateSlot) =>
+      strategy === 'teacher_best' ? c.teacherScore
+      : strategy === 'student_best' ? c.combinedScore
+      : SCHEDULING_CONFIG.TEACHER_WEIGHT * c.teacherScore + SCHEDULING_CONFIG.STUDENT_WEIGHT * c.studentScore
+    return score(b) - score(a)   // descending
+  }
+}
+
+// Gap penalty: for each date, subtract proportionally for gaps > threshold.
+function computeTotalScore(slots: LessonSlot[]): number {
+  const base = slots.reduce((sum, s) => sum + s.combinedScore, 0)
+  const byDate = Map.groupBy(slots, s => s.date)   // or Object.groupBy in ES2024
+  let penalty = 0
+  for (const [, daySlots] of byDate) {
+    const sorted = [...daySlots].sort((a, b) => parseMinutes(a.startTime) - parseMinutes(b.startTime))
+    for (let i = 1; i < sorted.length; i++) {
+      const gap = parseMinutes(sorted[i].startTime) - parseMinutes(sorted[i - 1].endTime)
+      if (gap > SCHEDULING_CONFIG.GAP_PENALTY_THRESHOLD_MINUTES)
+        penalty += (gap - SCHEDULING_CONFIG.GAP_PENALTY_THRESHOLD_MINUTES) * SCHEDULING_CONFIG.GAP_PENALTY_PER_MINUTE
+    }
+  }
+  return base - penalty
+}
+```
+
+**Strategy differences** (same algorithm, different sort key for "highest-scoring"):
+
+| Strategy | Candidate sort key |
+|---|---|
+| `teacher_best` | `teacherScore` descending |
+| `student_best` | `combinedScore` descending |
+| `balanced` | `TEACHER_WEIGHT × teacherScore + STUDENT_WEIGHT × studentScore` descending |
+
+All strategies enforce "include every student" as the primary objective — unscheduled students only appear when no feasible slot exists.
+
+**Gap penalty:** after assignment, for each date that has ≥ 2 lessons, sort by start time and subtract from `totalScore` for every gap > `GAP_PENALTY_THRESHOLD_MINUTES` between consecutive lessons. Penalty is proportional: `(gapMinutes - GAP_PENALTY_THRESHOLD_MINUTES) × GAP_PENALTY_PER_MINUTE` where `GAP_PENALTY_PER_MINUTE = 0.05` (so a 30-minute excess gap costs 1.5 points — comparable to one slot's score). This lets the optimizer distinguish a barely-too-large gap from a multi-hour hole.
+
+### No `applyWeekOverrides`
+
+This function is no longer needed. Week overrides are consumed directly by `generateAllCandidates` — dates in an override week with no available blocks simply produce no candidates, so those dates are naturally skipped during assignment.
+
+---
+
+### Worked example
+
+A small scenario that highlights the key benefit of semester-level scheduling: two bi-weekly students genuinely sharing the same recurring time slot on alternating weeks — impossible with a weekly recurring template.
+
+**Setup:**
+- Semester: Mon Jan 5 – Fri Jan 16 (2 weeks)
+- Teacher: Mon 09:00–12:00, Preferred. No other days.
+- Slot snap: 60 min (for readability). Lesson duration: 45 min. Min break: 10 min.
+- 3 students: Ana (weekly, 2 lessons), Barbara (bi-weekly, 1 lesson, away week 2), Chris (bi-weekly, 1 lesson, away week 1)
+
+**Input:**
+
+```typescript
+const input: SchedulingInput = {
+  semesterStart: "2026-01-05",
+  semesterEnd:   "2026-01-16",
+
+  teacherWeeklyBlocks: [
+    { dayOfWeek: 0, startTime: "09:00", endTime: "12:00", label: "preferred", score: 10 }
+  ],
+  teacherWeekOverrides: {},
+
+  enrollments: [
+    { studentId: "ana",     lessonDurationMinutes: 45, totalLessons: 2 },
+    { studentId: "barbara", lessonDurationMinutes: 45, totalLessons: 1 },
+    { studentId: "chris",   lessonDurationMinutes: 45, totalLessons: 1 }
+  ],
+
+  studentWeeklyBlocks: {
+    ana:     [{ dayOfWeek: 0, startTime: "09:00", endTime: "12:00", label: "preferred", score: 10 }],
+    barbara: [{ dayOfWeek: 0, startTime: "09:00", endTime: "12:00", label: "preferred", score: 10 }],
+    chris:   [{ dayOfWeek: 0, startTime: "09:00", endTime: "12:00", label: "preferred", score: 10 }]
+  },
+
+  studentWeekOverrides: {
+    barbara: { "2026-01-12": [] },  // fully unavailable week 2
+    chris:   { "2026-01-05": [] }   // fully unavailable week 1
+  }
+}
+```
+
+**`generateAllCandidates` output** (12 slots — only Mondays produce candidates):
+
+```
+Jan 5  (Mon, Week 1): ana @ 09:00, 10:00, 11:00  — combinedScore 10 each
+                      barbara @ 09:00, 10:00, 11:00 — combinedScore 10 each
+                      chris: no candidates (week override blocks entire week)
+
+Jan 12 (Mon, Week 2): ana @ 09:00, 10:00, 11:00  — combinedScore 10 each
+                      chris @ 09:00, 10:00, 11:00 — combinedScore 10 each
+                      barbara: no candidates (week override blocks entire week)
+```
+
+**`computeSchedule` trace (`teacher_best`):**
+
+```
+targetSpacingDays:
+  ana:     12 days / 2 lessons = 6 days
+  barbara: 12 days / 1 lesson  = 12 days
+  chris:   12 days / 1 lesson  = 12 days
+
+── Week 1 (Jan 5–9) ──────────────────────────────────────────────────────
+
+Due: ana (first week), barbara (first week). Chris has no candidates → skip.
+
+Sort by most constrained (fewest candidates per remaining lesson):
+  ana:     3 candidates / 2 lessons = 1.5  ← most constrained
+  barbara: 3 candidates / 1 lesson  = 3.0
+
+1. Ana     → Jan 5 09:00 (score 10) → no conflicts → assigned ✓
+2. Barbara → Jan 5 09:00 → conflict (Ana ends 09:45 + 10 min break → next 09:55, snap to 10:00)
+           → Jan 5 10:00 (score 10) → no conflict → assigned ✓
+
+── Week 2 (Jan 12–16) ────────────────────────────────────────────────────
+
+Due: ana (7 days since Jan 5 ≥ target 6 days ✓), chris (first available week).
+Barbara: 1/1 lessons assigned → done.
+
+Sort by most constrained:
+  ana:   3 candidates / 1 lesson = 3.0  (tie)
+  chris: 3 candidates / 1 lesson = 3.0  (tie → alphabetical)
+
+1. Ana   → Jan 12 09:00 (score 10) → no conflicts on this date → assigned ✓
+2. Chris → Jan 12 09:00 → conflict (Ana ends 09:45 + 10 min → 10:00)
+         → Jan 12 10:00 (score 10) → no conflict → assigned ✓
+```
+
+**Output:**
+
+```typescript
+{
+  slots: [
+    { studentId: "ana",     date: "2026-01-05", startTime: "09:00", endTime: "09:45",
+      teacherScore: 10, studentScore: 10, combinedScore: 10 },
+    { studentId: "barbara", date: "2026-01-05", startTime: "10:00", endTime: "10:45",
+      teacherScore: 10, studentScore: 10, combinedScore: 10 },
+    { studentId: "ana",     date: "2026-01-12", startTime: "09:00", endTime: "09:45",
+      teacherScore: 10, studentScore: 10, combinedScore: 10 },
+    { studentId: "chris",   date: "2026-01-12", startTime: "10:00", endTime: "10:45",
+      teacherScore: 10, studentScore: 10, combinedScore: 10 }
+  ],
+  unscheduledStudentIds: [],
+  totalScore: 40
+}
+```
+
+**Key observation:** Barbara (week 1) and Chris (week 2) both teach in the Mon 09:00–10:00 window — on alternating weeks. With a weekly recurring template, that slot would be permanently occupied by whichever student claimed it first, leaving the other without a Mon morning lesson. The semester-level approach assigns specific dates, so the slot is genuinely shared.
 
 ---
 
@@ -453,6 +936,194 @@ Applied after recurring slots are assigned: for each override week, per-student,
 ---
 
 ## Phase 1 — Implementation Plan
+
+### Build strategy
+
+All phases follow the same incremental pattern:
+
+1. **UI first with mock data** — build every page and component against static data in `src/data/schedulingMocks.ts`. Each step produces something visually reviewable and discussable before moving on.
+2. **RTDB wiring last** — once all UI is signed off, replace mock data with real Firebase hooks. This keeps each step fast and avoids debugging data and UI simultaneously.
+3. **One step at a time** — each step below is a natural review checkpoint. Implement it, run the app, review in the browser, discuss any design changes, then move to the next step.
+
+`src/data/schedulingMocks.ts` is a temporary file deleted entirely once the RTDB wiring phase is complete. Pages and components receive data via props during the mock phase; those props are populated from hooks in the wiring phase — the component signatures do not change.
+
+---
+
+### Phase 1 incremental steps
+
+#### Step A — Foundation (no visible UI)
+
+- `src/util/scheduling.ts` — all types, `SCHEDULING_CONFIG`, `schedulingPaths`, `computeCombinedScore`
+- `src/data/schedulingMocks.ts` — rich mock data covering: 2 locations, 2 semesters (one per location), 3 enrolled students per semester, teacher weekly availability, 3 student submissions, 3 lesson instances per student, 1 active scheduling round with mock suggestions
+- Add all new routes to `src/App.tsx` (pointing to placeholder `<div>` stubs) and `RouteInfo.tsx` entries so URLs are navigable from the start
+- Add **Scheduling** link (teacher) and **My Schedule** link (student) to `UserPopover`
+- Unit tests for `computeCombinedScore`
+
+*Review: navigate to `/scheduling` and `/schedule` — both render a blank stub. Nav links are visible to the right role.*
+
+---
+
+#### Step B — SchedulingPage (teacher hub)
+
+- `src/pages/scheduling/SchedulingPage.tsx` — reads from mock data; shows 2 location cards, each with its semesters listed; status chip per semester; "Open Semester" button navigates to `SemesterPage`
+- `LocationDialog` — create/edit location (form only, no RTDB write yet)
+- `SemesterDialog` — create/edit semester (form only)
+
+*Review: teacher sees locations and semesters, can open dialogs, can click through to the (stub) SemesterPage.*
+
+---
+
+#### Step C — AvailabilityCalendar component
+
+- `src/Components/scheduling/AvailabilityCalendar.tsx` — `react-big-calendar` week view + DnD addon; editable mode with label popover on slot select; `overlayBlocks` rendering for read-only teacher layer
+- Develop and review in isolation first: a temporary `/scheduling/availability-test` route that renders `AvailabilityCalendar` with mock blocks so the interaction can be reviewed without the full `SemesterPage` context
+- Remove the test route once approved
+
+*Review: can draw blocks, pick labels, drag to move/resize, see color coding. Overlay mode (student view) shows teacher blocks as background.*
+
+---
+
+#### Step D — SemesterPage: Availability tab
+
+- `src/pages/scheduling/SemesterPage.tsx` — tab shell (Availability / Students / Scheduling / Calendar)
+- Availability tab renders `AvailabilityCalendar` with mock teacher availability; week-override section below with a date picker + per-week calendar instance
+- Auto-save on change (debounced, no RTDB yet — just local state)
+
+*Review: navigate from SchedulingPage into a semester; draw and adjust availability blocks; add a week override.*
+
+---
+
+#### Step E — SemesterPage: Students tab
+
+- Students tab renders the enrolled students table (mock data: name, duration, lessons/week, cancellation window)
+- `EnrollmentDialog` — add student form (dropdown from mock student list, duration, frequency, optional cancellation window override)
+- Remove / soft-delete row action
+
+*Review: see enrolled students, open the Add dialog, remove a student from the list.*
+
+---
+
+#### Step F — LessonCalendar component + SemesterPage: Calendar tab
+
+- `src/Components/scheduling/LessonCalendar.tsx` — `react-big-calendar` month view (toggle to week/agenda); read-only events from mock lesson instances; click event → details popover with Cancel button (wired to `CancelLessonDialog` but no RTDB write yet)
+- `CancelLessonDialog` — reason field, "cancel all going forward" checkbox, policy message (within/outside window)
+- Calendar tab in `SemesterPage` renders `LessonCalendar` + Export .ics button (no-op for now)
+
+*Review: browse the semester calendar, click a lesson to see details, open the cancel dialog.*
+
+---
+
+#### Step G — SemesterPage: Scheduling tab + SchedulingRoundPage (collecting state)
+
+- Scheduling tab: list of rounds (mock: one round in `collecting` status), "New Round" button opens a deadline-picker dialog
+- `src/pages/scheduling/SchedulingRoundPage.tsx` — collecting state: table showing each student's submission status (submitted / pending), deadline countdown, "Close Round & Generate Suggestions" button (disabled until deadline passed or all submitted — mock the condition)
+
+*Review: see the round in the scheduling tab, click through to the round page, see submission statuses.*
+
+---
+
+#### Step H — SchedulingRoundPage: suggested state
+
+- `SuggestedScheduleCard` component — strategy label, total score, student → slot list, unscheduled students (if any)
+- `SchedulingRoundPage` suggested state: 3 cards side by side (or stacked on mobile); "Use This" button on each
+
+*Review: see all three strategy suggestions, compare scores and student placements.*
+
+---
+
+#### Step I — SchedulingRoundPage: editable confirmed view (DnD)
+
+- After "Use This": load the selected suggestion slots into a `react-big-calendar` week view with DnD enabled; one event per student (colored by combined score)
+- On drop/resize: validate no overlap + min-break; show inline error if violated, snap back if invalid
+- "Confirm Schedule" button (no RTDB write yet — just advances mock state and shows a success banner)
+
+*Review: drag student slots around, see conflict detection, confirm the schedule.*
+
+---
+
+#### Step J — StudentSchedulePage
+
+- `src/pages/scheduling/StudentSchedulePage.tsx` — two sections:
+  1. Pending availability requests (mock: one open round with deadline); "Submit Availability" navigates to `StudentAvailabilityPage`
+  2. Upcoming lessons: `LessonCalendar` in student mode (no student names, cancel button visible)
+
+*Review: student sees their pending request and their lesson calendar.*
+
+---
+
+#### Step K — StudentAvailabilityPage
+
+- `src/pages/scheduling/StudentAvailabilityPage.tsx` — full submission UI: `AvailabilityCalendar` in overlay mode (teacher blocks as background), student draws their own blocks, week-override section, validation banner (preference count, Preferred minimum), Submit button
+
+*Review: student sees teacher's availability, draws their own, sees the warning when hovering over Last Resort slots, can submit.*
+
+---
+
+**[UI complete — all pages and components reviewed and approved]**
+
+---
+
+#### Step L — Algorithm
+
+- `src/util/schedulingAlgorithm.ts` — `getEffectiveBlocksForDate`, `getScoreAtTime`, `generateAllCandidates`, `computeSchedule` (all 3 strategies), `generateAllSuggestions`
+- Unit tests: happy path, conflict resolution, bi-weekly slot sharing, unschedulable student, week override (spring break), gap penalty
+- No UI changes — runs client-side in `SchedulingRoundPage` when teacher triggers suggestion generation
+
+---
+
+#### Step M — RTDB hooks
+
+- `src/util/schedulingHooks.ts` — all `onValue` hooks listed in Step 4 of the detailed plan
+- Unit tests following the existing pattern (mock `onValue`, inject snapshots)
+
+---
+
+#### Step N — Wire teacher pages to RTDB
+
+- `SchedulingPage`: `useLocations` + `useSemesters`; dialogs write to RTDB
+- `SemesterPage` Availability tab: `useTeacherAvailability`; auto-save writes to RTDB
+- `SemesterPage` Students tab: `useStudentEnrollments`; `EnrollmentDialog` writes to RTDB
+- `SemesterPage` Scheduling tab: `useSchedulingRounds`; New Round writes to RTDB + sends availability request notifications
+- `SemesterPage` Calendar tab: `useLessonInstances`
+
+---
+
+#### Step O — Wire SchedulingRoundPage to RTDB + integrate algorithm
+
+- `useStudentSubmissions` for collecting state
+- "Generate Suggestions" button: runs `generateAllSuggestions` client-side, writes results to `scheduleSuggestions` path, updates round status to `suggested`
+- `useScheduleSuggestions` for suggested state
+- "Confirm Schedule" button: writes `confirmedSchedule`, converts `LessonSlot[]` directly to `LessonInstance` records (batch `update`), updates round status to `finalized`, sends confirmation notifications
+
+---
+
+#### Step P — Wire student pages to RTDB
+
+- `StudentSchedulePage`: queries open rounds across the student's teachers; `useMyLessonInstances` per semester
+- `StudentAvailabilityPage`: `useTeacherAvailability` for overlay; `useMySubmission` to pre-populate; writes submission on submit + sends notification to teacher
+
+---
+
+#### Step Q — Cancellation flow
+
+- Student cancel: write `Cancellation` record + update `LessonInstance` status; send notification to teacher
+- Teacher cancel: same, reversed; optionally create makeup `LessonInstance`
+- Bundle flow: "cancel all going forward" creates `CancellationBundle` + N `Cancellation` records, sends one bundled notification
+- Acknowledgment: write `acknowledgmentStatus: "acknowledged"` on the other party's action
+
+---
+
+#### Step R — ICS export
+
+- `src/util/icsExport.ts` — wire the Export button in `LessonCalendar` to generate and download the `.ics` file
+
+---
+
+#### Step S — Firebase security rules
+
+- Update `database.rules.json` with all new scheduling paths per the access table in the Schema section
+
+---
 
 ### Codebase conventions to follow
 
@@ -506,10 +1177,11 @@ await fetch('https://europe-west1-music-with-susanna.cloudfunctions.net/sendEmai
 ### New packages
 
 ```bash
-npm install ics          # client-side .ics download only (email invites handled by sendEmail)
+npm install react-big-calendar @types/react-big-calendar   # calendar UI (availability + lessons)
+npm install ics                                             # client-side .ics download
 ```
 
-Check if `date-fns` is already installed (`package.json`) — needed for date arithmetic (week enumeration, offset calculations). If not present, add it.
+`react-big-calendar`'s drag-and-drop addon ships with the package (`react-big-calendar/lib/addons/dragAndDrop`) — no extra install needed. It requires a peer dep on either `moment` or `date-fns` as the localizer; use `date-fns` (check `package.json` first — if not present, add it).
 
 ---
 
@@ -573,42 +1245,25 @@ computeCombinedScore(teacherScore, studentScore) → number
 
 **New file:** `src/util/schedulingAlgorithm.ts`
 
-Pure functions only — no RTDB, no React. Can be tested in isolation.
+Pure functions only — no RTDB, no React. Full type definitions and algorithm description in the Algorithm Notes section above. Summary of exports:
 
 ```
-SchedulingInput interface     { teacherAvailability, enrollments, studentSubmissions }
-SchedulingResult interface    { slots: SuggestedSlot[], unscheduledStudentIds: string[], totalScore: number }
-
-generateCandidateSlots(       → CandidateSlot[]     enumerate all valid (student, day, startTime) triples
-  enrollment, teacherBlocks,    snapped to SLOT_SNAP_MINUTES, within continuous windows,
-  studentBlocks                 combined_score > 0
-)
-
-computeSchedule(              → SchedulingResult    greedy assignment for one strategy
-  input, strategy
-)
-
-generateAllSuggestions(input) → Record<SuggestionStrategy, SchedulingResult>
-                                runs computeSchedule for all 3 strategies
-
-applyWeekOverrides(           → LessonInstance[]    takes the confirmed recurring slots +
-  confirmedSlots,               semester date range + per-student week overrides,
-  semesterDateRange,            expands to individual lesson instances,
-  studentOverrides              skipping or substituting as needed
-)
+getEffectiveBlocksForDate(weeklyBlocks, weekOverrides, date)  → AvailabilityBlock[]
+getScoreAtTime(blocks, startTime)                             → number
+generateAllCandidates(input)                                  → CandidateSlot[]
+computeSchedule(input, candidates, strategy)                  → SchedulingResult
+generateAllSuggestions(input)                                 → Record<SuggestionStrategy, SchedulingResult>
 ```
 
-Strategy differences (all enforce "include everyone" as first priority):
+No `applyWeekOverrides` — week overrides are consumed inside `generateAllCandidates`.
 
-| Strategy | Sort key for candidate slots |
-|---|---|
-| `teacher_best` | teacher score descending |
-| `student_best` | combined score descending, then prefer student Preferred |
-| `balanced` | `TEACHER_WEIGHT × teacher + STUDENT_WEIGHT × student` descending |
-
-Gap penalty: after assignment, iterate each day's placed lessons sorted by start time; sum gaps > `GAP_PENALTY_THRESHOLD_MINUTES`; subtract from `totalScore`.
-
-**Tests:** `src/util/schedulingAlgorithm.test.ts` — at minimum: single student happy path, conflict resolution (two students want the same slot), unschedulable student case, gap penalty applied.
+**Tests:** `src/util/schedulingAlgorithm.test.ts` — at minimum:
+- Single student, happy path — correct date and time assigned
+- Two students wanting the same slot — conflict resolved, both get a slot
+- Bi-weekly student shares a time slot with a weekly student on alternating dates
+- Student with no feasible slot — appears in `unscheduledStudentIds`
+- Week override (spring break) — no lessons generated for that week
+- Gap penalty applied when two lessons are far apart on the same day
 
 ---
 
@@ -676,38 +1331,39 @@ useMyNotifications(teacherId, uid)                → { notifications: Schedulin
 
 **New file:** `src/Components/scheduling/AvailabilityCalendar.tsx`
 
-The most complex UI piece. A weekly grid where users draw labeled time blocks.
+Wraps `react-big-calendar` in its weekly `"week"` view with the drag-and-drop addon enabled. Availability blocks map directly to calendar events; the library handles all time-grid rendering and interaction.
 
-**Layout:** CSS Grid — 8 columns (time gutter + 7 days) × N rows (one per `SLOT_SNAP_MINUTES` interval between `displayStartHour` and `displayEndHour` props). Each cell is a `<div>` identified by `(dayIndex, slotIndex)`.
+**Library setup:**
+- Localizer: `dateFnsLocalizer` from `react-big-calendar/lib/localizers/date-fns`
+- Addon: `withDragAndDrop` from `react-big-calendar/lib/addons/dragAndDrop` — wraps the `Calendar` component to enable drag-to-create, drag-to-move, and resize
+- Import both CSS files: `react-big-calendar/lib/css/react-big-calendar.css` and `react-big-calendar/lib/addons/dragAndDrop/styles.css`
 
 **Interaction (editable mode):**
-1. `mousedown` on a cell → record `dragStart`
-2. `mousemove` → highlight cells between `dragStart` and current cell
-3. `mouseup` → open a small popover to choose label (Preferred / Available / Last Resort); confirm → add block to state
-4. Click existing block → select it; Delete key or trash icon removes it
-5. Blocks are rendered as absolutely-positioned colored overlays on top of the grid using `position: absolute` + computed `top`/`height` from start/end times
+- `selectable` prop + `onSelectSlot` callback → drag on empty space creates a new block; open a small MUI `Popover` to choose label (Preferred / Available / Last Resort), then add to state
+- `onEventDrop` + `onEventResize` callbacks → update block start/end in state
+- Click existing event → show label popover to change label or delete
 
-**Overlay mode (student sees teacher's blocks):**
-- Teacher's blocks rendered as semi-transparent background behind the grid
-- Student draws their own blocks on top
-- When student starts a drag over a teacher Last Resort or Unavailable cell → show inline warning tooltip
+**Overlay mode (student view):**
+- Teacher's blocks passed as a separate event list, rendered with `eventPropGetter` as semi-transparent background events in a distinct style
+- Student cannot drag teacher events (they are in a non-selectable resource layer or flagged `isTeacher: true` and excluded from DnD callbacks)
+- When student creates a slot that overlaps a teacher Last Resort or Unavailable block → show an inline warning via a custom event wrapper component
 
 **Props:**
 ```typescript
 interface AvailabilityCalendarProps {
-  blocks: AvailabilityBlock[]           // current value
+  blocks: AvailabilityBlock[]
   onChange?: (blocks: AvailabilityBlock[]) => void  // undefined → read-only
-  overlayBlocks?: AvailabilityBlock[]   // teacher's blocks shown as background (student view)
-  displayStartHour?: number             // default 8
-  displayEndHour?: number               // default 20
+  overlayBlocks?: AvailabilityBlock[]               // teacher's blocks (student view)
+  displayStartHour?: number                         // default 8
+  displayEndHour?: number                           // default 20
 }
 ```
 
-**Colors per label** (MUI palette tokens, not hardcoded hex):
+**Colors per label** (MUI palette tokens via `eventPropGetter`, not hardcoded hex):
 - Preferred → `success.main`
 - Available → `primary.main`
 - Last Resort → `warning.main`
-- Unavailable → `error.main` (only in overlay; students can't draw Unavailable)
+- Unavailable → `error.main` (overlay only; students can't create Unavailable blocks)
 
 ---
 
@@ -715,17 +1371,21 @@ interface AvailabilityCalendarProps {
 
 **New file:** `src/Components/scheduling/LessonCalendar.tsx`
 
-Simpler than `AvailabilityCalendar` — read-only display of confirmed `LessonInstance` records.
+Also uses `react-big-calendar` (same localizer and import, no DnD addon needed). Reuses the library already in the bundle — no additional cost.
 
-**Layout:** grouped list by week, within each week grouped by day. Each lesson shown as a card with: student name (or "Your lesson" from student view), time range, location, status badge, cancel button (conditionally shown).
+**View:** defaults to `"month"` (gives semester-level overview); toggle to `"week"` for detail. The `"agenda"` view is available as a compact list fallback.
+
+**Events:** each `LessonInstance` maps to one calendar event, colored by status (`scheduled` → primary, `canceled` → error, `completed` → success). Teacher view shows the student's name in the event title; student view shows "Lesson" or the teacher's name.
+
+**Interaction:** read-only (`selectable={false}`, no DnD). Clicking an event opens a details popover with: time, location, status, and — where permitted — a Cancel button that triggers `onCancel`.
 
 **Props:**
 ```typescript
 interface LessonCalendarProps {
   lessons: LessonInstance[]
-  students?: Record<uid, { name: string }>  // teacher view: show names; omit in student view
-  onCancel?: (lessonId: string) => void      // undefined → no cancel button
-  onExportIcs?: () => void                   // show export button when provided
+  students?: Record<string, { name: string }>  // teacher view: show student names
+  onCancel?: (lessonId: string) => void         // undefined → no cancel affordance
+  onExportIcs?: () => void                      // show export button when provided
 }
 ```
 
@@ -792,7 +1452,7 @@ Teacher-only.
 **States (driven by round status):**
 
 - **`collecting`**: show submission status per student (submitted / pending), deadline countdown, "Close Round & Generate Suggestions" button (active once deadline passed or all submitted).
-- **`suggested`**: show 3 side-by-side `SuggestedScheduleCard` components. Teacher clicks "Use This" on one → loads it into an editable confirmed-schedule view where they can drag/adjust. "Confirm Schedule" button → writes `confirmedSchedule`, generates all `LessonInstance` records, sends notifications, advances round to `finalized`.
+- **`suggested`**: show 3 side-by-side `SuggestedScheduleCard` components. Teacher clicks "Use This" on one → loads it into an editable `AvailabilityCalendar`-style weekly view (DnD addon enabled, one event per enrolled student showing their assigned recurring slot). Teacher drags events to move them; the system validates no overlap + min-break constraint on each drop. "Confirm Schedule" button → writes `confirmedSchedule`, generates all `LessonInstance` records, sends notifications, advances round to `finalized`.
 - **`finalized`**: read-only view of the confirmed schedule; link back to semester calendar tab.
 
 **`src/Components/scheduling/SuggestedScheduleCard.tsx`** — displays one strategy's result: strategy label, total score, list of student → assigned slot, list of unscheduled students. "Use This" button.
