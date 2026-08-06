@@ -123,5 +123,40 @@ export const ROUTES: RouteInfo[] = [
     icon: <LibraryBooksIcon />,
     path: '/resources/:resourceId',
     hiddenFromAppBar: true
+  },
+  {
+    key: 'scheduling',
+    label: (strings) => strings.scheduling,
+    icon: <PersonIcon />,
+    path: '/scheduling',
+    hiddenFromAppBar: true
+  },
+  {
+    key: 'scheduling-semester',
+    label: (strings) => strings.scheduling,
+    icon: <PersonIcon />,
+    path: '/scheduling/semesters/:semesterId',
+    hiddenFromAppBar: true
+  },
+  {
+    key: 'scheduling-round',
+    label: (strings) => strings.scheduling,
+    icon: <PersonIcon />,
+    path: '/scheduling/semesters/:semesterId/rounds/:roundId',
+    hiddenFromAppBar: true
+  },
+  {
+    key: 'schedule',
+    label: (strings) => strings.mySchedule,
+    icon: <PersonIcon />,
+    path: '/schedule',
+    hiddenFromAppBar: true
+  },
+  {
+    key: 'schedule-availability',
+    label: (strings) => strings.mySchedule,
+    icon: <PersonIcon />,
+    path: '/schedule/rounds/:teacherId/:semesterId/:roundId',
+    hiddenFromAppBar: true
   }
 ]

@@ -1,6 +1,6 @@
 # Scheduling Feature
 
-> Status: Design complete — not yet implemented
+> Status: Implementation in progress — Steps A and B complete
 
 ---
 
@@ -951,25 +951,23 @@ All phases follow the same incremental pattern:
 
 ### Phase 1 incremental steps
 
-#### Step A — Foundation (no visible UI)
+#### ~~Step A — Foundation (no visible UI)~~ ✅ DONE
 
 - `src/util/scheduling.ts` — all types, `SCHEDULING_CONFIG`, `schedulingPaths`, `computeCombinedScore`
 - `src/data/schedulingMocks.ts` — rich mock data covering: 2 locations, 2 semesters (one per location), 3 enrolled students per semester, teacher weekly availability, 3 student submissions, 3 lesson instances per student, 1 active scheduling round with mock suggestions
-- Add all new routes to `src/App.tsx` (pointing to placeholder `<div>` stubs) and `RouteInfo.tsx` entries so URLs are navigable from the start
-- Add **Scheduling** link (teacher) and **My Schedule** link (student) to `UserPopover`
-- Unit tests for `computeCombinedScore`
-
-*Review: navigate to `/scheduling` and `/schedule` — both render a blank stub. Nav links are visible to the right role.*
+- All new routes in `src/App.tsx` (placeholder stubs) and `RouteInfo.tsx`
+- **Scheduling** link (teacher) and **My Schedule** link (student) added to `UserPopover`
+- Unit tests for `computeCombinedScore` (8 tests, all passing) in `src/util/scheduling.test.ts`
+- `date-fns` installed
 
 ---
 
-#### Step B — SchedulingPage (teacher hub)
+#### ~~Step B — SchedulingPage (teacher hub)~~ ✅ DONE
 
-- `src/pages/scheduling/SchedulingPage.tsx` — reads from mock data; shows 2 location cards, each with its semesters listed; status chip per semester; "Open Semester" button navigates to `SemesterPage`
-- `LocationDialog` — create/edit location (form only, no RTDB write yet)
-- `SemesterDialog` — create/edit semester (form only)
-
-*Review: teacher sees locations and semesters, can open dialogs, can click through to the (stub) SemesterPage.*
+- `src/pages/scheduling/SchedulingPage.tsx` — location cards with semesters, status chips, "Open" navigates to stub SemesterPage
+- `src/Components/scheduling/LocationDialog.tsx` — create/edit location (name required, address optional)
+- `src/Components/scheduling/SemesterDialog.tsx` — create/edit semester (name, start/end dates, cancellation window hours)
+- `src/App.tsx` updated to use `SchedulingPage` instead of placeholder div
 
 ---
 

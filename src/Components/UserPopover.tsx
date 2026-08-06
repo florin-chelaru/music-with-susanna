@@ -5,6 +5,7 @@ import { Button, IconButton, ListItemIcon, ListItemText, MenuItem, Stack } from 
 // components
 import MenuPopover from './MenuPopover'
 import { LocaleContext, LocaleHandler } from '../store/LocaleProvider'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
 import PersonIcon from '@mui/icons-material/Person'
 import LoginIcon from '@mui/icons-material/Login'
@@ -111,20 +112,44 @@ export default function UserPopover({}: UserPopoverProps) {
                     </ListItemIcon>
                     <ListItemText>{strings.resources}</ListItemText>
                   </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      handleClose()
+                      navigate('/scheduling')
+                      scrollToTop()
+                    }}>
+                    <ListItemIcon>
+                      <CalendarMonthIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{strings.scheduling}</ListItemText>
+                  </MenuItem>
                 </>
               )}
               {user.role === UserRole.STUDENT && (
-                <MenuItem
-                  onClick={() => {
-                    handleClose()
-                    navigate('/subjects')
-                    scrollToTop()
-                  }}>
-                  <ListItemIcon>
-                    <PersonIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText>{strings.subjects}</ListItemText>
-                </MenuItem>
+                <>
+                  <MenuItem
+                    onClick={() => {
+                      handleClose()
+                      navigate('/subjects')
+                      scrollToTop()
+                    }}>
+                    <ListItemIcon>
+                      <PersonIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{strings.subjects}</ListItemText>
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      handleClose()
+                      navigate('/schedule')
+                      scrollToTop()
+                    }}>
+                    <ListItemIcon>
+                      <CalendarMonthIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{strings.mySchedule}</ListItemText>
+                  </MenuItem>
+                </>
               )}
               <MenuItem
                 onClick={() => {

@@ -28,6 +28,8 @@ export interface GlobalLocalizedData extends LocalizedData {
   news: string
   readMore: string
   resources: string
+  mySchedule: string
+  scheduling: string
   signUp: string
   students: string
   subjects: string
