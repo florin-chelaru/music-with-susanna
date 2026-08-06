@@ -25,6 +25,7 @@ import StudentViewResourcesPage from './pages/StudentViewResourcesPage'
 import TeacherResourcesPage from './pages/TeacherResourcesPage'
 import VideoChannel from './pages/VideoChannel'
 import SchedulingPage from './pages/scheduling/SchedulingPage'
+import SemesterPage from './pages/scheduling/SemesterPage'
 import AvailabilityCalendarTest from './pages/scheduling/AvailabilityCalendarTest'
 import AnnouncementProvider from './store/AnnouncementProvider'
 import FabPositionProvider from './store/FabPositionProvider'
@@ -85,7 +86,7 @@ function App() {
                         />
                         <Route
                           path="/scheduling/semesters/:semesterId"
-                          element={<div>Semester — coming soon</div>}
+                          element={<SemesterPage />}
                         />
                         <Route
                           path="/scheduling/semesters/:semesterId/rounds/:roundId"

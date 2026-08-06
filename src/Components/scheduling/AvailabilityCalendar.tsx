@@ -1,8 +1,30 @@
-import { Box, Divider, MenuItem, Popover, Typography, useTheme } from '@mui/material'
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Fab,
+  IconButton,
+  MenuItem,
+  Popover,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme
+} from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
 import CheckIcon from '@mui/icons-material/Check'
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import { alpha } from '@mui/material/styles'
-import dayjs from 'dayjs'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { TimePicker } from '@mui/x-date-pickers/TimePicker'
+import dayjs, { Dayjs } from 'dayjs'
 import isBetween from 'dayjs/plugin/isBetween'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
@@ -13,7 +35,7 @@ import minMax from 'dayjs/plugin/minMax'
 import updateLocale from 'dayjs/plugin/updateLocale'
 import utc from 'dayjs/plugin/utc'
 import 'dayjs/locale/ro'
-import { useContext, useMemo, useRef, useState } from 'react'
+import React, { useContext, useMemo, useRef, useState } from 'react'
 import { Calendar, dayjsLocalizer } from 'react-big-calendar'
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
@@ -52,10 +74,18 @@ const REFERENCE_DATE = new Date(2024, 0, 1)
 
 // ─── Custom day-column header ─────────────────────────────────────────────────
 // Defined outside the component so react-big-calendar never remounts the Calendar.
+// Reads weekStart from context to optionally show the actual calendar date.
+
+const WeekStartContext = React.createContext<string | undefined>(undefined)
 
 function DayColumnHeader({ date }: { date: Date }) {
+  const weekStart = useContext(WeekStartContext)
+  const jsDay = date.getDay()
+  const dayOffset = jsDay === 0 ? 6 : jsDay - 1
+  const actualDate = weekStart ? dayjs(`${weekStart}T12:00:00`).add(dayOffset, 'day') : null
+
   return (
-    <Box sx={{ textAlign: 'center', py: 1.25 }}>
+    <Box sx={{ textAlign: 'center', py: weekStart ? 0.75 : 1.25 }}>
       <Typography
         sx={{
           fontSize: '0.8125rem',
@@ -66,6 +96,11 @@ function DayColumnHeader({ date }: { date: Date }) {
         }}>
         {dayjs(date).format('ddd')}
       </Typography>
+      {actualDate && (
+        <Typography sx={{ fontSize: '0.6875rem', color: 'text.secondary', lineHeight: 1.3 }}>
+          {actualDate.format('D MMM')}
+        </Typography>
+      )}
     </Box>
   )
 }
@@ -135,6 +170,363 @@ function dateToBlockFields(
   }
 }
 
+// Remove or clip any blocks on the same day that overlap with `incoming`.
+// Blocks that are fully covered are dropped; partially-overlapping blocks are trimmed;
+// a block that straddles both sides of `incoming` is split into two fragments.
+function removeOverlaps(
+  existing: AvailabilityBlock[],
+  incoming: AvailabilityBlock
+): AvailabilityBlock[] {
+  const toMin = (t: string) => {
+    const [h, m] = t.split(':').map(Number)
+    return h * 60 + m
+  }
+  const toTime = (min: number) => {
+    const h = Math.floor(min / 60)
+    const m = min % 60
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  }
+  const ns = toMin(incoming.startTime)
+  const ne = toMin(incoming.endTime)
+  const result: AvailabilityBlock[] = []
+  for (const b of existing) {
+    if (b.dayOfWeek !== incoming.dayOfWeek) {
+      result.push(b)
+      continue
+    }
+    const bs = toMin(b.startTime)
+    const be = toMin(b.endTime)
+    if (be <= ns || bs >= ne) {
+      result.push(b) // no overlap
+    } else if (bs < ns && be > ne) {
+      result.push({ ...b, endTime: toTime(ns) }) // incoming punches through middle — left fragment
+      result.push({ ...b, startTime: toTime(ne) }) // right fragment
+    } else if (bs < ns) {
+      result.push({ ...b, endTime: toTime(ns) }) // overlap at right end of existing — trim right
+    } else if (be > ne) {
+      result.push({ ...b, startTime: toTime(ne) }) // overlap at left end of existing — trim left
+    }
+    // else: existing fully covered by incoming — drop it
+  }
+  return result
+}
+
+// ─── Mobile view ──────────────────────────────────────────────────────────────
+
+const DAY_NAMES_EN = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const DAY_NAMES_RO = ['Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă', 'Duminică']
+
+interface MobileDialogState {
+  mode: 'add' | 'edit'
+  startTime: Dayjs
+  endTime: Dayjs
+  label: AvailabilityLabel
+  blockIdx?: number
+}
+
+interface MobileCalendarProps {
+  blocks: AvailabilityBlock[]
+  onChange?: (blocks: AvailabilityBlock[]) => void
+  overlayBlocks: AvailabilityBlock[]
+  labelTitles: Record<AvailabilityLabel, string>
+  isRo: boolean
+  editable: boolean
+  dayjsLocale: string
+  weekStart?: string // YYYY-MM-DD; when set, shows calendar dates in the navigator
+}
+
+function MobileAvailabilityCalendar({
+  blocks,
+  onChange,
+  overlayBlocks,
+  labelTitles,
+  isRo,
+  editable,
+  dayjsLocale,
+  weekStart
+}: MobileCalendarProps) {
+  const theme = useTheme()
+  const labelColors: Record<AvailabilityLabel, string> = {
+    [AvailabilityLabel.PREFERRED]: theme.palette.success.main,
+    [AvailabilityLabel.AVAILABLE]: theme.palette.primary.main,
+    [AvailabilityLabel.LAST_RESORT]: theme.palette.warning.main,
+    [AvailabilityLabel.UNAVAILABLE]: theme.palette.error.main
+  }
+
+  const [dayIndex, setDayIndex] = useState(0)
+  const touchStart = useRef<{ x: number; y: number } | null>(null)
+  const [dialog, setDialog] = useState<MobileDialogState | null>(null)
+
+  const dayNames = isRo ? DAY_NAMES_RO : DAY_NAMES_EN
+  const dayDate = weekStart
+    ? dayjs(`${weekStart}T12:00:00`).add(dayIndex, 'day').locale(dayjsLocale)
+    : null
+
+  const dayBlocks = blocks
+    .map((block, idx) => ({ block, idx }))
+    .filter(({ block }) => block.dayOfWeek === dayIndex)
+    .sort((a, b) => a.block.startTime.localeCompare(b.block.startTime))
+
+  const dayOverlayBlocks = overlayBlocks
+    .filter((b) => b.dayOfWeek === dayIndex)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime))
+
+  function openAdd() {
+    setDialog({
+      mode: 'add',
+      startTime: dayjs().hour(9).minute(0).second(0).millisecond(0),
+      endTime: dayjs().hour(10).minute(0).second(0).millisecond(0),
+      label: AvailabilityLabel.AVAILABLE
+    })
+  }
+
+  function openEdit(blockIdx: number) {
+    const b = blocks[blockIdx]
+    const [sh, sm] = b.startTime.split(':').map(Number)
+    const [eh, em] = b.endTime.split(':').map(Number)
+    setDialog({
+      mode: 'edit',
+      startTime: dayjs().hour(sh).minute(sm).second(0).millisecond(0),
+      endTime: dayjs().hour(eh).minute(em).second(0).millisecond(0),
+      label: b.label,
+      blockIdx
+    })
+  }
+
+  function handleSave() {
+    if (!onChange || !dialog) return
+    const newBlock: AvailabilityBlock = {
+      dayOfWeek: dayIndex,
+      startTime: dialog.startTime.format('HH:mm'),
+      endTime: dialog.endTime.format('HH:mm'),
+      label: dialog.label,
+      score: LABEL_SCORES[dialog.label]
+    }
+    const rest =
+      dialog.blockIdx !== undefined ? blocks.filter((_, i) => i !== dialog.blockIdx) : blocks
+    onChange([...removeOverlaps(rest, newBlock), newBlock])
+    setDialog(null)
+  }
+
+  function handleDelete() {
+    if (!onChange || dialog?.blockIdx === undefined) return
+    onChange(blocks.filter((_, i) => i !== dialog.blockIdx))
+    setDialog(null)
+  }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (!touchStart.current) return
+    const dx = e.changedTouches[0].clientX - touchStart.current.x
+    const dy = e.changedTouches[0].clientY - touchStart.current.y
+    touchStart.current = null
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return
+    setDayIndex((i) => (dx < 0 ? Math.min(i + 1, 6) : Math.max(i - 1, 0)))
+  }
+
+  const labelOptions = [
+    { label: AvailabilityLabel.PREFERRED, text: labelTitles[AvailabilityLabel.PREFERRED] },
+    { label: AvailabilityLabel.AVAILABLE, text: labelTitles[AvailabilityLabel.AVAILABLE] },
+    { label: AvailabilityLabel.LAST_RESORT, text: labelTitles[AvailabilityLabel.LAST_RESORT] }
+  ]
+
+  const d = theme.palette.divider
+  const paper = theme.palette.background.paper
+  const canSave = dialog?.endTime.isAfter(dialog.startTime) ?? false
+
+  return (
+    <Box
+      sx={{ border: `1px solid ${d}`, borderRadius: 2, overflow: 'hidden' }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}>
+      {/* Day navigator */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ px: 0.5, py: 0.75, borderBottom: `1px solid ${d}`, backgroundColor: paper }}>
+        <IconButton
+          size="small"
+          onClick={() => setDayIndex((i) => Math.max(i - 1, 0))}
+          disabled={dayIndex === 0}>
+          <ChevronLeftIcon />
+        </IconButton>
+        <Stack alignItems="center" spacing={0}>
+          <Typography
+            variant="body2"
+            fontWeight={700}
+            sx={{ textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.secondary' }}>
+            {dayNames[dayIndex]}
+          </Typography>
+          {dayDate && (
+            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>
+              {dayDate.format('D MMMM')}
+            </Typography>
+          )}
+        </Stack>
+        <IconButton
+          size="small"
+          onClick={() => setDayIndex((i) => Math.min(i + 1, 6))}
+          disabled={dayIndex === 6}>
+          <ChevronRightIcon />
+        </IconButton>
+      </Stack>
+
+      {/* Block list */}
+      <Box sx={{ p: 1.5, backgroundColor: paper }}>
+        {dayBlocks.length === 0 && dayOverlayBlocks.length === 0 && (
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 1.5 }}>
+            {isRo ? 'Nicio disponibilitate' : 'No availability set'}
+          </Typography>
+        )}
+        {dayBlocks.map(({ block, idx }) => (
+          <Box
+            key={idx}
+            onClick={() => {
+              if (editable) openEdit(idx)
+            }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              borderLeft: `3px solid ${labelColors[block.label]}`,
+              backgroundColor: alpha(labelColors[block.label], 0.12),
+              borderRadius: 1,
+              px: 1.5,
+              py: 1,
+              mb: 1,
+              cursor: editable ? 'pointer' : 'default',
+              userSelect: 'none'
+            }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="body2" fontWeight={600}>
+                {block.startTime} – {block.endTime}
+              </Typography>
+              <Typography variant="caption" sx={{ color: labelColors[block.label] }}>
+                {labelTitles[block.label]}
+              </Typography>
+            </Box>
+            {editable && <ChevronRightIcon sx={{ color: 'text.disabled', fontSize: '1.125rem' }} />}
+          </Box>
+        ))}
+        {dayOverlayBlocks.map((block, i) => (
+          <Box
+            key={`ov-${i}`}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              borderLeft: `3px solid ${alpha(labelColors[block.label], 0.4)}`,
+              backgroundColor: alpha(labelColors[block.label], 0.06),
+              borderRadius: 1,
+              px: 1.5,
+              py: 1,
+              mb: 1
+            }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="body2" fontWeight={600} sx={{ opacity: 0.55 }}>
+                {block.startTime} – {block.endTime}
+              </Typography>
+              <Typography variant="caption" sx={{ color: alpha(labelColors[block.label], 0.55) }}>
+                {labelTitles[block.label]}
+              </Typography>
+            </Box>
+          </Box>
+        ))}
+        {editable && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
+            <Fab size="small" color="primary" onClick={openAdd}>
+              <AddIcon />
+            </Fab>
+          </Box>
+        )}
+      </Box>
+
+      {/* Add / Edit dialog */}
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={dayjsLocale}>
+        <Dialog open={Boolean(dialog)} onClose={() => setDialog(null)} fullWidth maxWidth="xs">
+          <DialogTitle>
+            {dialog?.mode === 'add'
+              ? isRo
+                ? 'Adaugă disponibilitate'
+                : 'Add availability'
+              : isRo
+              ? 'Editează intervalul'
+              : 'Edit block'}
+          </DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 0.5 }}>
+              <Stack direction="row" spacing={1.5}>
+                <TimePicker
+                  label={isRo ? 'Început' : 'Start'}
+                  value={dialog?.startTime ?? null}
+                  onChange={(v) => {
+                    if (v) setDialog((prev) => (prev ? { ...prev, startTime: v } : prev))
+                  }}
+                  minutesStep={SCHEDULING_CONFIG.SLOT_SNAP_MINUTES}
+                  ampm={!isRo}
+                  slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                />
+                <TimePicker
+                  label={isRo ? 'Sfârșit' : 'End'}
+                  value={dialog?.endTime ?? null}
+                  onChange={(v) => {
+                    if (v) setDialog((prev) => (prev ? { ...prev, endTime: v } : prev))
+                  }}
+                  minutesStep={SCHEDULING_CONFIG.SLOT_SNAP_MINUTES}
+                  ampm={!isRo}
+                  minTime={
+                    dialog?.startTime?.add(SCHEDULING_CONFIG.SLOT_SNAP_MINUTES, 'minute') ??
+                    undefined
+                  }
+                  slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                />
+              </Stack>
+              <Box>
+                {labelOptions.map(({ label, text }) => (
+                  <MenuItem
+                    key={label}
+                    dense
+                    onClick={() => setDialog((prev) => (prev ? { ...prev, label } : prev))}>
+                    <Box
+                      sx={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        backgroundColor: labelColors[label],
+                        flexShrink: 0,
+                        mr: 1.5
+                      }}
+                    />
+                    <Typography variant="body2" sx={{ flex: 1 }}>
+                      {text}
+                    </Typography>
+                    {dialog?.label === label && (
+                      <CheckIcon sx={{ color: labelColors[label], ml: 1, fontSize: '1rem' }} />
+                    )}
+                  </MenuItem>
+                ))}
+              </Box>
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDialog(null)}>{isRo ? 'Anulează' : 'Cancel'}</Button>
+            {dialog?.mode === 'edit' && (
+              <Button color="error" onClick={handleDelete}>
+                {isRo ? 'Șterge' : 'Delete'}
+              </Button>
+            )}
+            <Button variant="contained" disabled={!canSave} onClick={handleSave}>
+              {dialog?.mode === 'add' ? (isRo ? 'Adaugă' : 'Add') : isRo ? 'Salvează' : 'Save'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </LocalizationProvider>
+    </Box>
+  )
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface AvailabilityCalendarProps {
@@ -143,6 +535,7 @@ export interface AvailabilityCalendarProps {
   overlayBlocks?: AvailabilityBlock[] // teacher's blocks shown in student view
   displayStartHour?: number // default 8
   displayEndHour?: number // default 20
+  weekStart?: string // YYYY-MM-DD; passed to mobile view to show calendar dates
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -152,7 +545,8 @@ export default function AvailabilityCalendar({
   onChange,
   overlayBlocks = [],
   displayStartHour = 8,
-  displayEndHour = 20
+  displayEndHour = 20,
+  weekStart
 }: AvailabilityCalendarProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   const isRo = localeManager.locale === SupportedLocale.RO_RO
@@ -163,6 +557,9 @@ export default function AvailabilityCalendar({
   dayjs.locale(dayjsLocale)
 
   const theme = useTheme()
+  const isTouch = useMediaQuery('(pointer: coarse)')
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'))
+  const isMobile = isTouch || isSmallScreen
   const editable = Boolean(onChange)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -250,10 +647,17 @@ export default function AvailabilityCalendar({
     if (!onChange || !popover) return
     if (popover.pendingSlot) {
       const { start, end } = popover.pendingSlot
-      onChange([...blocks, { ...dateToBlockFields(start, end), label, score: LABEL_SCORES[label] }])
+      const newBlock: AvailabilityBlock = {
+        ...dateToBlockFields(start, end),
+        label,
+        score: LABEL_SCORES[label]
+      }
+      onChange([...removeOverlaps(blocks, newBlock), newBlock])
     } else if (popover.selectedId) {
       const idx = parseInt(popover.selectedId.replace('main-', ''), 10)
-      onChange(blocks.map((b, i) => (i === idx ? { ...b, label, score: LABEL_SCORES[label] } : b)))
+      const newBlock: AvailabilityBlock = { ...blocks[idx], label, score: LABEL_SCORES[label] }
+      const rest = blocks.filter((_, i) => i !== idx)
+      onChange([...removeOverlaps(rest, newBlock), newBlock])
     }
     closePopover()
   }
@@ -269,22 +673,24 @@ export default function AvailabilityCalendar({
   function handleEventDrop({ event, start, end }: any) {
     if (!onChange || (event as CalEvent).isOverlay) return
     const idx = parseInt((event as CalEvent).id.replace('main-', ''), 10)
-    onChange(
-      blocks.map((b, i) =>
-        i === idx ? { ...b, ...dateToBlockFields(start as Date, end as Date) } : b
-      )
-    )
+    const newBlock: AvailabilityBlock = {
+      ...blocks[idx],
+      ...dateToBlockFields(start as Date, end as Date)
+    }
+    const rest = blocks.filter((_, i) => i !== idx)
+    onChange([...removeOverlaps(rest, newBlock), newBlock])
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function handleEventResize({ event, start, end }: any) {
     if (!onChange || (event as CalEvent).isOverlay) return
     const idx = parseInt((event as CalEvent).id.replace('main-', ''), 10)
-    onChange(
-      blocks.map((b, i) =>
-        i === idx ? { ...b, ...dateToBlockFields(start as Date, end as Date) } : b
-      )
-    )
+    const newBlock: AvailabilityBlock = {
+      ...blocks[idx],
+      ...dateToBlockFields(start as Date, end as Date)
+    }
+    const rest = blocks.filter((_, i) => i !== idx)
+    onChange([...removeOverlaps(rest, newBlock), newBlock])
   }
 
   // ── Event styling (MUI X Scheduler–inspired) ──────────────────────────────────
@@ -446,88 +852,106 @@ export default function AvailabilityCalendar({
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
-  return (
-    <Box ref={containerRef} sx={calendarSx}>
-      <Box sx={{ height: 580 }}>
-        <DnDCalendar
-          localizer={localizer}
-          culture={dayjsLocale}
-          events={events}
-          components={CALENDAR_COMPONENTS}
-          defaultView="week"
-          views={['week']}
-          toolbar={false}
-          date={REFERENCE_DATE}
-          onNavigate={() => {
-            /* locked to reference week */
-          }}
-          selectable={editable}
-          onSelectSlot={handleSelectSlot}
-          onSelectEvent={handleSelectEvent}
-          onEventDrop={handleEventDrop}
-          onEventResize={handleEventResize}
-          resizable={editable}
-          step={SCHEDULING_CONFIG.SLOT_SNAP_MINUTES}
-          timeslots={1}
-          min={minTime}
-          max={maxTime}
-          eventPropGetter={eventPropGetter}
-        />
-      </Box>
+  if (isMobile) {
+    return (
+      <MobileAvailabilityCalendar
+        blocks={blocks}
+        onChange={onChange}
+        overlayBlocks={overlayBlocks}
+        labelTitles={labelTitles}
+        isRo={isRo}
+        editable={editable}
+        dayjsLocale={dayjsLocale}
+        weekStart={weekStart}
+      />
+    )
+  }
 
-      <Popover
-        open={Boolean(popover)}
-        anchorEl={popover?.anchorEl ?? null}
-        anchorReference={popover?.anchorPosition ? 'anchorPosition' : 'anchorEl'}
-        anchorPosition={popover?.anchorPosition}
-        onClose={closePopover}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        PaperProps={{ sx: { minWidth: 176, py: 0.5 } }}>
-        {(() => {
-          const currentLabel = popover?.selectedId
-            ? blocks[parseInt(popover.selectedId.replace('main-', ''), 10)]?.label
-            : null
-          return (
-            <>
-              {labelOptions.map(({ label, text }) => (
-                <MenuItem
-                  key={label}
-                  dense
-                  onClick={() => {
-                    handleLabelPick(label)
-                  }}>
-                  <Box
-                    sx={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
-                      backgroundColor: LABEL_COLORS[label],
-                      flexShrink: 0,
-                      mr: 1.5
-                    }}
-                  />
-                  <Typography variant="body2" sx={{ flex: 1 }}>
-                    {text}
-                  </Typography>
-                  {label === currentLabel && (
-                    <CheckIcon sx={{ color: LABEL_COLORS[label], ml: 1, fontSize: '1rem' }} />
-                  )}
-                </MenuItem>
-              ))}
-              {popover?.selectedId && (
-                <>
-                  <Divider sx={{ my: 0.5 }} />
-                  <MenuItem dense onClick={handleDelete} sx={{ color: 'error.main' }}>
-                    <DeleteOutlineIcon sx={{ mr: 1.5, fontSize: '1.125rem' }} />
-                    <Typography variant="body2">{isRo ? 'Șterge' : 'Delete'}</Typography>
+  return (
+    <WeekStartContext.Provider value={weekStart}>
+      <Box ref={containerRef} sx={calendarSx}>
+        <Box sx={{ height: 580 }}>
+          <DnDCalendar
+            localizer={localizer}
+            culture={dayjsLocale}
+            events={events}
+            key={dayjsLocale}
+            components={CALENDAR_COMPONENTS}
+            defaultView="week"
+            views={['week']}
+            toolbar={false}
+            date={REFERENCE_DATE}
+            onNavigate={() => {
+              /* locked to reference week */
+            }}
+            selectable={editable}
+            onSelectSlot={handleSelectSlot}
+            onSelectEvent={handleSelectEvent}
+            onEventDrop={handleEventDrop}
+            onEventResize={handleEventResize}
+            resizable={editable}
+            step={SCHEDULING_CONFIG.SLOT_SNAP_MINUTES}
+            timeslots={1}
+            min={minTime}
+            max={maxTime}
+            eventPropGetter={eventPropGetter}
+          />
+        </Box>
+
+        <Popover
+          open={Boolean(popover)}
+          anchorEl={popover?.anchorEl ?? null}
+          anchorReference={popover?.anchorPosition ? 'anchorPosition' : 'anchorEl'}
+          anchorPosition={popover?.anchorPosition}
+          onClose={closePopover}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          PaperProps={{ sx: { minWidth: 176, py: 0.5 } }}>
+          {(() => {
+            const currentLabel = popover?.selectedId
+              ? blocks[parseInt(popover.selectedId.replace('main-', ''), 10)]?.label
+              : null
+            return (
+              <>
+                {labelOptions.map(({ label, text }) => (
+                  <MenuItem
+                    key={label}
+                    dense
+                    onClick={() => {
+                      handleLabelPick(label)
+                    }}>
+                    <Box
+                      sx={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        backgroundColor: LABEL_COLORS[label],
+                        flexShrink: 0,
+                        mr: 1.5
+                      }}
+                    />
+                    <Typography variant="body2" sx={{ flex: 1 }}>
+                      {text}
+                    </Typography>
+                    {label === currentLabel && (
+                      <CheckIcon sx={{ color: LABEL_COLORS[label], ml: 1, fontSize: '1rem' }} />
+                    )}
                   </MenuItem>
-                </>
-              )}
-            </>
-          )
-        })()}
-      </Popover>
-    </Box>
+                ))}
+                {popover?.selectedId && (
+                  <>
+                    <Divider sx={{ my: 0.5 }} />
+                    <MenuItem dense onClick={handleDelete} sx={{ color: 'error.main' }}>
+                      <DeleteOutlineIcon sx={{ mr: 1.5, fontSize: '1.125rem' }} />
+                      <Typography variant="body2">{isRo ? 'Șterge' : 'Delete'}</Typography>
+                    </MenuItem>
+                  </>
+                )}
+              </>
+            )
+          })()}
+        </Popover>
+      </Box>
+    </WeekStartContext.Provider>
   )
 }
