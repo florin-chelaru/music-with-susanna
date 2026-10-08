@@ -1,0 +1,3 @@
+# Build output — not source, and not covered by tsconfig
+build/
+coverage/
