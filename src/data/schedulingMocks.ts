@@ -130,16 +130,52 @@ export const MOCK_TEACHER_AVAILABILITY: WeeklyAvailability = {
 
 // Spring 2026 (active): Ana weekly 45min, Barbara bi-weekly 60min, Chris weekly 45min
 export const MOCK_ENROLLMENTS_SPRING: StudentEnrollment[] = [
-  { studentId: MOCK_STUDENT_IDS.ana, lessonDurationMinutes: 45, totalLessons: 20 },
-  { studentId: MOCK_STUDENT_IDS.barbara, lessonDurationMinutes: 60, totalLessons: 10 },
-  { studentId: MOCK_STUDENT_IDS.chris, lessonDurationMinutes: 45, totalLessons: 20 }
+  {
+    studentId: MOCK_STUDENT_IDS.ana,
+    lessonDurationMinutes: 45,
+    totalLessons: 20,
+    lessonsPerPeriod: 1,
+    period: 'week'
+  },
+  {
+    studentId: MOCK_STUDENT_IDS.barbara,
+    lessonDurationMinutes: 60,
+    totalLessons: 10,
+    lessonsPerPeriod: 1,
+    period: 'biweek'
+  },
+  {
+    studentId: MOCK_STUDENT_IDS.chris,
+    lessonDurationMinutes: 45,
+    totalLessons: 20,
+    lessonsPerPeriod: 1,
+    period: 'week'
+  }
 ]
 
 // Fall 2026 (scheduling): same students, same pattern
 export const MOCK_ENROLLMENTS_FALL: StudentEnrollment[] = [
-  { studentId: MOCK_STUDENT_IDS.ana, lessonDurationMinutes: 45, totalLessons: 15 },
-  { studentId: MOCK_STUDENT_IDS.barbara, lessonDurationMinutes: 60, totalLessons: 8 },
-  { studentId: MOCK_STUDENT_IDS.chris, lessonDurationMinutes: 45, totalLessons: 15 }
+  {
+    studentId: MOCK_STUDENT_IDS.ana,
+    lessonDurationMinutes: 45,
+    totalLessons: 15,
+    lessonsPerPeriod: 1,
+    period: 'week'
+  },
+  {
+    studentId: MOCK_STUDENT_IDS.barbara,
+    lessonDurationMinutes: 60,
+    totalLessons: 8,
+    lessonsPerPeriod: 1,
+    period: 'biweek'
+  },
+  {
+    studentId: MOCK_STUDENT_IDS.chris,
+    lessonDurationMinutes: 45,
+    totalLessons: 15,
+    lessonsPerPeriod: 1,
+    period: 'week'
+  }
 ]
 
 // ─── Scheduling round ─────────────────────────────────────────────────────────

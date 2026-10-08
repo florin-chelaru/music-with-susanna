@@ -7,6 +7,11 @@ import {
   IconButton,
   Stack,
   Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
   Tabs,
   Toolbar,
   Typography
@@ -21,14 +26,24 @@ import 'dayjs/locale/ro'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AvailabilityCalendar from '../../Components/scheduling/AvailabilityCalendar'
+import EnrollmentDialog from '../../Components/scheduling/EnrollmentDialog'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
-import { AvailabilityBlock, SemesterStatus, WeeklyAvailability } from '../../util/scheduling'
 import {
+  AvailabilityBlock,
+  SemesterStatus,
+  StudentEnrollment,
+  WeeklyAvailability
+} from '../../util/scheduling'
+import {
+  MOCK_ENROLLMENTS_FALL,
+  MOCK_ENROLLMENTS_SPRING,
   MOCK_LOCATIONS,
+  MOCK_SEMESTER_IDS,
   MOCK_SEMESTERS,
+  MOCK_STUDENTS,
   MOCK_TEACHER_AVAILABILITY
 } from '../../data/schedulingMocks'
 
@@ -50,6 +65,13 @@ interface SemesterPageTexts {
   statusActive: string
   statusCompleted: string
   comingSoon: string
+  addStudent: string
+  noStudents: string
+  colStudent: string
+  colDuration: string
+  colTotalLessons: string
+  colCancellationWindow: string
+  defaultWindow: string
 }
 
 const EN_US: SemesterPageTexts = {
@@ -67,7 +89,14 @@ const EN_US: SemesterPageTexts = {
   statusScheduling: 'Scheduling',
   statusActive: 'Active',
   statusCompleted: 'Completed',
-  comingSoon: 'Coming soon'
+  comingSoon: 'Coming soon',
+  addStudent: 'Add Student',
+  noStudents: 'No students enrolled.',
+  colStudent: 'Student',
+  colDuration: 'Duration',
+  colTotalLessons: 'Total Lessons',
+  colCancellationWindow: 'Cancellation Window',
+  defaultWindow: 'Default'
 }
 
 const RO_RO: SemesterPageTexts = {
@@ -85,7 +114,14 @@ const RO_RO: SemesterPageTexts = {
   statusScheduling: 'În planificare',
   statusActive: 'Activ',
   statusCompleted: 'Finalizat',
-  comingSoon: 'În curând'
+  comingSoon: 'În curând',
+  addStudent: 'Adaugă elev',
+  noStudents: 'Niciun elev înscris.',
+  colStudent: 'Elev',
+  colDuration: 'Durată',
+  colTotalLessons: 'Total lecții',
+  colCancellationWindow: 'Fereastră anulare',
+  defaultWindow: 'Implicit'
 }
 
 const TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -206,6 +242,24 @@ export default function SemesterPage() {
       return { ...prev, weekOverrides: rest }
     })
     triggerAutoSave()
+  }
+
+  // ── Enrollment state ─────────────────────────────────────────────────────────
+
+  const [enrollments, setEnrollments] = useState<StudentEnrollment[]>(() => {
+    if (semesterId === MOCK_SEMESTER_IDS.spring2026) return [...MOCK_ENROLLMENTS_SPRING]
+    if (semesterId === MOCK_SEMESTER_IDS.fall2026) return [...MOCK_ENROLLMENTS_FALL]
+    return []
+  })
+  const [enrollDialogOpen, setEnrollDialogOpen] = useState(false)
+
+  function handleAddStudent(enrollment: StudentEnrollment) {
+    setEnrollments((prev) => [...prev, enrollment])
+    setEnrollDialogOpen(false)
+  }
+
+  function handleRemoveStudent(studentId: string) {
+    setEnrollments((prev) => prev.filter((e) => e.studentId !== studentId))
   }
 
   // ── Week override picker ─────────────────────────────────────────────────────
@@ -386,8 +440,80 @@ export default function SemesterPage() {
         </Box>
       )}
 
+      {/* ── Students tab ───────────────────────────────────────────────────── */}
+      {tab === 1 && (
+        <Box>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>
+              {t.tabStudents}
+            </Typography>
+            <Button
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setEnrollDialogOpen(true)
+              }}>
+              {t.addStudent}
+            </Button>
+          </Stack>
+          {enrollments.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              {t.noStudents}
+            </Typography>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t.colStudent}</TableCell>
+                  <TableCell align="center">{t.colDuration}</TableCell>
+                  <TableCell align="center">{t.colTotalLessons}</TableCell>
+                  <TableCell>{t.colCancellationWindow}</TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {enrollments.map((enrollment) => {
+                  const student = MOCK_STUDENTS[enrollment.studentId]
+                  return (
+                    <TableRow key={enrollment.studentId} hover>
+                      <TableCell>{student?.name ?? enrollment.studentId}</TableCell>
+                      <TableCell align="center">{enrollment.lessonDurationMinutes} min</TableCell>
+                      <TableCell align="center">{enrollment.totalLessons}</TableCell>
+                      <TableCell>
+                        {enrollment.cancellationWindowHours !== undefined
+                          ? `${enrollment.cancellationWindowHours} h`
+                          : `${t.defaultWindow} (${semester.defaultCancellationWindowHours} h)`}
+                      </TableCell>
+                      <TableCell padding="checkbox">
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            handleRemoveStudent(enrollment.studentId)
+                          }}>
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          )}
+          <EnrollmentDialog
+            key={enrollDialogOpen ? 'open' : 'closed'}
+            open={enrollDialogOpen}
+            students={MOCK_STUDENTS}
+            alreadyEnrolledIds={enrollments.map((e) => e.studentId)}
+            onClose={() => {
+              setEnrollDialogOpen(false)
+            }}
+            onSave={handleAddStudent}
+          />
+        </Box>
+      )}
+
       {/* ── Placeholder tabs ───────────────────────────────────────────────── */}
-      {tab !== 0 && <Typography color="text.secondary">{t.comingSoon}</Typography>}
+      {tab > 1 && <Typography color="text.secondary">{t.comingSoon}</Typography>}
     </Container>
   )
 }

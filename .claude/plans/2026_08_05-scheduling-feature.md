@@ -1,6 +1,6 @@
 # Scheduling Feature
 
-> Status: Implementation in progress — Steps A, B, and C complete
+> Status: Implementation in progress — Steps A, B, C, D, and E complete
 
 ---
 
@@ -977,27 +977,37 @@ All phases follow the same incremental pattern:
 - Uses `dayjsLocalizer` (not `dateFnsLocalizer` — date-fns v4 is ESM-only and incompatible with CRA)
 - MUI X Scheduler–inspired styling: rounded container, light-tinted events with 3 px left accent bar, theme-aware borders, custom day-column headers
 - Popover positioning: drag → `bounds.top/left - window.scrollY/scrollX` (page→viewport coords); click → `box.clientY/X`; both clamped to container top
-- Test route `/scheduling/availability-test` still present — remove before shipping
+- **Gutter alignment by locale:** `key={dayjsLocale}` on DnDCalendar forces a full remount on locale change so the time gutter DOM width is re-measured correctly (English AM/PM labels are wider than Romanian 24h labels)
+- **Overlap clipping (`removeOverlaps`):** module-level pure function applied in `handleLabelPick`, `handleEventDrop`, `handleEventResize`. New block punches through existing ones on the same day — covers: no overlap, left trim, right trim, split (punch-through), fully covered (drop). No error is shown; the new block silently claims its time range.
+- **Day column date labels:** `WeekStartContext = React.createContext<string | undefined>(undefined)` (module-level, so `DayColumnHeader` defined outside the component stays stable). When `weekStart` is provided, shows the calendar date below the day abbreviation (`'D MMM'` format for desktop). `DayColumnHeader` must be defined outside `AvailabilityCalendar` — react-big-calendar remounts if the component reference is new on each render.
+- **Mobile view:** activated when `isTouch || isSmallScreen` (`isTouch = useMediaQuery('(pointer: coarse)')`, `isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'))` — two separate calls, never OR'd inline to avoid hook short-circuit). 1-day-at-a-time with left/right swipe navigation (swipe detection via `useRef<{x,y}|null>`, ignores vertical scrolls with `Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)`). Block list instead of time grid. FAB + dialog for add/edit. Mobile shows full month name (`'D MMMM'` format, locale-aware). Desktop shows abbreviated (`'D MMM'`).
+- Test route `/scheduling/availability-test` still present — **remove before shipping**
+- Props extended with `weekStart?: string` — passed by `SemesterPage` for week override instances so day headers show correct calendar dates
 
 ---
 
-#### Step D — SemesterPage: Availability tab
+#### ~~Step D — SemesterPage: Availability tab~~ ✅ DONE
 
 - `src/pages/scheduling/SemesterPage.tsx` — tab shell (Availability / Students / Scheduling / Calendar)
-- Availability tab renders `AvailabilityCalendar` with mock teacher availability; week-override section below with a date picker + per-week calendar instance
-- Auto-save on change (debounced, no RTDB yet — just local state)
+- Availability tab renders `AvailabilityCalendar` with mock teacher availability; week-override section below with a date picker + per-week calendar instance; `weekStart` prop passed to each override calendar
+- Auto-save on change (debounced 1 s via `setTimeout` ref — no RTDB yet, just local state + "Saving…" / "Saved" indicator)
+- **Week override pre-population:** `handleAddOverride` seeds a new override with `[...availability.weeklyTemplate.blocks]` instead of an empty array, so the teacher starts from the template and edits from there
+- **Week override date validation:** `shouldDisableOverrideDate` disables any date whose week (Mon–Sun) is either fully in the past (`sunday.isBefore(dayjs().startOf('day'))`) or has no overlap with the semester's start/end range. `minDate`/`maxDate` on the picker restrict calendar navigation to semester bounds.
+- **Semester end date validation (SemesterDialog):** `minDate={!initial ? dayjs() : undefined}` on the end-date `DatePicker` — only restricts future-only for new semesters; editing existing semesters (where `initial` is set) has no restriction so completed semesters aren't broken.
+- Auth guard: `const { user } = useUser()` (not `useUser()` directly — context returns `{ user, dispatch }`); locale cast: `localeManager.locale as SupportedLocale`
 
-*Review: navigate from SchedulingPage into a semester; draw and adjust availability blocks; add a week override.*
+*Review: navigate from SchedulingPage into a semester; draw and adjust availability blocks; add a week override pre-populated from the template; verify date picker rejects past/out-of-range weeks.*
 
 ---
 
-#### Step E — SemesterPage: Students tab
+#### ~~Step E — SemesterPage: Students tab~~ ✅ DONE
 
-- Students tab renders the enrolled students table (mock data: name, duration, lessons/week, cancellation window)
-- `EnrollmentDialog` — add student form (dropdown from mock student list, duration, frequency, optional cancellation window override)
-- Remove / soft-delete row action
+- `src/Components/scheduling/EnrollmentDialog.tsx` — new dialog: student dropdown (filtered to unenrolled), lesson duration (min), total lessons, optional cancellation window override (h). All controlled state; no form submit — `handleSave` reads state directly. Bilingual EN_US / RO_RO. `key={enrollDialogOpen ? 'open' : 'closed'}` on the call site forces a fresh mount each time the dialog opens, giving clean state.
+- `SemesterPage` Students tab (tab index 1): table with columns Student / Duration / Total Lessons / Cancellation Window + row-level remove button (`DeleteOutlineIcon`). Empty state shows `t.noStudents`. Cancellation window cell shows `"Default (Nh)"` when no per-student override is set. `tab > 1` keeps the "Coming soon" placeholder for Scheduling and Calendar tabs.
+- Enrollment state initialized from the correct mock set (`MOCK_ENROLLMENTS_SPRING` or `MOCK_ENROLLMENTS_FALL`) via a lazy `useState` initializer keyed on `semesterId`.
+- `handleAddStudent` appends to local state and closes dialog; `handleRemoveStudent` filters from local state (no RTDB write yet — deferred to Step N).
 
-*Review: see enrolled students, open the Add dialog, remove a student from the list.*
+*Review: navigate to Students tab; see enrolled students; open Add dialog, pick a student, adjust duration/lessons; remove a row.*
 
 ---
 

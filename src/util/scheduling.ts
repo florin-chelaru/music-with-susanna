@@ -59,11 +59,15 @@ export interface Semester {
   createdAt: number
 }
 
+export type LessonPeriod = 'week' | 'biweek' | 'month'
+
 export interface StudentEnrollment {
   studentId: string
   lessonDurationMinutes: number
   totalLessons: number
   cancellationWindowHours?: number // falls back to semester default when absent
+  lessonsPerPeriod?: number // UI-derived; used for display only
+  period?: LessonPeriod // UI-derived; used for display only
 }
 
 export type RoundStatus = 'collecting' | 'ready' | 'suggested' | 'finalized'
