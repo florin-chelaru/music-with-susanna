@@ -67,7 +67,7 @@ export const MOCK_SEMESTERS: Semester[] = [
     name: 'Spring 2026',
     startDate: '2026-02-02',
     endDate: '2026-06-20',
-    status: 'active',
+    status: 'completed',
     defaultCancellationWindowHours: 24,
     timezone: 'Europe/Bucharest',
     createdAt: 1700000000000
@@ -78,7 +78,7 @@ export const MOCK_SEMESTERS: Semester[] = [
     name: 'Fall 2026',
     startDate: '2026-09-07',
     endDate: '2026-12-19',
-    status: 'scheduling',
+    status: 'active',
     defaultCancellationWindowHours: 24,
     timezone: 'Europe/Bucharest',
     createdAt: 1700000000000
@@ -180,13 +180,41 @@ export const MOCK_ENROLLMENTS_FALL: StudentEnrollment[] = [
 
 // ─── Scheduling round ─────────────────────────────────────────────────────────
 
-export const MOCK_ROUND: SchedulingRound = {
-  id: MOCK_ROUND_ID,
-  roundNumber: 1,
-  status: 'collecting',
-  deadline: new Date('2026-08-20T23:59:00+03:00').getTime(),
-  createdAt: new Date('2026-08-06T10:00:00+03:00').getTime()
-}
+const DAY_MS = 24 * 60 * 60 * 1000
+
+// Like the lesson statuses, the open round's dates are relative to now. A fixed deadline
+// goes stale: once it passes, the countdown reads as expired and the "close the round"
+// button is permanently enabled, so neither state can be reviewed.
+const NOW = Date.now()
+
+export const MOCK_ROUNDS_SPRING: SchedulingRound[] = [
+  {
+    id: 'round-sp-1',
+    roundNumber: 1,
+    status: 'finalized',
+    deadline: new Date('2026-01-16T23:59:00+02:00').getTime(),
+    createdAt: new Date('2026-01-05T10:00:00+02:00').getTime()
+  }
+]
+
+export const MOCK_ROUNDS_FALL: SchedulingRound[] = [
+  // Round 1 produced the schedule the Calendar tab shows.
+  {
+    id: 'round-fa-1',
+    roundNumber: 1,
+    status: 'finalized',
+    deadline: new Date('2026-08-20T23:59:00+03:00').getTime(),
+    createdAt: new Date('2026-08-06T10:00:00+03:00').getTime()
+  },
+  // Round 2 is open: the teacher reopened negotiation partway through the semester.
+  {
+    id: MOCK_ROUND_ID,
+    roundNumber: 2,
+    status: 'collecting',
+    deadline: NOW + 5 * DAY_MS,
+    createdAt: NOW - 2 * DAY_MS
+  }
+]
 
 // ─── Student submissions ──────────────────────────────────────────────────────
 
@@ -194,7 +222,7 @@ export const MOCK_SUBMISSIONS: Record<string, StudentSubmission> = {
   [MOCK_STUDENT_IDS.ana]: {
     studentId: MOCK_STUDENT_IDS.ana,
     status: 'submitted',
-    submittedAt: new Date('2026-08-07T14:30:00+03:00').getTime(),
+    submittedAt: NOW - 1.5 * DAY_MS,
     recurringPreferences: [
       block(0, '09:00', '11:00', AvailabilityLabel.PREFERRED), // Mon preferred
       block(2, '09:00', '11:00', AvailabilityLabel.AVAILABLE), // Wed available
@@ -205,7 +233,7 @@ export const MOCK_SUBMISSIONS: Record<string, StudentSubmission> = {
   [MOCK_STUDENT_IDS.barbara]: {
     studentId: MOCK_STUDENT_IDS.barbara,
     status: 'submitted',
-    submittedAt: new Date('2026-08-08T09:15:00+03:00').getTime(),
+    submittedAt: NOW - 0.5 * DAY_MS,
     recurringPreferences: [
       block(0, '10:00', '12:00', AvailabilityLabel.PREFERRED), // Mon preferred
       block(1, '10:00', '12:00', AvailabilityLabel.AVAILABLE), // Tue available
