@@ -116,9 +116,11 @@ Once confirmed, the system generates individual `LessonInstance` records for eve
 - **"Cancel all going forward"**: creates N individual cancellation records, sends **one bundled notification** to the other party.
 
 **Student cancellation policy:**
-- If canceled outside the cancellation window: no charge, no makeup.
+- If canceled outside the cancellation window: no charge, and the student may request a makeup lesson from the teacher.
 - If canceled inside the window (or no-show): lesson is charged, no makeup.
 - Cancellation window is configurable globally per semester, with a per-student override.
+
+> Resolved 2026-10-08: an earlier draft said "no charge, no makeup" for a cancellation outside the window, contradicting the user flow below. Outside the window the student may request a makeup lesson; granting it stays the teacher's decision. `CancelLessonDialog` already shows this wording.
 
 **Teacher cancellation:**
 - Teacher can cancel any lesson.
@@ -1023,11 +1025,14 @@ All phases follow the same incremental pattern:
 
 ---
 
-#### Step F — LessonCalendar component + SemesterPage: Calendar tab
+#### ~~Step F — LessonCalendar component + SemesterPage: Calendar tab~~ ✅ DONE
 
-- `src/Components/scheduling/LessonCalendar.tsx` — `react-big-calendar` month view (toggle to week/agenda); read-only events from mock lesson instances; click event → details popover with Cancel button (wired to `CancelLessonDialog` but no RTDB write yet)
-- `CancelLessonDialog` — reason field, "cancel all going forward" checkbox, policy message (within/outside window)
-- Calendar tab in `SemesterPage` renders `LessonCalendar` + Export .ics button (no-op for now)
+- `src/Components/scheduling/LessonCalendar.tsx` — `react-big-calendar` month view (toggle to week/agenda); read-only events from mock lesson instances; click event → details popover with Cancel button (wired to `CancelLessonDialog` but no RTDB write yet). Canceled lessons stay visible, struck through and faded, so a called-off lesson is distinguishable from a gap in the schedule.
+- `CancelLessonDialog` — reason field, "cancel all going forward" checkbox, and a `mode` prop: `teacher` offers a makeup lesson, `student` sees the charge policy. Built for both now so Step J reuses it.
+- Calendar tab in `SemesterPage` renders `LessonCalendar` + Export .ics button (no-op for now). The calendar opens on today when the semester is running and clamps to the semester's own range otherwise, so a past or future semester never opens on an empty month.
+- `src/util/calendarLocalizer.ts` — the dayjs plugin setup and `dayjsLocalizer` moved out of `AvailabilityCalendar`. It used to run only if that component was imported, so a calendar rendered on its own fell back to a Sunday week start, contradicting the `0=Mon` `AvailabilityBlock` convention.
+- `isWithinCancellationWindow` added to `src/util/scheduling.ts` with tests — Step Q stores it as `withinWindow`. A lesson already in the past counts as inside the window, which is what makes a no-show behave like a late cancellation.
+- Mock lesson instances split into `MOCK_LESSON_INSTANCES_SPRING` / `_FALL` (matching how RTDB keys them by semester), with statuses derived from the current date rather than hardcoded — fixed statuses had drifted into claiming lessons were "scheduled" for dates already past.
 
 *Review: browse the semester calendar, click a lesson to see details, open the cancel dialog.*
 
