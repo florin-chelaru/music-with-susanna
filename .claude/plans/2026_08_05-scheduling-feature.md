@@ -1,11 +1,14 @@
 # Scheduling Feature
 
-> Status: Implementation in progress — Steps A, B, C, D, and E complete
+> Status: Implementation in progress — Steps A, B, C, D, and E complete.
+> Shared date helpers (`src/util/schedulingDates.ts`) landed 2026-10-08; this document was
+> corrected the same day (see the review linked below for what changed and why).
 >
 > Review (2026-10-08): see [2026_10_08-scheduling-feature-review.md](./2026_10_08-scheduling-feature-review.md)
-> for current status, a fixed build break, and corrections this plan still needs
-> (stale date-fns algorithm section, duplicate `student_best`/`balanced` strategies,
-> missing security-rules file, `toWeekMonday` timezone bug).
+> for the full findings and the progress log. The corrections it identified have been applied to
+> this document, and the `toWeekMonday` timezone bug is fixed in code. Still open from that review:
+> exporting the live Firebase rules into this repo (Step M2), tests for `removeOverlaps`, the dead
+> `UNAVAILABLE` label, and the student "My Schedule" nav link that currently leads to a stub.
 
 ---
 
@@ -57,10 +60,10 @@ Design note: labels map to numeric scores. New labels can be inserted at any sco
 ```
 if teacher_score == 0: combined = 0  (hard block)
 else if student_score == 0: combined = 0  (student hard block)
-else: combined = (teacher_score × TEACHER_WEIGHT + student_score × STUDENT_WEIGHT) / 10
+else: combined = teacher_score × TEACHER_WEIGHT + student_score × STUDENT_WEIGHT
 ```
 
-Weights are configurable constants: `TEACHER_WEIGHT = 0.7`, `STUDENT_WEIGHT = 0.3`.
+Weights are configurable constants: `TEACHER_WEIGHT = 0.7`, `STUDENT_WEIGHT = 0.3`. They sum to 1, so the combined score stays on the same 0–10 scale as the inputs — which is what the gap penalty below is tuned against. (An earlier draft of this document divided by 10; the implementation in `computeCombinedScore` does not, and the implementation is correct.)
 
 **Gap penalty:** after satisfying the minimum break constraint, the algorithm penalizes days where the gap between consecutive lessons exceeds `GAP_PENALTY_THRESHOLD_MINUTES`. This encourages compact scheduling.
 
@@ -88,13 +91,15 @@ A student submits:
 
 After all students submit (or the deadline passes), the system generates **3 candidate schedules simultaneously**, one per optimization strategy:
 
-| Strategy | Objective |
-|---|---|
-| Best for Teacher | Maximize sum of teacher scores across all placed slots |
-| Best for Students | Maximize number of students placed in their Preferred slots |
-| Balanced | Weighted combination of teacher and student scores |
+| Strategy | Objective | Candidate sort key |
+|---|---|---|
+| Best for Teacher | Maximize sum of teacher scores across all placed slots | `teacherScore` |
+| Best for Students | Maximize students placed in their Preferred slots | `studentScore` |
+| Balanced | Weighted combination of teacher and student scores | `combinedScore` |
 
-All three strategies treat "include every student" as a hard constraint first. Only if a student genuinely cannot be fit into any slot is that student dropped and the teacher notified.
+The three sort keys must stay distinct. `combinedScore` *is* `teacherScore × 0.7 + studentScore × 0.3`, so if "Best for Students" also sorted by `combinedScore` it would be identical to Balanced and the teacher would be shown the same schedule twice.
+
+All three strategies place every student before optimizing anything else, scheduling the most constrained students first. This is a **greedy pass with no backtracking**: a student can end up unplaced because earlier picks consumed the slots they could have used, not only because no feasible slot ever existed. For Phase 1 cohort sizes (≤ 20 students) that is an accepted trade-off — see Open Questions. Either way, unplaced students are surfaced to the teacher.
 
 The teacher sees all three side-by-side, picks one as a starting point, edits manually, then confirms.
 
@@ -195,6 +200,7 @@ Student-initiated writes that need field-level validation (cancellation requests
 /studentSubmissions/teachers/{teacherId}/semesters/{semesterId}/rounds/{roundId}/students/{studentId}
   status: "pending" | "submitted"
   submittedAt: timestamp (optional)
+  carriedForward: boolean (optional — seeded from the previous round, not yet re-confirmed)
   recurringPreferences: [ { dayOfWeek, startTime, endTime, label, score } ]
   weekOverrides: { {weekStartDate}: { blocks: [...] } }
 
@@ -483,60 +489,58 @@ interface SchedulingInput {
 
 ### Helper functions
 
-Date-level operations use `date-fns` (installed with `react-big-calendar`). "HH:mm" time strings use plain arithmetic — `date-fns` works on `Date` objects, so converting "HH:mm" through a Date reference introduces timezone hazards (confirmed: `addMinutes(new Date(0), 570)` formats as "11:30" on a UTC+2 machine). `snapUp` uses `Math.ceil` directly since `roundToNearestMinutes` operates on `Date` objects, not raw minute integers.
+All date and time-of-day primitives already live in **`src/util/schedulingDates.ts`** (added 2026-10-08) and are shared with the scheduling UI. Import them; do not reimplement them:
+
+`parseDate`, `formatDate`, `toDayOfWeek`, `weekStartOf`, `weekStartDate`, `eachDateInRange`, `eachWeekStartInRange`, `daysBetween`, `parseMinutes`, `formatMinutes`, `snapUpMinutes`.
+
+Two rules that module enforces, which any new date code must follow:
+
+- **Never** `new Date('YYYY-MM-DD')` and **never** `.toISOString()` for a calendar day. `new Date('2026-03-09')` is UTC midnight and `.toISOString()` formats in UTC, so either one shifts the calendar day in any timezone east of UTC — including `Europe/Bucharest`, which every semester is configured with. This exact mistake keyed every week override one day early until it was fixed; the algorithm's Monday-keyed override lookup would have silently never matched.
+- Date-only strings are anchored at **local noon**, so `.add(n, 'day')` survives DST transitions. A 23-hour day must still count as one day or lesson spacing drifts after the March changeover.
+
+"HH:mm" times of day are handled with plain integer arithmetic and never routed through a `Date`, for the same reason.
+
+> `date-fns` is **not** used anywhere in this project. An earlier draft of this plan specified it; v4 is ESM-only and incompatible with CRA, it conflicted with `@mui/x-date-pickers`' peer range, and it was removed. Use dayjs via `schedulingDates.ts`.
+
+Tests for these helpers are in `src/util/schedulingDates.test.ts`, and `jest.config.js` pins `TZ=Europe/Bucharest` so date tests are deterministic and run in a zone where the hazards above actually bite.
+
+So the algorithm module only needs the availability-query helpers below.
 
 ```typescript
-import { startOfWeek, getDay, format, eachDayOfInterval, eachWeekOfInterval, differenceInDays } from 'date-fns'
-
-// ─── Time string helpers ───────────────────────────────────────────────────────
-
-// "HH:mm" → total minutes since midnight.  e.g. "09:30" → 570
-function parseMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number)
-  return h * 60 + m
-}
-
-// Minutes since midnight → "HH:mm".  e.g. 570 → "09:30"
-function formatMinutes(minutes: number): string {
-  const h = String(Math.floor(minutes / 60)).padStart(2, '0')
-  const m = String(minutes % 60).padStart(2, '0')
-  return `${h}:${m}`
-}
-
-// Round minutes up to the nearest snap-grid point.  e.g. snapUp(67, 15) → 75
-function snapUp(minutes: number, snap: number): number {
-  return Math.ceil(minutes / snap) * snap
-}
-
-// ─── Date helpers ─────────────────────────────────────────────────────────────
-
-// "YYYY-MM-DD" → day-of-week where 0=Mon … 6=Sun (AvailabilityBlock convention).
-// date-fns getDay returns 0=Sun, so we remap.
-function getDayOfWeek(date: string): number {
-  const dow = getDay(new Date(date))   // 0=Sun, 1=Mon … 6=Sat
-  return dow === 0 ? 6 : dow - 1      // remap to 0=Mon … 6=Sun
-}
+import {
+  daysBetween,
+  eachDateInRange,
+  eachWeekStartInRange,
+  formatMinutes,
+  parseDate,
+  parseMinutes,
+  snapUpMinutes,
+  toDayOfWeek,
+  weekStartDate
+} from './schedulingDates'
 
 // ─── Availability queries ─────────────────────────────────────────────────────
 
 // Return the effective availability blocks for a specific date.
 //
-// Finds the Monday of the week containing `date` (via date-fns startOfWeek).
-// If weekOverrides has an entry keyed by that Monday string, returns those blocks
-// filtered to the matching dayOfWeek. An empty override array means the entire
-// week is unavailable → returns [].
+// Finds the Monday of the week containing `date`. If weekOverrides has an entry
+// keyed by that Monday string, returns those blocks filtered to the matching
+// dayOfWeek. An empty override array means the entire week is unavailable → [].
 // Otherwise falls back to weeklyBlocks filtered to that dayOfWeek.
 //
+// The override key MUST be produced by weekStartDate — the UI writes overrides with
+// the same function, and a one-day disagreement silently disables every override.
+//
 // Example: weeklyBlocks = [{dayOfWeek:0, startTime:"09:00", endTime:"12:00", score:10}]
-//   date = "2026-03-09" (Mon, normal week)    → [{Mon, 09:00-12:00, score:10}]
+//   date = "2026-03-09" (Mon, normal week)   → [{Mon, 09:00-12:00, score:10}]
 //   date = "2026-03-16" (Mon, override = []) → []   ← spring break
 function getEffectiveBlocksForDate(
   weeklyBlocks: AvailabilityBlock[],
   weekOverrides: WeekOverrides,
   date: string
 ): AvailabilityBlock[] {
-  const weekStart = format(startOfWeek(new Date(date), { weekStartsOn: 1 }), 'yyyy-MM-dd')
-  const dow = getDayOfWeek(date)
+  const weekStart = weekStartDate(date)
+  const dow = toDayOfWeek(date)
   if (weekStart in weekOverrides) {
     return weekOverrides[weekStart].filter(b => b.dayOfWeek === dow)
   }
@@ -601,8 +605,6 @@ function getScoreForSpan(
 ### Candidate generation
 
 ```typescript
-import { eachDayOfInterval, format } from 'date-fns'
-
 // Generate all feasible (student, date, startTime) triples for the semester.
 // A triple is feasible if both teacher and student are available for the full
 // lesson duration and the combined score > 0.
@@ -614,10 +616,7 @@ import { eachDayOfInterval, format } from 'date-fns'
 function generateAllCandidates(input: SchedulingInput): CandidateSlot[] {
   const candidates: CandidateSlot[] = []
 
-  const dates = eachDayOfInterval({
-    start: new Date(input.semesterStart),
-    end: new Date(input.semesterEnd)
-  }).map(d => format(d, 'yyyy-MM-dd'))
+  const dates = eachDateInRange(input.semesterStart, input.semesterEnd)
 
   for (const date of dates) {
     const teacherBlocks = getEffectiveBlocksForDate(
@@ -632,7 +631,7 @@ function generateAllCandidates(input: SchedulingInput): CandidateSlot[] {
       )
 
       for (const tb of teacherBlocks) {
-        let t = snapUp(parseMinutes(tb.startTime), SCHEDULING_CONFIG.SLOT_SNAP_MINUTES)
+        let t = snapUpMinutes(parseMinutes(tb.startTime), SCHEDULING_CONFIG.SLOT_SNAP_MINUTES)
         const blockEnd = parseMinutes(tb.endTime)
 
         while (t + enrollment.lessonDurationMinutes <= blockEnd) {
@@ -685,40 +684,37 @@ Candidates are generated once and passed into all three `computeSchedule` calls.
 **`computeSchedule` — week-by-week greedy:**
 
 ```typescript
-import { eachWeekOfInterval, eachDayOfInterval, differenceInDays, format } from 'date-fns'
-
 function computeSchedule(
   input: SchedulingInput,
   candidates: CandidateSlot[],
   strategy: SuggestionStrategy
 ): SchedulingResult {
-  const semesterDays = differenceInDays(new Date(input.semesterEnd), new Date(input.semesterStart))
+  const semesterDays = daysBetween(input.semesterStart, input.semesterEnd)
   const targetSpacing = (e: StudentEnrollment) => semesterDays / e.totalLessons
 
   const assigned: LessonSlot[] = []
+  const unscheduledStudentIds: string[] = []
   const remaining = Object.fromEntries(input.enrollments.map(e => [e.studentId, e.totalLessons]))
   const lastDate: Record<string, string> = {}   // studentId → most recently assigned date
 
-  const weeks = eachWeekOfInterval(
-    { start: new Date(input.semesterStart), end: new Date(input.semesterEnd) },
-    { weekStartsOn: 1 }
-  )
+  // Monday of every week overlapping the semester, as "YYYY-MM-DD" strings.
+  const weeks = eachWeekStartInRange(input.semesterStart, input.semesterEnd)
 
   for (const weekStart of weeks) {
-    const datesThisWeek = eachDayOfInterval({
-      start: weekStart,
-      end: new Date(Math.min(
-        new Date(input.semesterEnd).getTime(),
-        weekStart.getTime() + 6 * 24 * 60 * 60 * 1000
-      ))
-    }).map(d => format(d, 'yyyy-MM-dd'))
+    // The first and last weeks may be partial — clip them to the semester range.
+    const weekEnd = parseDate(weekStart).add(6, 'day')
+    const from = parseDate(weekStart).isBefore(parseDate(input.semesterStart), 'day')
+      ? input.semesterStart
+      : weekStart
+    const to = weekEnd.isAfter(parseDate(input.semesterEnd), 'day') ? input.semesterEnd : weekEnd
+    const datesThisWeek = eachDateInRange(from, to)
 
     // students who need a lesson this week
     const due = input.enrollments.filter(e => {
       if (remaining[e.studentId] <= 0) return false
       const last = lastDate[e.studentId]
       if (!last) return true   // no lesson yet → always due on first opportunity
-      return differenceInDays(new Date(weekStart), new Date(last)) >= targetSpacing(e) * 0.8
+      return daysBetween(last, weekStart) >= targetSpacing(e) * 0.8
     })
 
     // most constrained first: fewest candidates this week per remaining lesson
@@ -755,8 +751,9 @@ function computeSchedule(
       assigned.push(next)
       remaining[enrollment.studentId]--
     }
-    if (remaining[enrollment.studentId] > 0)
-      result.unscheduledStudentIds.push(enrollment.studentId)
+    if (remaining[enrollment.studentId] > 0) {
+      unscheduledStudentIds.push(enrollment.studentId)
+    }
   }
 
   // gap penalty
@@ -778,10 +775,13 @@ function hasConflict(candidate: CandidateSlot, assigned: LessonSlot[], minBreak:
 // Score key for sorting candidates by strategy.
 function bySortKey(strategy: SuggestionStrategy) {
   return (a: CandidateSlot, b: CandidateSlot) => {
+    // combinedScore already *is* TEACHER_WEIGHT × teacherScore + STUDENT_WEIGHT × studentScore,
+    // so 'balanced' uses it directly and 'student_best' must NOT — otherwise the two
+    // strategies produce byte-identical schedules and the teacher sees the same card twice.
     const score = (c: CandidateSlot) =>
       strategy === 'teacher_best' ? c.teacherScore
-      : strategy === 'student_best' ? c.combinedScore
-      : SCHEDULING_CONFIG.TEACHER_WEIGHT * c.teacherScore + SCHEDULING_CONFIG.STUDENT_WEIGHT * c.studentScore
+      : strategy === 'student_best' ? c.studentScore
+      : c.combinedScore
     return score(b) - score(a)   // descending
   }
 }
@@ -789,9 +789,15 @@ function bySortKey(strategy: SuggestionStrategy) {
 // Gap penalty: for each date, subtract proportionally for gaps > threshold.
 function computeTotalScore(slots: LessonSlot[]): number {
   const base = slots.reduce((sum, s) => sum + s.combinedScore, 0)
-  const byDate = Map.groupBy(slots, s => s.date)   // or Object.groupBy in ES2024
+  // Group by date by hand: Map.groupBy is not in the TypeScript 4.8 lib (added in 5.4)
+  // and needs Chrome 117+ at runtime, outside this project's browserslist.
+  const byDate: Record<string, LessonSlot[]> = {}
+  for (const slot of slots) {
+    if (!byDate[slot.date]) byDate[slot.date] = []
+    byDate[slot.date].push(slot)
+  }
   let penalty = 0
-  for (const [, daySlots] of byDate) {
+  for (const daySlots of Object.values(byDate)) {
     const sorted = [...daySlots].sort((a, b) => parseMinutes(a.startTime) - parseMinutes(b.startTime))
     for (let i = 1; i < sorted.length; i++) {
       const gap = parseMinutes(sorted[i].startTime) - parseMinutes(sorted[i - 1].endTime)
@@ -808,10 +814,10 @@ function computeTotalScore(slots: LessonSlot[]): number {
 | Strategy | Candidate sort key |
 |---|---|
 | `teacher_best` | `teacherScore` descending |
-| `student_best` | `combinedScore` descending |
-| `balanced` | `TEACHER_WEIGHT × teacherScore + STUDENT_WEIGHT × studentScore` descending |
+| `student_best` | `studentScore` descending |
+| `balanced` | `combinedScore` descending — i.e. `TEACHER_WEIGHT × teacherScore + STUDENT_WEIGHT × studentScore` |
 
-All strategies enforce "include every student" as the primary objective — unscheduled students only appear when no feasible slot exists.
+All strategies place every student first and only then optimize. Because the pass is greedy with no backtracking, an unscheduled student means "no slot was still free by the time this student was considered", which is not always the same as "no feasible slot exists". See Open Questions.
 
 **Gap penalty:** after assignment, for each date that has ≥ 2 lessons, sort by start time and subtract from `totalScore` for every gap > `GAP_PENALTY_THRESHOLD_MINUTES` between consecutive lessons. Penalty is proportional: `(gapMinutes - GAP_PENALTY_THRESHOLD_MINUTES) × GAP_PENALTY_PER_MINUTE` where `GAP_PENALTY_PER_MINUTE = 0.05` (so a 30-minute excess gap costs 1.5 points — comparable to one slot's score). This lets the optimizer distinguish a barely-too-large gap from a multi-hour hole.
 
@@ -933,7 +939,7 @@ Sort by most constrained:
 
 ## Open Questions / Deferred Decisions
 
-- **Algorithm sophistication**: greedy works for small cohorts but may produce suboptimal results as student count grows. A constraint solver (e.g., or-tools) could be introduced in a later phase without changing the data model.
+- **Algorithm sophistication**: the pass is greedy with no backtracking. Beyond producing suboptimal totals as the cohort grows, it means a student can land in `unscheduledStudentIds` because earlier picks took the slots they could have used — not because no feasible slot existed. Accepted for Phase 1 (≤ 20 students); the Step L tests should include a case that documents this rather than asserting it cannot happen. A constraint solver (e.g. or-tools) could replace the pass later without changing the data model.
 - **"Balanced" strategy weights**: currently an equal blend; worth exposing as a teacher-adjustable slider in Phase 2.
 - **Notification delivery timing**: reminder cadence (e.g., 48h before deadline, 24h before deadline) is a detail for the Cloud Function implementation phase.
 - **Student-to-teacher linking across locations**: currently handled by existing `/students` and `/teachers` RTDB paths; scheduling feature adds enrollment per semester without changing that mapping.
@@ -963,7 +969,8 @@ All phases follow the same incremental pattern:
 - All new routes in `src/App.tsx` (placeholder stubs) and `RouteInfo.tsx`
 - **Scheduling** link (teacher) and **My Schedule** link (student) added to `UserPopover`
 - Unit tests for `computeCombinedScore` (8 tests, all passing) in `src/util/scheduling.test.ts`
-- `date-fns` installed
+- `dayjs`, `react-big-calendar`, `@types/react-big-calendar` and `@mui/x-date-pickers` installed
+  (`date-fns` was added here by mistake and has since been removed — see the 2026-10-08 review)
 
 ---
 
@@ -1078,8 +1085,10 @@ All phases follow the same incremental pattern:
 
 #### Step L — Algorithm
 
-- `src/util/schedulingAlgorithm.ts` — `getEffectiveBlocksForDate`, `getScoreAtTime`, `generateAllCandidates`, `computeSchedule` (all 3 strategies), `generateAllSuggestions`
+- `src/util/schedulingAlgorithm.ts` — `getEffectiveBlocksForDate`, `getScoreAtTime`, `getScoreForSpan`, `generateAllCandidates`, `computeSchedule` (all 3 strategies), `generateAllSuggestions`
+- All date and "HH:mm" math comes from `src/util/schedulingDates.ts` — see Helper functions above. Do not add date arithmetic here.
 - Unit tests: happy path, conflict resolution, bi-weekly slot sharing, unschedulable student, week override (spring break), gap penalty
+- Plus two tests that guard the mistakes this plan previously contained: (a) `student_best` and `balanced` return *different* schedules for an input where teacher and student preferences disagree; (b) a week override written by the UI (`weekStartDate`) is actually found by `getEffectiveBlocksForDate`
 - No UI changes — runs client-side in `SchedulingRoundPage` when teacher triggers suggestion generation
 
 ---
@@ -1088,6 +1097,24 @@ All phases follow the same incremental pattern:
 
 - `src/util/schedulingHooks.ts` — all `onValue` hooks listed in Step 4 of the detailed plan
 - Unit tests following the existing pattern (mock `onValue`, inject snapshots)
+
+---
+
+#### Step M2 — Firebase security rules
+
+**Must land before Step N.** Every step from N onward writes real data; until these rules exist,
+those paths are governed by whatever the Firebase console currently has, which may well be a
+permissive `auth != null` default — i.e. every student able to read every other student's
+submissions, enrollments and lesson records.
+
+- **First**: there is no `database.rules.json` and no `firebase.json` in this repo, and the
+  functions repo's `firebase.json` declares only `functions`. The live rules exist *only* in the
+  Firebase console. Export them into this repo before touching anything, so the current state is
+  captured and version-controlled.
+- Add `firebase.json` with a `database` block pointing at `database.rules.json`.
+- Add rules for all new scheduling paths per the access table in the Schema section.
+- Phase 1 relaxation (see "Phase 1 simplification: cancellation write path" below): students write
+  cancellation records and submissions directly; no round-status guard in rules.
 
 ---
 
@@ -1117,6 +1144,27 @@ All phases follow the same incremental pattern:
 
 ---
 
+#### Step P2 — Amend, don't re-enter: carry submissions between rounds
+
+Core Concepts says *"students amend (not re-enter) their previous submission in subsequent rounds"*,
+but nothing implements it: `studentSubmissions` is keyed per round and no code copies round N−1
+into round N.
+
+- On creating round N+1 (Scheduling tab, Step N), copy each student's round-N submission into the
+  new round — `recurringPreferences` and `weekOverrides` preserved, `status` reset to `"pending"`,
+  `submittedAt` cleared, and `carriedForward: true` set.
+- Add `carriedForward?: boolean` to `StudentSubmission` so the teacher's status table can tell
+  "prefilled from last round, not yet re-confirmed" apart from "submitted this round". Presence of
+  the record alone can no longer mean "submitted".
+- `StudentAvailabilityPage` needs no change: `useMySubmission` already pre-populates from the
+  current round, which is now seeded.
+
+Alternative considered and rejected: have the student page fall back to reading round N−1 when the
+current round has no record. That keeps writes smaller but makes "who has submitted?" ambiguous for
+the teacher, since presence of a record is the signal the round page depends on.
+
+---
+
 #### Step Q — Cancellation flow
 
 - Student cancel: write `Cancellation` record + update `LessonInstance` status; send notification to teacher
@@ -1134,7 +1182,8 @@ All phases follow the same incremental pattern:
 
 #### Step S — Firebase security rules
 
-- Update `database.rules.json` with all new scheduling paths per the access table in the Schema section
+**Moved — see Step M2**, which now sits before the wiring steps. Rules must exist before the first
+real RTDB write, not after the last one.
 
 ---
 
@@ -1189,12 +1238,21 @@ await fetch('https://europe-west1-music-with-susanna.cloudfunctions.net/sendEmai
 
 ### New packages
 
-```bash
-npm install react-big-calendar @types/react-big-calendar   # calendar UI (availability + lessons)
-npm install ics                                             # client-side .ics download
+Already installed (Step A):
+
+```
+react-big-calendar, @types/react-big-calendar   calendar UI (availability + lessons)
+dayjs                                           date library behind the localizer and the pickers
+@mui/x-date-pickers                             date/time pickers
 ```
 
-`react-big-calendar`'s drag-and-drop addon ships with the package (`react-big-calendar/lib/addons/dragAndDrop`) — no extra install needed. It requires a peer dep on either `moment` or `date-fns` as the localizer; use `date-fns` (check `package.json` first — if not present, add it).
+Still to install, for Step R:
+
+```bash
+npm install ics    # client-side .ics download
+```
+
+`react-big-calendar`'s drag-and-drop addon ships with the package (`react-big-calendar/lib/addons/dragAndDrop`) — no extra install needed. It does **not** need a localizer peer dependency: v1.20 bundles `dayjs`, `moment`, `luxon` and `globalize` as real dependencies, and its only peers are `react` and `react-dom`. Use `dayjsLocalizer`.
 
 ---
 
@@ -1347,7 +1405,7 @@ useMyNotifications(teacherId, uid)                → { notifications: Schedulin
 Wraps `react-big-calendar` in its weekly `"week"` view with the drag-and-drop addon enabled. Availability blocks map directly to calendar events; the library handles all time-grid rendering and interaction.
 
 **Library setup:**
-- Localizer: `dateFnsLocalizer` from `react-big-calendar/lib/localizers/date-fns`
+- Localizer: `dayjsLocalizer` from `react-big-calendar`, with `dayjs.updateLocale('en', { weekStart: 1 })` at module scope so both locales start the week on Monday
 - Addon: `withDragAndDrop` from `react-big-calendar/lib/addons/dragAndDrop` — wraps the `Calendar` component to enable drag-to-create, drag-to-move, and resize
 - Import both CSS files: `react-big-calendar/lib/css/react-big-calendar.css` and `react-big-calendar/lib/addons/dragAndDrop/styles.css`
 
@@ -1564,7 +1622,13 @@ Surface the entry points in `UserPopover` (the existing nav menu component) alon
 
 ### Step 12 — Firebase security rules
 
-**File:** `database.rules.json` (or wherever the current rules live — check root of repo).
+**File:** `database.rules.json` — **which does not exist yet.** Checked 2026-10-08: there is no
+`database.rules.json` and no `firebase.json` in this repo, and the functions repo's `firebase.json`
+declares only `functions`, no `database` block. The live rules exist only in the Firebase console.
+
+So this step starts by exporting the console's current rules into the repo and adding a
+`firebase.json` with a `database` block, *then* extends them. Do it before the wiring steps, not
+after — see **Step M2**.
 
 Add rules for all new scheduling paths following the access table in the Schema section. Key patterns:
 
@@ -1633,11 +1697,13 @@ Step 5  (AvailabilityCalendar)     Step 6  (LessonCalendar)
   ↓                                        ↓
 Step 7  (forms/dialogs) ←──────────────────┘
   ↓
+Step 12 (security rules)   ← before anything writes to RTDB for real
+  ↓
 Step 8  (teacher pages)    Step 9  (student pages)    Step 10  (ics export)
   ↓                              ↓                         ↓
 Step 11 (routing) ←──────────────┴─────────────────────────┘
-  ↓
-Step 12 (security rules)
 ```
 
 Steps 2 and 3 can be done in parallel with each other. Steps 5 and 6 can be done in parallel. Steps 8, 9, and 10 can be done in parallel once their dependencies are in place.
+
+Step 12 moved ahead of the page wiring: it used to sit last, which would have meant writing live data to paths still governed by the console's default rules. The same reordering appears in the incremental list as **Step M2**.

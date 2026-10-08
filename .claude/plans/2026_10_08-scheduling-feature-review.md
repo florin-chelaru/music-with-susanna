@@ -279,15 +279,7 @@ Before resuming Step F — roughly half a day:
 
 1. ~~**Fix `toWeekMonday`** (§4a) and extract `src/util/schedulingDates.ts` — dayjs-based week/day
    helpers shared by UI and algorithm — with unit tests.~~ **DONE 2026-10-08 — see §6.**
-2. **Update the plan document**:
-   - rewrite Algorithm Notes against dayjs (§3b)
-   - fix the `student_best` sort key (§3a)
-   - fix the `computeCombinedScore` `/10` formula to match the code (§3d)
-   - fix the undeclared-variable and `Map.groupBy` pseudocode (§3c)
-   - drop the date-fns / `dateFnsLocalizer` claims (§3b)
-   - add an "amend previous round's submission" step (§3f)
-   - move Step S before Step N (§3e)
-   - soften the "every student is a hard constraint" claim (§4b)
+2. ~~**Update the plan document**~~ **DONE 2026-10-08 — see §6.**
 3. **Decide where RTDB rules live** (§3e) and commit the current console rules into this repo.
 4. **Add `removeOverlaps` tests** (§4e).
 
@@ -355,3 +347,34 @@ still in place.
 > here even though CLAUDE.md suggests it for targeted fixes — Prettier 2.7.1 reports
 > `jsxBracketSameLine` as deprecated and moves the closing `>` to its own line, which the ESLint
 > prettier plugin then rejects. Use `npx eslint --fix <file>` for `.tsx` instead.
+
+### 2026-10-08 — Step 2 done: plan document corrected
+
+All eight corrections from §3 and §4(b) are now applied to
+[2026_08_05-scheduling-feature.md](./2026_08_05-scheduling-feature.md):
+
+| Was | Now |
+|---|---|
+| `combined = (… ) / 10` | no division — matches `computeCombinedScore`, and the worked example's `totalScore: 40` independently confirms the code was right |
+| `student_best` sorted by `combinedScore` (identical to `balanced`) | sorts by `studentScore`; both the objective table and the sort-key table now show all three keys side by side, with a note on why they must stay distinct |
+| Algorithm Notes written against date-fns | written against `src/util/schedulingDates.ts`; the two rules that module enforces are stated inline, with the week-override bug named as the reason |
+| `result.unscheduledStudentIds` / `unscheduledStudentIds` undeclared | declared next to `assigned` |
+| `Map.groupBy` | hand-rolled grouping, with the TS 4.8 / browserslist reason in a comment |
+| `eachWeekOfInterval` + manual ms clipping | `eachWeekStartInRange` + explicit partial-week clipping at both ends |
+| "react-big-calendar requires a moment or date-fns peer" | corrected — v1.20 bundles dayjs/moment/luxon/globalize; only `ics` is still to install |
+| `dateFnsLocalizer` in Step 5 | `dayjsLocalizer`, with the Monday week-start note |
+| "include every student is a hard constraint" | reworded: greedy with no backtracking, so unplaced ≠ infeasible; Open Questions names the consequence and Step L gains a test that documents it |
+| Step S (rules) last | new **Step M2** before Step N, with the "no rules file exists in this repo" finding inline; old Step S left as a pointer so existing references still resolve. Numbered Step 12 and the dependency diagram updated to match |
+| "students amend their previous submission" with no mechanism | new **Step P2**, including the `carriedForward` flag added to the `StudentSubmission` schema, and the rejected alternative recorded |
+
+Step letters were deliberately *not* renumbered: `SemesterPage.tsx` contains a
+`// TODO (Step N)` marker and this document references Step N and Step R, so the new steps are
+`M2` and `P2` rather than shifting N–S along one.
+
+Remaining from §4 and §5, in the order I would take them:
+
+- Export the live Firebase rules into this repo (now Step M2) — still the highest-risk open item.
+- `removeOverlaps` tests (§4e).
+- Dead `UNAVAILABLE` label (§4c); student "My Schedule" nav link pointing at a stub (§4d) — both
+  ship blockers rather than build blockers.
+- Then **Step F** (LessonCalendar + Calendar tab).
