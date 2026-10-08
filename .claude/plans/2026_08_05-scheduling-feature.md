@@ -942,7 +942,7 @@ Sort by most constrained:
 ## Open Questions / Deferred Decisions
 
 - **Algorithm sophistication**: the pass is greedy with no backtracking. Beyond producing suboptimal totals as the cohort grows, it means a student can land in `unscheduledStudentIds` because earlier picks took the slots they could have used — not because no feasible slot existed. Accepted for Phase 1 (≤ 20 students); the Step L tests should include a case that documents this rather than asserting it cannot happen. A constraint solver (e.g. or-tools) could replace the pass later without changing the data model.
-- **"Balanced" strategy weights**: currently an equal blend; worth exposing as a teacher-adjustable slider in Phase 2.
+- **"Balanced" is not actually a third strategy.** With `TEACHER_WEIGHT = 0.7` and label scores {2, 6, 10}, the largest possible student-score swing is `0.3 × (10 − 2) = 2.4`, while the smallest gap between two distinct teacher scores is `0.7 × 4 = 2.8`. The student term can therefore never overturn a teacher-score difference, which makes `balanced` exactly `teacher_best` with a student-score tiebreak — verified exhaustively over the score set. So the three cards are really teacher-first (date tiebreak), teacher-first (student tiebreak), and student-first. Settle this before Step L: either lower `TEACHER_WEIGHT` below 0.5, widen the label scores, or drop to two strategies and be honest about it. Exposing the weights as a teacher-adjustable slider in Phase 2 would also make it moot.
 - **Notification delivery timing**: reminder cadence (e.g., 48h before deadline, 24h before deadline) is a detail for the Cloud Function implementation phase.
 - **Student-to-teacher linking across locations**: currently handled by existing `/students` and `/teachers` RTDB paths; scheduling feature adds enrollment per semester without changing that mapping.
 
@@ -1052,10 +1052,13 @@ All phases follow the same incremental pattern:
 
 ---
 
-#### Step H — SchedulingRoundPage: suggested state
+#### ~~Step H — SchedulingRoundPage: suggested state~~ ✅ DONE
 
-- `SuggestedScheduleCard` component — strategy label, total score, student → slot list, unscheduled students (if any)
-- `SchedulingRoundPage` suggested state: 3 cards side by side (or stacked on mobile); "Use This" button on each
+- `src/Components/scheduling/SuggestedScheduleCard.tsx` — strategy label and a one-line explanation of what it optimises, total score, one row per student (lesson count, recurring day/time patterns, average combined score as a colour-coded chip), a warning listing any unscheduled students, and "Use this".
+- `SchedulingRoundPage` suggested state: the three cards in a grid, stacked below `md`; selecting one enables "Confirm schedule". Round statuses other than `collecting` and `suggested` keep the read-only notice.
+- Mock submissions are now keyed by round id (`MOCK_SUBMISSIONS_BY_ROUND`). Fall's round 2 has closed with everyone submitted; Spring 2027's round is still waiting on one student, which is what keeps the collecting state reviewable.
+- **Fixture policy:** suggestion scores are looked up from `MOCK_TEACHER_AVAILABILITY` and the student's own submission, never written by hand — hand-written scores had already drifted away from the blocks they were supposed to come from. Beyond that, do **not** hand-simulate the algorithm in fixtures: picking a plausible slot per strategy is enough, and solving the placement properly is Step L's job.
+- The `unscheduledStudentIds` warning branch is implemented but not exercised by the current fixture, because every student in it can in fact be placed. An earlier fixture faked an unschedulable student and ended up contradicting the teacher's own availability.
 
 *Review: see all three strategy suggestions, compare scores and student placements.*
 
