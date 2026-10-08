@@ -23,17 +23,21 @@ import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleP
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
-import { RoundStatus, SchedulingRound } from '../../util/scheduling'
+import { RoundStatus, SchedulingRound, SuggestionStrategy } from '../../util/scheduling'
+import SuggestedScheduleCard from '../../Components/scheduling/SuggestedScheduleCard'
 import { formatCountdown } from '../../util/schedulingDates'
 import {
   MOCK_ENROLLMENTS_FALL,
   MOCK_ENROLLMENTS_SPRING,
+  MOCK_ENROLLMENTS_SPRING2027,
   MOCK_ROUNDS_FALL,
   MOCK_ROUNDS_SPRING,
+  MOCK_ROUNDS_SPRING2027,
+  MOCK_SUGGESTIONS,
   MOCK_SEMESTER_IDS,
   MOCK_SEMESTERS,
   MOCK_STUDENTS,
-  MOCK_SUBMISSIONS
+  MOCK_SUBMISSIONS_BY_ROUND
 } from '../../data/schedulingMocks'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
@@ -57,6 +61,11 @@ interface SchedulingRoundPageTexts {
   statusFinalized: string
   notCollecting: string
   notFound: string
+  suggestionsTitle: string
+  suggestionsHint: string
+  confirmSchedule: string
+  pickOne: string
+  selectedHint: string
 }
 
 const EN_US: SchedulingRoundPageTexts = {
@@ -78,7 +87,14 @@ const EN_US: SchedulingRoundPageTexts = {
   statusSuggested: 'Suggested',
   statusFinalized: 'Finalized',
   notCollecting: 'This round is no longer collecting availability.',
-  notFound: 'Round not found.'
+  notFound: 'Round not found.',
+  suggestionsTitle: 'Suggested schedules',
+  suggestionsHint:
+    'Three ways to fit everyone in. Pick the one closest to what you want — you can adjust it before confirming.',
+  confirmSchedule: 'Confirm schedule',
+  pickOne: 'Pick a suggestion to continue.',
+  selectedHint:
+    'Confirming generates every lesson for the rest of the semester and notifies the students.'
 }
 
 const RO_RO: SchedulingRoundPageTexts = {
@@ -100,7 +116,13 @@ const RO_RO: SchedulingRoundPageTexts = {
   statusSuggested: 'Cu sugestii',
   statusFinalized: 'Finalizată',
   notCollecting: 'Această rundă nu mai colectează disponibilitate.',
-  notFound: 'Runda nu a fost găsită.'
+  notFound: 'Runda nu a fost găsită.',
+  suggestionsTitle: 'Orare sugerate',
+  suggestionsHint:
+    'Trei moduri de a încadra pe toată lumea. Alege-l pe cel mai apropiat de ce vrei — îl poți ajusta înainte de confirmare.',
+  confirmSchedule: 'Confirmă orarul',
+  pickOne: 'Alege o sugestie pentru a continua.',
+  selectedHint: 'Confirmarea generează toate lecțiile din restul semestrului și notifică elevii.'
 }
 
 const TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -126,14 +148,19 @@ export function roundStatusLabel(status: RoundStatus, t: SchedulingRoundPageText
 function roundsFor(semesterId: string | undefined): SchedulingRound[] {
   if (semesterId === MOCK_SEMESTER_IDS.spring2026) return MOCK_ROUNDS_SPRING
   if (semesterId === MOCK_SEMESTER_IDS.fall2026) return MOCK_ROUNDS_FALL
+  if (semesterId === MOCK_SEMESTER_IDS.spring2027) return MOCK_ROUNDS_SPRING2027
   return []
 }
 
 function enrollmentsFor(semesterId: string | undefined) {
   if (semesterId === MOCK_SEMESTER_IDS.spring2026) return MOCK_ENROLLMENTS_SPRING
   if (semesterId === MOCK_SEMESTER_IDS.fall2026) return MOCK_ENROLLMENTS_FALL
+  if (semesterId === MOCK_SEMESTER_IDS.spring2027) return MOCK_ENROLLMENTS_SPRING2027
   return []
 }
+
+// Order shown to the teacher: own preference first, then the students', then the compromise.
+const STRATEGY_ORDER: SuggestionStrategy[] = ['teacher_best', 'student_best', 'balanced']
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -168,6 +195,8 @@ export default function SchedulingRoundPage() {
   const round = roundsFor(semesterId).find((r) => r.id === roundId)
   const enrollments = enrollmentsFor(semesterId)
 
+  const [selectedStrategy, setSelectedStrategy] = useState<SuggestionStrategy | null>(null)
+
   // The countdown re-renders once a minute; it is never shown finer than minutes.
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -190,7 +219,7 @@ export default function SchedulingRoundPage() {
   }
 
   const rows = enrollments.map((enrollment) => {
-    const submission = MOCK_SUBMISSIONS[enrollment.studentId]
+    const submission = MOCK_SUBMISSIONS_BY_ROUND[round.id]?.[enrollment.studentId]
     return {
       studentId: enrollment.studentId,
       name: MOCK_STUDENTS[enrollment.studentId]?.name ?? enrollment.studentId,
@@ -239,7 +268,48 @@ export default function SchedulingRoundPage() {
         </Box>
       </Typography>
 
-      {round.status !== 'collecting' ? (
+      {round.status === 'suggested' ? (
+        <Box>
+          <Typography variant="subtitle1" fontWeight={600}>
+            {t.suggestionsTitle}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {t.suggestionsHint}
+          </Typography>
+
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 2,
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+              mb: 3
+            }}>
+            {STRATEGY_ORDER.map((strategy) => (
+              <SuggestedScheduleCard
+                key={strategy}
+                strategy={strategy}
+                suggestion={MOCK_SUGGESTIONS[strategy]}
+                students={MOCK_STUDENTS}
+                selected={selectedStrategy === strategy}
+                onUse={setSelectedStrategy}
+              />
+            ))}
+          </Box>
+
+          <Alert severity={selectedStrategy ? 'success' : 'info'} sx={{ mb: 2 }}>
+            {selectedStrategy ? t.selectedHint : t.pickOne}
+          </Alert>
+          <Button
+            variant="contained"
+            disabled={!selectedStrategy}
+            onClick={() => {
+              // TODO (Step I): load the chosen suggestion into an editable calendar, then
+              // (Step O) write the confirmed schedule and generate the lesson instances.
+            }}>
+            {t.confirmSchedule}
+          </Button>
+        </Box>
+      ) : round.status !== 'collecting' ? (
         <Alert severity="info">{t.notCollecting}</Alert>
       ) : (
         <>

@@ -52,11 +52,13 @@ import { parseDate, weekStartDate, weekStartOf } from '../../util/schedulingDate
 import {
   MOCK_ENROLLMENTS_FALL,
   MOCK_ENROLLMENTS_SPRING,
+  MOCK_ENROLLMENTS_SPRING2027,
   MOCK_LESSON_INSTANCES_FALL,
   MOCK_LESSON_INSTANCES_SPRING,
   MOCK_ROUNDS_FALL,
   MOCK_ROUNDS_SPRING,
-  MOCK_SUBMISSIONS,
+  MOCK_ROUNDS_SPRING2027,
+  MOCK_SUBMISSIONS_BY_ROUND,
   MOCK_LOCATIONS,
   MOCK_SEMESTER_IDS,
   MOCK_SEMESTERS,
@@ -339,6 +341,7 @@ export default function SemesterPage() {
   const [enrollments, setEnrollments] = useState<StudentEnrollment[]>(() => {
     if (semesterId === MOCK_SEMESTER_IDS.spring2026) return [...MOCK_ENROLLMENTS_SPRING]
     if (semesterId === MOCK_SEMESTER_IDS.fall2026) return [...MOCK_ENROLLMENTS_FALL]
+    if (semesterId === MOCK_SEMESTER_IDS.spring2027) return [...MOCK_ENROLLMENTS_SPRING2027]
     return []
   })
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false)
@@ -357,6 +360,7 @@ export default function SemesterPage() {
   const [rounds, setRounds] = useState<SchedulingRound[]>(() => {
     if (semesterId === MOCK_SEMESTER_IDS.spring2026) return [...MOCK_ROUNDS_SPRING]
     if (semesterId === MOCK_SEMESTER_IDS.fall2026) return [...MOCK_ROUNDS_FALL]
+    if (semesterId === MOCK_SEMESTER_IDS.spring2027) return [...MOCK_ROUNDS_SPRING2027]
     return []
   })
   const [newRoundOpen, setNewRoundOpen] = useState(false)
@@ -757,8 +761,9 @@ export default function SemesterPage() {
               {[...rounds]
                 .sort((a, b) => b.roundNumber - a.roundNumber)
                 .map((round) => {
+                  const submissions = MOCK_SUBMISSIONS_BY_ROUND[round.id] ?? {}
                   const done = enrollments.filter(
-                    (e) => MOCK_SUBMISSIONS[e.studentId]?.status === 'submitted'
+                    (e) => submissions[e.studentId]?.status === 'submitted'
                   ).length
                   return (
                     <Box
