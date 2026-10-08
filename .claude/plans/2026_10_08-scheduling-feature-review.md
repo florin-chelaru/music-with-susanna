@@ -188,6 +188,32 @@ every student can read every other student's submissions and lesson records.
 **Fix:** move rules work to *before* Step N. First export the current console rules into this repo
 as `database.rules.json` + a `firebase.json` with a `database` block, so nothing is lost.
 
+> **Correction, later on 2026-10-08.** `db-snapshots/2026-08-06 - rules.json` turns out to hold a
+> rules snapshot — rules have been captured alongside data all along, so there *is* a baseline in
+> the repo, just not a deployed-from file. Reading it settles the severity question above, in both
+> directions:
+>
+> - **The new scheduling paths fail closed, not open.** There is no root-level `.read`/`.write`, and
+>   RTDB denies anything no rule matches. So Step N would hit `permission-denied` rather than leak
+>   data. The speculation above about a permissive `auth != null` default does not apply to this
+>   project. Rules still must land before Step N — the failure is just loud instead of silent.
+> - **But six legacy paths are wide open right now:** `lessons`, `teacherLessons`, `studentLessons`,
+>   `groupClasses`, `teacherGroupClasses`, `studentGroupClasses` each carry
+>   `{".read": "auth != null", ".write": "auth != null"}`. The 2026-08-07 data export contains none
+>   of them, so they are leftovers from an earlier abandoned scheduling attempt (cf. the
+>   `fc/scheduling` and `scheduling-work` branches). No data leaks today, but any signed-in student
+>   can write arbitrary JSON into those six top-level paths. Worth deleting as its own change,
+>   separate from the scheduling additions.
+>
+> Two smaller pre-existing observations from the same file: `users/$uid` grants
+> `".read": "auth != null"`, so any signed-in user can read every user record (name, email, role,
+> phone); and `resources/teachers/$tid` has `".read": "$tid === auth.uid || auth != null"`, where
+> the second clause makes the first redundant. Both look deliberate enough to leave alone, but they
+> should be a conscious decision rather than an accident.
+>
+> The snapshot is from 2026-08-06, so the live rules still need to be confirmed against it before
+> anything is deployed.
+
 ### (f) "Students amend their previous submission in subsequent rounds" has no mechanism — MEDIUM
 
 The phrase appears exactly once in the plan (line 33, Core Concepts) and is never implemented.
