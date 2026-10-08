@@ -3,6 +3,7 @@ import {
   daysBetween,
   eachDateInRange,
   eachWeekStartInRange,
+  formatCountdown,
   formatDate,
   formatMinutes,
   parseDate,
@@ -200,5 +201,38 @@ describe('time-of-day helpers', () => {
     expect(snapUpMinutes(67, 15)).toBe(75)
     expect(snapUpMinutes(60, 15)).toBe(60)
     expect(snapUpMinutes(1, 15)).toBe(15)
+  })
+})
+
+// ─── formatCountdown ──────────────────────────────────────────────────────────
+
+describe('formatCountdown', () => {
+  const minutes = (n: number) => n * 60000
+  const hours = (n: number) => minutes(n * 60)
+  const days = (n: number) => hours(n * 24)
+
+  test('shows days and hours once at least a day remains', () => {
+    expect(formatCountdown(days(2) + hours(5))).toBe('2d 5h')
+    expect(formatCountdown(days(1))).toBe('1d 0h')
+  })
+
+  test('drops to hours and minutes under a day', () => {
+    expect(formatCountdown(hours(5) + minutes(20))).toBe('5h 20m')
+    expect(formatCountdown(hours(23) + minutes(59))).toBe('23h 59m')
+  })
+
+  test('shows minutes only under an hour', () => {
+    expect(formatCountdown(minutes(18))).toBe('18m')
+    expect(formatCountdown(minutes(1))).toBe('1m')
+  })
+
+  test('rounds down rather than up, so it never overstates the time left', () => {
+    expect(formatCountdown(minutes(5) + 59000)).toBe('5m')
+  })
+
+  // The caller shows "deadline passed" instead, but the formatter must not emit "-3m".
+  test('clamps at zero for an elapsed deadline', () => {
+    expect(formatCountdown(0)).toBe('0m')
+    expect(formatCountdown(-minutes(3))).toBe('0m')
   })
 })

@@ -105,3 +105,16 @@ export function formatMinutes(minutes: number): string {
 export function snapUpMinutes(minutes: number, snap: number): number {
   return Math.ceil(minutes / snap) * snap
 }
+
+// Coarse "time left" label: "2d 5h", "5h 20m", "18m". Deliberately never finer than
+// minutes — a submission deadline does not have second-level meaning, and a ticking
+// seconds counter would imply it does. Clamps at zero rather than going negative.
+export function formatCountdown(msRemaining: number): string {
+  const totalMinutes = Math.max(0, Math.floor(msRemaining / 60000))
+  const days = Math.floor(totalMinutes / (60 * 24))
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60)
+  const minutes = totalMinutes % 60
+  if (days > 0) return `${days}d ${hours}h`
+  if (hours > 0) return `${hours}h ${minutes}m`
+  return `${minutes}m`
+}

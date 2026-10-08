@@ -14,7 +14,9 @@ import {
   TableRow,
   Tabs,
   Toolbar,
-  Typography
+  Typography,
+  useMediaQuery,
+  useTheme
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
@@ -24,13 +26,15 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs, { Dayjs } from 'dayjs'
 import 'dayjs/locale/ro'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import AvailabilityCalendar from '../../Components/scheduling/AvailabilityCalendar'
 import CancelLessonDialog, {
   CancelLessonOptions
 } from '../../Components/scheduling/CancelLessonDialog'
 import EnrollmentDialog from '../../Components/scheduling/EnrollmentDialog'
 import LessonCalendar from '../../Components/scheduling/LessonCalendar'
+import NewRoundDialog from '../../Components/scheduling/NewRoundDialog'
+import SchedulingNav from '../../Components/scheduling/SchedulingNav'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
@@ -38,6 +42,8 @@ import { UserRole } from '../../util/User'
 import {
   AvailabilityBlock,
   LessonInstance,
+  RoundStatus,
+  SchedulingRound,
   SemesterStatus,
   StudentEnrollment,
   WeeklyAvailability
@@ -48,6 +54,9 @@ import {
   MOCK_ENROLLMENTS_SPRING,
   MOCK_LESSON_INSTANCES_FALL,
   MOCK_LESSON_INSTANCES_SPRING,
+  MOCK_ROUNDS_FALL,
+  MOCK_ROUNDS_SPRING,
+  MOCK_SUBMISSIONS,
   MOCK_LOCATIONS,
   MOCK_SEMESTER_IDS,
   MOCK_SEMESTERS,
@@ -80,6 +89,18 @@ interface SemesterPageTexts {
   colTotalLessons: string
   colCancellationWindow: string
   defaultWindow: string
+  removeStudent: string
+  round: string
+  newRound: string
+  noRounds: string
+  open: string
+  deadline: string
+  submittedOf: string
+  roundAlreadyOpen: string
+  roundStatusCollecting: string
+  roundStatusReady: string
+  roundStatusSuggested: string
+  roundStatusFinalized: string
 }
 
 const EN_US: SemesterPageTexts = {
@@ -104,7 +125,19 @@ const EN_US: SemesterPageTexts = {
   colDuration: 'Duration',
   colTotalLessons: 'Total Lessons',
   colCancellationWindow: 'Cancellation Window',
-  defaultWindow: 'Default'
+  defaultWindow: 'Default',
+  removeStudent: 'Remove',
+  round: 'Round',
+  newRound: 'New Round',
+  noRounds: 'No scheduling rounds yet.',
+  open: 'Open',
+  deadline: 'Deadline',
+  submittedOf: '{done} of {total} submitted',
+  roundAlreadyOpen: 'A round is already collecting availability. Close it before opening another.',
+  roundStatusCollecting: 'Collecting',
+  roundStatusReady: 'Ready',
+  roundStatusSuggested: 'Suggested',
+  roundStatusFinalized: 'Finalized'
 }
 
 const RO_RO: SemesterPageTexts = {
@@ -129,7 +162,20 @@ const RO_RO: SemesterPageTexts = {
   colDuration: 'Durată',
   colTotalLessons: 'Total lecții',
   colCancellationWindow: 'Fereastră anulare',
-  defaultWindow: 'Implicit'
+  defaultWindow: 'Implicit',
+  removeStudent: 'Elimină',
+  round: 'Runda',
+  newRound: 'Rundă nouă',
+  noRounds: 'Nicio rundă de planificare încă.',
+  open: 'Deschide',
+  deadline: 'Termen limită',
+  submittedOf: '{done} din {total} au trimis',
+  roundAlreadyOpen:
+    'O rundă colectează deja disponibilitate. Închide-o înainte de a deschide alta.',
+  roundStatusCollecting: 'În colectare',
+  roundStatusReady: 'Pregătită',
+  roundStatusSuggested: 'Cu sugestii',
+  roundStatusFinalized: 'Finalizată'
 }
 
 const TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -155,6 +201,29 @@ function formatWeekStart(weekStart: string, locale: SupportedLocale): string {
   return fmt.format(parseDate(weekStart).toDate())
 }
 
+function roundStatusLabel(status: RoundStatus, t: SemesterPageTexts): string {
+  switch (status) {
+    case 'collecting':
+      return t.roundStatusCollecting
+    case 'ready':
+      return t.roundStatusReady
+    case 'suggested':
+      return t.roundStatusSuggested
+    case 'finalized':
+      return t.roundStatusFinalized
+  }
+}
+
+function formatDeadline(ms: number, locale: SupportedLocale): string {
+  return new Intl.DateTimeFormat(locale === SupportedLocale.RO_RO ? 'ro-RO' : 'en-US', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(new Date(ms))
+}
+
 function statusLabel(status: SemesterStatus, t: SemesterPageTexts): string {
   switch (status) {
     case 'draft':
@@ -170,11 +239,19 @@ function statusLabel(status: SemesterStatus, t: SemesterPageTexts): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+// Tab order, and the values accepted in the ?tab= query parameter.
+const TAB_KEYS = ['availability', 'students', 'scheduling', 'calendar']
+
 type SaveStatus = 'idle' | 'saving' | 'saved'
 
 export default function SemesterPage() {
   const { semesterId } = useParams<{ semesterId: string }>()
   const navigate = useNavigate()
+  const theme = useTheme()
+  // Two separate useMediaQuery calls, never OR'd inline — hooks must not short-circuit.
+  const isTouch = useMediaQuery('(pointer: coarse)')
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'))
+  const isMobile = isTouch || isSmallScreen
   const { user } = useUser()
   const localeManager = useContext<LocaleHandler>(LocaleContext)
 
@@ -202,8 +279,23 @@ export default function SemesterPage() {
   const location = semester ? MOCK_LOCATIONS.find((l) => l.id === semester.locationId) : null
 
   // ── Tabs ─────────────────────────────────────────────────────────────────────
+  //
+  // The tab lives in the URL rather than component state so that links can point at a
+  // specific tab — the round page's breadcrumb returns to the Scheduling tab, not to
+  // whichever tab happened to be open first. It also survives a reload and makes the
+  // browser's back button step between tabs sensibly.
 
-  const [tab, setTab] = useState(0)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = Math.max(0, TAB_KEYS.indexOf(searchParams.get('tab') ?? ''))
+
+  function handleTabChange(value: number) {
+    // Copy the existing params rather than replacing them — the app carries the locale in
+    // ?hl=, and handing setSearchParams a fresh object would drop it.
+    const next = new URLSearchParams(searchParams)
+    next.set('tab', TAB_KEYS[value])
+    // `replace` so flipping through tabs does not fill the history stack.
+    setSearchParams(next, { replace: true })
+  }
 
   // ── Availability state ───────────────────────────────────────────────────────
 
@@ -259,6 +351,34 @@ export default function SemesterPage() {
     return []
   })
   const [cancelTarget, setCancelTarget] = useState<LessonInstance | null>(null)
+
+  // ── Scheduling round state ───────────────────────────────────────────────────
+
+  const [rounds, setRounds] = useState<SchedulingRound[]>(() => {
+    if (semesterId === MOCK_SEMESTER_IDS.spring2026) return [...MOCK_ROUNDS_SPRING]
+    if (semesterId === MOCK_SEMESTER_IDS.fall2026) return [...MOCK_ROUNDS_FALL]
+    return []
+  })
+  const [newRoundOpen, setNewRoundOpen] = useState(false)
+
+  // Only one round may collect at a time, otherwise students would have two open
+  // requests for the same semester and no way to tell which one counts.
+  const hasOpenRound = rounds.some((r) => r.status === 'collecting')
+
+  function handleCreateRound(deadline: number) {
+    // TODO (Step N): push the round to RTDB and notify every enrolled student.
+    setRounds((prev) => [
+      ...prev,
+      {
+        id: `round-local-${Date.now()}`,
+        roundNumber: prev.reduce((max, r) => Math.max(max, r.roundNumber), 0) + 1,
+        status: 'collecting',
+        deadline,
+        createdAt: Date.now()
+      }
+    ])
+    setNewRoundOpen(false)
+  }
 
   function handleConfirmCancel({ cancelAllForward }: CancelLessonOptions) {
     const target = cancelTarget
@@ -352,6 +472,7 @@ export default function SemesterPage() {
   return (
     <Container maxWidth="md" sx={{ pt: 3, pb: 6 }}>
       <Toolbar />
+      <SchedulingNav items={[{ label: semester.name }]} />
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5 }}>
@@ -373,7 +494,7 @@ export default function SemesterPage() {
         <Tabs
           value={tab}
           onChange={(_e, v) => {
-            setTab(v as number)
+            handleTabChange(v as number)
           }}>
           <Tab label={t.tabAvailability} />
           <Tab label={t.tabStudents} />
@@ -504,6 +625,51 @@ export default function SemesterPage() {
             <Typography variant="body2" color="text.secondary">
               {t.noStudents}
             </Typography>
+          ) : isMobile ? (
+            // A five-column table does not fit a phone: the delete button ended up off-screen
+            // behind a horizontal scroll. One card per student keeps every control reachable.
+            <Stack spacing={1.5}>
+              {enrollments.map((enrollment) => {
+                const student = MOCK_STUDENTS[enrollment.studentId]
+                return (
+                  <Box
+                    key={enrollment.studentId}
+                    sx={{
+                      border: 1,
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      p: 1.5,
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 1
+                    }}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" fontWeight={600}>
+                        {student?.name ?? enrollment.studentId}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {enrollment.lessonDurationMinutes} min · {enrollment.totalLessons}{' '}
+                        {t.colTotalLessons.toLowerCase()}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {t.colCancellationWindow}:{' '}
+                        {enrollment.cancellationWindowHours !== undefined
+                          ? `${enrollment.cancellationWindowHours} h`
+                          : `${t.defaultWindow} (${semester.defaultCancellationWindowHours} h)`}
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      aria-label={`${t.removeStudent} ${student?.name ?? enrollment.studentId}`}
+                      onClick={() => {
+                        handleRemoveStudent(enrollment.studentId)
+                      }}>
+                      <DeleteOutlineIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                )
+              })}
+            </Stack>
           ) : (
             <Table size="small">
               <TableHead>
@@ -531,6 +697,7 @@ export default function SemesterPage() {
                       <TableCell padding="checkbox">
                         <IconButton
                           size="small"
+                          aria-label={`${t.removeStudent} ${student?.name ?? enrollment.studentId}`}
                           onClick={() => {
                             handleRemoveStudent(enrollment.studentId)
                           }}>
@@ -556,8 +723,98 @@ export default function SemesterPage() {
         </Box>
       )}
 
-      {/* ── Scheduling tab (not built yet) ─────────────────────────────────── */}
-      {tab === 2 && <Typography color="text.secondary">{t.comingSoon}</Typography>}
+      {/* ── Scheduling tab ─────────────────────────────────────────────────── */}
+      {tab === 2 && (
+        <Box>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>
+              {t.tabScheduling}
+            </Typography>
+            <Button
+              size="small"
+              startIcon={<AddIcon />}
+              disabled={hasOpenRound}
+              title={hasOpenRound ? t.roundAlreadyOpen : undefined}
+              onClick={() => {
+                setNewRoundOpen(true)
+              }}>
+              {t.newRound}
+            </Button>
+          </Stack>
+
+          {hasOpenRound && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+              {t.roundAlreadyOpen}
+            </Typography>
+          )}
+
+          {rounds.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              {t.noRounds}
+            </Typography>
+          ) : (
+            <Stack spacing={1.5}>
+              {[...rounds]
+                .sort((a, b) => b.roundNumber - a.roundNumber)
+                .map((round) => {
+                  const done = enrollments.filter(
+                    (e) => MOCK_SUBMISSIONS[e.studentId]?.status === 'submitted'
+                  ).length
+                  return (
+                    <Box
+                      key={round.id}
+                      sx={{
+                        border: 1,
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        p: 1.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5
+                      }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Typography variant="body2" fontWeight={600}>
+                            {t.round} {round.roundNumber}
+                          </Typography>
+                          <Chip
+                            size="small"
+                            label={roundStatusLabel(round.status, t)}
+                            color={round.status === 'collecting' ? 'primary' : 'default'}
+                          />
+                        </Stack>
+                        <Typography variant="caption" color="text.secondary">
+                          {t.deadline}:{' '}
+                          {formatDeadline(round.deadline, localeManager.locale as SupportedLocale)}
+                          {round.status === 'collecting' &&
+                            ` · ${t.submittedOf
+                              .replace('{done}', String(done))
+                              .replace('{total}', String(enrollments.length))}`}
+                        </Typography>
+                      </Box>
+                      <Button
+                        size="small"
+                        onClick={() => {
+                          navigate(`/scheduling/semesters/${semester.id}/rounds/${round.id}`)
+                        }}>
+                        {t.open}
+                      </Button>
+                    </Box>
+                  )
+                })}
+            </Stack>
+          )}
+
+          <NewRoundDialog
+            key={newRoundOpen ? 'open' : 'closed'}
+            open={newRoundOpen}
+            onClose={() => {
+              setNewRoundOpen(false)
+            }}
+            onSave={handleCreateRound}
+          />
+        </Box>
+      )}
 
       {/* ── Calendar tab ───────────────────────────────────────────────────── */}
       {tab === 3 && (

@@ -2,6 +2,7 @@ import { Box, Button, Chip, Container, Paper, Stack, Toolbar, Typography } from 
 import AddIcon from '@mui/icons-material/Add'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import SchedulingNav from '../../Components/scheduling/SchedulingNav'
 import LocationDialog from '../../Components/scheduling/LocationDialog'
 import SemesterDialog from '../../Components/scheduling/SemesterDialog'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
@@ -153,6 +154,7 @@ export default function SchedulingPage() {
   return (
     <Container maxWidth="md" sx={{ pt: 3 }}>
       <Toolbar />
+      <SchedulingNav />
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
         <Button
           variant="outlined"
