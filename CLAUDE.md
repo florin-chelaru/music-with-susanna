@@ -6,6 +6,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Bilingual (Romanian/English) music lesson website for violin/viola teacher Susanna Johnson-Chelaru at vioara-cu-susanna.ro. Serves as a public portfolio and a private teacher-student homework portal.
 
+## Changing the Live Database or Rules
+
+**Never modify production data, RTDB security rules, or Storage rules without doing all three, in this order:**
+
+1. **Ask first, and be specific.** State the exact change before making it — which paths, which fields, which rule clauses, what the before and after look like, and whether it is additive or destructive. "I'm going to update the rules" is not enough to approve. Wait for an explicit go-ahead.
+2. **Snapshot first.** Save the current state into [db-snapshots/](db-snapshots/) *before* the change lands, following the existing naming convention:
+   - `YYYY-MM-DD - music-with-susanna-default-rtdb-export.json` — RTDB data
+   - `YYYY-MM-DD - rules.json` — RTDB security rules
+   - `YYYY-MM-DD - storage.rules` — Storage rules
+3. **Then apply it**, and report what actually changed.
+
+This covers anything that reaches the live project: `firebase deploy --only database`, `firebase database:set` / `update` / `remove` / `import`, edits made in the Firebase console, and any script that writes using production credentials.
+
+Reading is free and needs no approval: `firebase database:get`, fetching the current rules, and anything that stays local.
+
 ## Commands
 
 ```bash
