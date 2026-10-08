@@ -21,6 +21,24 @@ This covers anything that reaches the live project: `firebase deploy --only data
 
 Reading is free and needs no approval: `firebase database:get`, fetching the current rules, and anything that stays local.
 
+### What's in `db-snapshots/`
+
+Point-in-time exports going back to October 2023, committed to the repo — 48 files as of 2026-10-08. **Check here before asking where the rules live or what shape the data has**: a recent copy of both is already in the repo.
+
+| File | What it is | Format |
+|---|---|---|
+| `YYYY-MM-DD - music-with-susanna-default-rtdb-export.json` | RTDB data | The console's "Export JSON": the raw data tree with no wrapper object. Top-level keys are `announcement`, `deleted`, `homework`, `posts`, `resources`, `shared-resources`, `students`, `teachers`, `users`, `videos`. 27 files. |
+| `YYYY-MM-DD - rules.json` | RTDB security rules | The console's rules verbatim, wrapped in a top-level `"rules"` key — already in `database.rules.json` format. 20 files. |
+| `YYYY-MM-DD - storage.rules` | Cloud Storage security rules | Storage rules language (`rules_version = '2'; service firebase.storage { … }`), not JSON. 1 file. |
+
+Snapshots from 2023 use an older `YYYY-MM-DD HH-MM <name>` form; everything since uses `YYYY-MM-DD - <name>`. Use the newer form for anything you add.
+
+Most recent of each as of 2026-10-08: data `2026-08-07`, RTDB rules `2026-08-06`, Storage rules `2026-07-28`.
+
+Two caveats:
+- A snapshot is a record of one moment, not necessarily what is live now. Confirm against the console or CLI before deploying anything derived from one.
+- There is still no `database.rules.json` or `firebase.json` in this repo — rules are edited and deployed from the Firebase console. These snapshots are history, not a deploy source.
+
 ## Commands
 
 ```bash
@@ -121,7 +139,7 @@ File uploads go to Firebase Storage at `users/{uid}/files/{name}_{randomSuffix}.
 - **CRA (Create React App)** — Webpack is managed by `react-scripts`; no custom webpack config
 - **Deployed via `gh-pages`** to the `build/` directory; `build/CNAME` sets the custom domain
 - Firebase config lives in [src/store/Firebase.ts](src/store/Firebase.ts) (app init, exports `auth`, `database`, `storage`, `analytics`)
-- DB snapshots for version history are kept in [db-snapshots/](db-snapshots/)
+- DB snapshots for version history are kept in [db-snapshots/](db-snapshots/) — see "What's in `db-snapshots/`" above
 
 ### Cloud Functions
 
