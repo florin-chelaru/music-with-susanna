@@ -30,7 +30,6 @@ test('teacher sees edit button; non-teacher does not', () => {
   const { unmount } = renderWithProviders(<Announcement />, { announcement: { data } })
   expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument()
   unmount()
-
   ;(useUser as jest.Mock).mockReturnValue({ user: { role: UserRole.STUDENT } })
   renderWithProviders(<Announcement />, { announcement: { data } })
   expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument()

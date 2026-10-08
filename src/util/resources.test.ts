@@ -19,8 +19,8 @@ jest.mock('firebase/database')
 jest.mock('firebase/storage')
 jest.mock('../store/Firebase', () => ({ database: {}, storage: {} }))
 jest.mock('./youtube', () => ({
-  extractYouTubeVideoId: jest.requireActual<typeof import('./youtube')>('./youtube')
-    .extractYouTubeVideoId,
+  extractYouTubeVideoId:
+    jest.requireActual<typeof import('./youtube')>('./youtube').extractYouTubeVideoId,
   fetchYouTubeVideo: jest.fn()
 }))
 
@@ -166,8 +166,8 @@ test('deleteResource skips Storage deletion when storagePath is absent', async (
 // ---------------------------------------------------------------------------
 
 test('useTeacherResources returns resources from the RTDB snapshot', () => {
-  mockOnValue.mockImplementationOnce((_: unknown, cb: (snap: object) => void) => {
-    cb({ exists: () => true, val: () => ({ [RESOURCE_ID]: DB_RECORD }) })
+  mockOnValue.mockImplementationOnce((_: unknown, listener: (snap: object) => void) => {
+    listener({ exists: () => true, val: () => ({ [RESOURCE_ID]: DB_RECORD }) })
     return jest.fn()
   })
 
@@ -233,7 +233,15 @@ test('deduplicateResources returns zero counts when there are no resources', asy
 
 test('deduplicateResources returns zero counts when all resources are YouTube (no storagePath)', async () => {
   mockGet.mockResolvedValueOnce(
-    makeSnap({ 'yt-1': { type: ResourceType.YOUTUBE, url: 'https://youtu.be/x', tags: {}, createdAt: '2026-01-01T00:00:00.000Z', title: 'Video' } })
+    makeSnap({
+      'yt-1': {
+        type: ResourceType.YOUTUBE,
+        url: 'https://youtu.be/x',
+        tags: {},
+        createdAt: '2026-01-01T00:00:00.000Z',
+        title: 'Video'
+      }
+    })
   )
 
   const result = await deduplicateResources(TEACHER)
@@ -330,7 +338,9 @@ test('deduplicateResources groups users/ files by base name after stripping 10-c
     createdAt: '2026-02-01T00:00:00.000Z'
   }
 
-  mockGet.mockResolvedValueOnce(makeSnap({ [RES_SUFFIX_A_ID]: RES_SUFFIX_A, [RES_SUFFIX_B_ID]: RES_SUFFIX_B }))
+  mockGet.mockResolvedValueOnce(
+    makeSnap({ [RES_SUFFIX_A_ID]: RES_SUFFIX_A, [RES_SUFFIX_B_ID]: RES_SUFFIX_B })
+  )
   mockGetMetadata.mockResolvedValue({ size: 1024 })
   mockGet.mockResolvedValueOnce(makeSnap(null, false))
   mockGet.mockResolvedValueOnce(makeSnap(null, false))
@@ -425,7 +435,11 @@ test('importExistingUploads imports YouTube links from homework content and dedu
   expect(mockFetchYouTubeVideo).toHaveBeenCalledWith(VIDEO_ID, undefined)
   expect(mockSet).toHaveBeenCalledWith(
     expect.anything(),
-    expect.objectContaining({ type: ResourceType.YOUTUBE, url: CANONICAL_URL, title: 'Bach Concerto' })
+    expect.objectContaining({
+      type: ResourceType.YOUTUBE,
+      url: CANONICAL_URL,
+      title: 'Bach Concerto'
+    })
   )
   // Backfill: both homework entries get the resource reference
   expect(mockUpdate).toHaveBeenCalledWith(
@@ -445,7 +459,15 @@ test('importExistingUploads skips YouTube videos already in the resource library
   mockListAll.mockResolvedValueOnce({ items: [], prefixes: [] })
   // Existing resource already has the canonical URL for this video
   mockGet.mockResolvedValueOnce(
-    makeSnap({ 'yt-existing': { type: ResourceType.YOUTUBE, url: CANONICAL_URL, title: 'Existing', tags: {}, createdAt: '2026-01-01T00:00:00.000Z' } })
+    makeSnap({
+      'yt-existing': {
+        type: ResourceType.YOUTUBE,
+        url: CANONICAL_URL,
+        title: 'Existing',
+        tags: {},
+        createdAt: '2026-01-01T00:00:00.000Z'
+      }
+    })
   )
   mockGet.mockResolvedValueOnce(
     makeSnap({ [STUDENT]: { 'hw-1': { content: `<iframe src="${EMBED_URL}"></iframe>` } } })
@@ -462,7 +484,11 @@ test('importExistingUploads skips YouTube videos already in the resource library
 test('importExistingUploads skips files already present in the resource library', async () => {
   mockListAll.mockResolvedValueOnce({ items: [STORAGE_ITEM], prefixes: [] })
   mockGetDownloadURL.mockResolvedValueOnce(IMPORTED_URL)
-  mockGetMetadata.mockResolvedValueOnce({ contentType: 'application/pdf', timeCreated: '2026-03-01T00:00:00.000Z', size: 512 })
+  mockGetMetadata.mockResolvedValueOnce({
+    contentType: 'application/pdf',
+    timeCreated: '2026-03-01T00:00:00.000Z',
+    size: 512
+  })
   // get(existingResources) — file already imported; get(pubHw), get(draftHw) — empty
   mockGet.mockResolvedValueOnce(makeSnap({ [RESOURCE_ID]: { ...DB_RECORD, url: IMPORTED_URL } }))
   mockGet.mockResolvedValueOnce(makeSnap(null, false))

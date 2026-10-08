@@ -26,8 +26,8 @@ function wrapper({ children }: { children: ReactNode }) {
 
 function setupData(data: AnnouncementData | null) {
   mockOnValue.mockImplementationOnce(
-    (_: unknown, cb: (snap: { val: () => unknown }) => void) => {
-      cb({ val: () => data })
+    (_: unknown, listener: (snap: { val: () => unknown }) => void) => {
+      listener({ val: () => data })
       return jest.fn()
     }
   )
