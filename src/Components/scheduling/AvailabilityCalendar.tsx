@@ -46,9 +46,10 @@ import {
   AvailabilityBlock,
   AvailabilityLabel,
   LABEL_SCORES,
-  SCHEDULING_CONFIG
+  SCHEDULING_CONFIG,
+  removeOverlaps
 } from '../../util/scheduling'
-import { formatMinutes, parseDate, parseMinutes, toDayOfWeek } from '../../util/schedulingDates'
+import { parseDate, toDayOfWeek } from '../../util/schedulingDates'
 
 // ─── Dayjs setup (module-level, runs once) ────────────────────────────────────
 
@@ -165,38 +166,6 @@ function dateToBlockFields(
     startTime: `${pad(start.getHours())}:${pad(start.getMinutes())}`,
     endTime: `${pad(end.getHours())}:${pad(end.getMinutes())}`
   }
-}
-
-// Remove or clip any blocks on the same day that overlap with `incoming`.
-// Blocks that are fully covered are dropped; partially-overlapping blocks are trimmed;
-// a block that straddles both sides of `incoming` is split into two fragments.
-function removeOverlaps(
-  existing: AvailabilityBlock[],
-  incoming: AvailabilityBlock
-): AvailabilityBlock[] {
-  const ns = parseMinutes(incoming.startTime)
-  const ne = parseMinutes(incoming.endTime)
-  const result: AvailabilityBlock[] = []
-  for (const b of existing) {
-    if (b.dayOfWeek !== incoming.dayOfWeek) {
-      result.push(b)
-      continue
-    }
-    const bs = parseMinutes(b.startTime)
-    const be = parseMinutes(b.endTime)
-    if (be <= ns || bs >= ne) {
-      result.push(b) // no overlap
-    } else if (bs < ns && be > ne) {
-      result.push({ ...b, endTime: formatMinutes(ns) }) // incoming punches through middle — left fragment
-      result.push({ ...b, startTime: formatMinutes(ne) }) // right fragment
-    } else if (bs < ns) {
-      result.push({ ...b, endTime: formatMinutes(ns) }) // overlap at right end of existing — trim right
-    } else if (be > ne) {
-      result.push({ ...b, startTime: formatMinutes(ne) }) // overlap at left end of existing — trim left
-    }
-    // else: existing fully covered by incoming — drop it
-  }
-  return result
 }
 
 // ─── Mobile view ──────────────────────────────────────────────────────────────

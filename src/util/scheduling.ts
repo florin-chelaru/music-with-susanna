@@ -1,3 +1,5 @@
+import { formatMinutes, parseMinutes } from './schedulingDates'
+
 export enum AvailabilityLabel {
   PREFERRED = 'preferred',
   AVAILABLE = 'available',
@@ -231,4 +233,46 @@ export function computeCombinedScore(teacherScore: number, studentScore: number)
     teacherScore * SCHEDULING_CONFIG.TEACHER_WEIGHT +
     studentScore * SCHEDULING_CONFIG.STUDENT_WEIGHT
   )
+}
+
+// Clip every existing block that overlaps `incoming` on the same day.
+//
+// `incoming` is NOT included in the result — the caller appends it. The new block always
+// wins its time range outright; there is no error or confirmation, it simply claims the span.
+//
+// Five outcomes per existing block:
+//   no overlap            → kept unchanged (touching edges do not overlap)
+//   straddles `incoming`  → split into a left and a right fragment
+//   overlaps on the right → end trimmed back to incoming.startTime
+//   overlaps on the left  → start pushed forward to incoming.endTime
+//   fully covered         → dropped
+//
+// Blocks on other days are always kept.
+export function removeOverlaps(
+  existing: AvailabilityBlock[],
+  incoming: AvailabilityBlock
+): AvailabilityBlock[] {
+  const ns = parseMinutes(incoming.startTime)
+  const ne = parseMinutes(incoming.endTime)
+  const result: AvailabilityBlock[] = []
+  for (const b of existing) {
+    if (b.dayOfWeek !== incoming.dayOfWeek) {
+      result.push(b)
+      continue
+    }
+    const bs = parseMinutes(b.startTime)
+    const be = parseMinutes(b.endTime)
+    if (be <= ns || bs >= ne) {
+      result.push(b) // no overlap
+    } else if (bs < ns && be > ne) {
+      result.push({ ...b, endTime: formatMinutes(ns) }) // incoming punches through middle — left fragment
+      result.push({ ...b, startTime: formatMinutes(ne) }) // right fragment
+    } else if (bs < ns) {
+      result.push({ ...b, endTime: formatMinutes(ns) }) // overlap at right end of existing — trim right
+    } else if (be > ne) {
+      result.push({ ...b, startTime: formatMinutes(ne) }) // overlap at left end of existing — trim left
+    }
+    // else: existing fully covered by incoming — drop it
+  }
+  return result
 }
