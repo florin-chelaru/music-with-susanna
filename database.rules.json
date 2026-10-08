@@ -112,12 +112,6 @@
     "announcement": {
       ".read": true,
       ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'teacher'"
-    },
-    "lessons": { ".read": "auth != null", ".write": "auth != null" },
-    "teacherLessons": { ".read": "auth != null", ".write": "auth != null" },
-    "studentLessons": { ".read": "auth != null", ".write": "auth != null" },
-    "groupClasses": { ".read": "auth != null", ".write": "auth != null" },
-    "teacherGroupClasses": { ".read": "auth != null", ".write": "auth != null" },
-    "studentGroupClasses": { ".read": "auth != null", ".write": "auth != null" }
+    }
   }
 }
