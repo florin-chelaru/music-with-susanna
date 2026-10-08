@@ -21,33 +21,29 @@ This covers anything that reaches the live project: `firebase deploy --only data
 
 Reading is free and needs no approval: `firebase database:get`, fetching the current rules, and anything that stays local.
 
-### What's in `db-snapshots/`
+### Snapshots and backups
 
-Point-in-time exports going back to October 2023, committed to the repo — 48 files as of 2026-10-08. **Check here before asking where the rules live or what shape the data has**: a recent copy of both is already in the repo.
+**This repository is public, and the RTDB data exports contain student and parent personal data.** Snapshots therefore live in the private repo [florin-chelaru/music-with-susanna-db-snapshots](https://github.com/florin-chelaru/music-with-susanna-db-snapshots), cloned alongside this one at `../music-with-susanna-db-snapshots`. `db-snapshots/` is gitignored here — never commit an export to this repo.
+
+What the snapshot repo holds (see its README for restore instructions):
 
 | File | What it is | Format |
 |---|---|---|
-| `YYYY-MM-DD - music-with-susanna-default-rtdb-export.json` | RTDB data | The console's "Export JSON": the raw data tree with no wrapper object. Top-level keys are `announcement`, `deleted`, `homework`, `posts`, `resources`, `shared-resources`, `students`, `teachers`, `users`, `videos`. 27 files. |
-| `YYYY-MM-DD - rules.json` | RTDB security rules | The console's rules verbatim, wrapped in a top-level `"rules"` key — already in `database.rules.json` format. 20 files. |
-| `YYYY-MM-DD - storage.rules` | Cloud Storage security rules | Storage rules language (`rules_version = '2'; service firebase.storage { … }`), not JSON. 1 file. |
+| `YYYY-MM-DD - music-with-susanna-default-rtdb-export.json` | RTDB data | The console's "Export JSON": the raw data tree, no wrapper. Top-level keys are `announcement`, `deleted`, `homework`, `posts`, `resources`, `shared-resources`, `students`, `teachers`, `users`, `videos`. |
+| `YYYY-MM-DD - rules.json` | RTDB security rules | The rules verbatim, wrapped in a top-level `"rules"` key — already in `database.rules.json` format. |
+| `YYYY-MM-DD - storage.rules` | Cloud Storage security rules | Storage rules language (`rules_version = '2'; …`), not JSON. |
 
-Snapshots from 2023 use an older `YYYY-MM-DD HH-MM <name>` form; everything since uses `YYYY-MM-DD - <name>`. Use the newer form for anything you add.
+Taking a snapshot:
 
-Most recent of each as of 2026-10-08: data `2026-08-07`, RTDB rules `2026-08-06`, Storage rules `2026-07-28`.
+```bash
+cd ../music-with-susanna-db-snapshots
+firebase database:get "/" --project music-with-susanna > "$(date +%F) - music-with-susanna-default-rtdb-export.json"
+firebase database:get "/.settings/rules" --project music-with-susanna > "$(date +%F) - rules.json"
+```
 
-Two caveats:
-- A snapshot is a record of one moment, not necessarily what is live now. Confirm against the console or CLI before deploying anything derived from one.
-- There is still no `database.rules.json` or `firebase.json` in this repo — rules are edited and deployed from the Firebase console. These snapshots are history, not a deploy source.
+Storage rules have no CLI read; copy them from the console when they change.
 
-## Before Committing
-
-**Never run `git commit` without asking for review first.** When a change is ready:
-
-1. Say what changed and why, and point at the files.
-2. Wait for an explicit go-ahead.
-3. Only then commit.
-
-This applies to every change — code, tests, docs, config, plan files, everything. Editing files, staging them, and showing a diff are all fine; `git commit` is the gate. Pushing, tagging and deploying each need their own separate go-ahead.
+**RTDB rules are deployed from this repo**: [database.rules.json](database.rules.json) is the source of truth, referenced by [firebase.json](firebase.json), and deployed with `firebase deploy --only database`. It contains no personal data, so it stays here.
 
 ## Commands
 
@@ -149,7 +145,7 @@ File uploads go to Firebase Storage at `users/{uid}/files/{name}_{randomSuffix}.
 - **CRA (Create React App)** — Webpack is managed by `react-scripts`; no custom webpack config
 - **Deployed via `gh-pages`** to the `build/` directory; `build/CNAME` sets the custom domain
 - Firebase config lives in [src/store/Firebase.ts](src/store/Firebase.ts) (app init, exports `auth`, `database`, `storage`, `analytics`)
-- DB snapshots for version history are kept in [db-snapshots/](db-snapshots/) — see "What's in `db-snapshots/`" above
+- DB snapshots live in a separate private repo — see "Snapshots and backups" above
 
 ### Cloud Functions
 

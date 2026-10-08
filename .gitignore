@@ -121,3 +121,7 @@ dist
 .env.development.local
 .env.test.local
 .env.production.local
+
+# DB snapshots contain student personal data and live in the private repo
+# florin-chelaru/music-with-susanna-db-snapshots (cloned at ../music-with-susanna-db-snapshots)
+db-snapshots/
