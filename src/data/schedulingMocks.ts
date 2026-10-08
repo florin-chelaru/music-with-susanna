@@ -317,13 +317,14 @@ function lesson(
   isoDate: string,
   startHour: number,
   durationMin: number,
-  status: LessonInstance['status'] = 'completed'
+  status: LessonInstance['status'] = 'completed',
+  locationId: string = MOCK_LOCATION_IDS.home
 ): LessonInstance {
   const [start, end] = lessonTs(isoDate, startHour, durationMin)
   return {
     id,
     studentId,
-    locationId: MOCK_LOCATION_IDS.home,
+    locationId,
     scheduledStart: start,
     scheduledEnd: end,
     timezone: 'Europe/Bucharest',
@@ -335,26 +336,92 @@ function lesson(
   }
 }
 
-export const MOCK_LESSON_INSTANCES: LessonInstance[] = [
+// ─── Lesson instances ─────────────────────────────────────────────────────────
+//
+// In RTDB these live under lessonInstances/.../semesters/{semesterId}/lessons, so the
+// semester is implied by the path and the record carries no semesterId. The mocks are
+// split the same way, matching MOCK_ENROLLMENTS_SPRING / _FALL.
+
+// Spring 2026 (2 Feb – 20 Jun) is over; these are history.
+export const MOCK_LESSON_INSTANCES_SPRING: LessonInstance[] = [
   // Ana — weekly Mon 09:00 (45 min)
-  lesson('li-ana-1', MOCK_STUDENT_IDS.ana, '2026-02-02', 9, 45, 'completed'),
-  lesson('li-ana-2', MOCK_STUDENT_IDS.ana, '2026-02-09', 9, 45, 'completed'),
-  lesson('li-ana-3', MOCK_STUDENT_IDS.ana, '2026-02-16', 9, 45, 'completed'),
-  lesson('li-ana-4', MOCK_STUDENT_IDS.ana, '2026-02-23', 9, 45, 'canceled'),
-  lesson('li-ana-5', MOCK_STUDENT_IDS.ana, '2026-03-02', 9, 45, 'completed'),
-  lesson('li-ana-6', MOCK_STUDENT_IDS.ana, '2026-08-10', 9, 45, 'scheduled'),
-  lesson('li-ana-7', MOCK_STUDENT_IDS.ana, '2026-08-17', 9, 45, 'scheduled'),
+  lesson('li-sp-ana-1', MOCK_STUDENT_IDS.ana, '2026-02-02', 9, 45, 'completed'),
+  lesson('li-sp-ana-2', MOCK_STUDENT_IDS.ana, '2026-02-09', 9, 45, 'completed'),
+  lesson('li-sp-ana-3', MOCK_STUDENT_IDS.ana, '2026-02-16', 9, 45, 'completed'),
+  lesson('li-sp-ana-4', MOCK_STUDENT_IDS.ana, '2026-02-23', 9, 45, 'canceled'),
+  lesson('li-sp-ana-5', MOCK_STUDENT_IDS.ana, '2026-03-02', 9, 45, 'completed'),
 
   // Barbara — bi-weekly Mon 10:00 (60 min)
-  lesson('li-bar-1', MOCK_STUDENT_IDS.barbara, '2026-02-02', 10, 60, 'completed'),
-  lesson('li-bar-2', MOCK_STUDENT_IDS.barbara, '2026-02-16', 10, 60, 'completed'),
-  lesson('li-bar-3', MOCK_STUDENT_IDS.barbara, '2026-03-02', 10, 60, 'completed'),
-  lesson('li-bar-4', MOCK_STUDENT_IDS.barbara, '2026-08-10', 10, 60, 'scheduled'),
+  lesson('li-sp-bar-1', MOCK_STUDENT_IDS.barbara, '2026-02-02', 10, 60, 'completed'),
+  lesson('li-sp-bar-2', MOCK_STUDENT_IDS.barbara, '2026-02-16', 10, 60, 'completed'),
+  lesson('li-sp-bar-3', MOCK_STUDENT_IDS.barbara, '2026-03-02', 10, 60, 'completed'),
 
-  // Chris — weekly Mon 11:15 (45 min)
-  lesson('li-chr-1', MOCK_STUDENT_IDS.chris, '2026-02-02', 11, 45, 'completed'),
-  lesson('li-chr-2', MOCK_STUDENT_IDS.chris, '2026-02-09', 11, 45, 'completed'),
-  lesson('li-chr-3', MOCK_STUDENT_IDS.chris, '2026-02-16', 11, 45, 'completed'),
-  lesson('li-chr-4', MOCK_STUDENT_IDS.chris, '2026-08-10', 11, 45, 'scheduled'),
-  lesson('li-chr-5', MOCK_STUDENT_IDS.chris, '2026-08-17', 11, 45, 'scheduled')
+  // Chris — weekly Mon 11:00 (45 min)
+  lesson('li-sp-chr-1', MOCK_STUDENT_IDS.chris, '2026-02-02', 11, 45, 'completed'),
+  lesson('li-sp-chr-2', MOCK_STUDENT_IDS.chris, '2026-02-09', 11, 45, 'completed'),
+  lesson('li-sp-chr-3', MOCK_STUDENT_IDS.chris, '2026-02-16', 11, 45, 'completed')
+]
+
+// Mondays of the Fall 2026 semester (7 Sep – 19 Dec).
+const FALL_MONDAYS = [
+  '2026-09-07',
+  '2026-09-14',
+  '2026-09-21',
+  '2026-09-28',
+  '2026-10-05',
+  '2026-10-12',
+  '2026-10-19',
+  '2026-10-26',
+  '2026-11-02',
+  '2026-11-09',
+  '2026-11-16',
+  '2026-11-23',
+  '2026-11-30',
+  '2026-12-07',
+  '2026-12-14'
+]
+
+// Build a recurring Monday series. everyNthWeek = 2 gives a bi-weekly student.
+//
+// Status is derived from the clock — past dates read as completed, future ones as
+// scheduled — so the Calendar tab always shows a realistic mix of both. Fixed statuses
+// were what let the previous mocks drift into claiming lessons were "scheduled" for
+// dates that had already passed.
+function fallSeries(
+  idPrefix: string,
+  studentId: string,
+  startHour: number,
+  durationMin: number,
+  everyNthWeek: number,
+  statusOverrides: Record<string, LessonInstance['status']> = {}
+): LessonInstance[] {
+  const now = Date.now()
+  const lessons: LessonInstance[] = []
+  for (let i = 0; i < FALL_MONDAYS.length; i += everyNthWeek) {
+    const date = FALL_MONDAYS[i]
+    const [start] = lessonTs(date, startHour, durationMin)
+    const status = statusOverrides[date] ?? (start < now ? 'completed' : 'scheduled')
+    lessons.push(
+      lesson(
+        `${idPrefix}-${i + 1}`,
+        studentId,
+        date,
+        startHour,
+        durationMin,
+        status,
+        MOCK_LOCATION_IDS.school
+      )
+    )
+  }
+  return lessons
+}
+
+// Fall 2026 (7 Sep – 19 Dec) is the semester in progress.
+export const MOCK_LESSON_INSTANCES_FALL: LessonInstance[] = [
+  // Ana — weekly Mon 09:00 (45 min), one cancellation early in the term
+  ...fallSeries('li-fa-ana', MOCK_STUDENT_IDS.ana, 9, 45, 1, { '2026-09-28': 'canceled' }),
+  // Barbara — bi-weekly Mon 10:00 (60 min)
+  ...fallSeries('li-fa-bar', MOCK_STUDENT_IDS.barbara, 10, 60, 2),
+  // Chris — weekly Mon 11:00 (45 min)
+  ...fallSeries('li-fa-chr', MOCK_STUDENT_IDS.chris, 11, 45, 1)
 ]
