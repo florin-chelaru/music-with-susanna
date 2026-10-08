@@ -45,6 +45,33 @@ Storage rules have no CLI read; copy them from the console when they change.
 
 **RTDB rules are deployed from this repo**: [database.rules.json](database.rules.json) is the source of truth, referenced by [firebase.json](firebase.json), and deployed with `firebase deploy --only database`. It contains no personal data, so it stays here.
 
+## Before Verifying
+
+**Typechecking, tests, linting and builds are a final step, not a loop.** Do not run them while
+implementing, and **ask before running any of them**:
+
+```bash
+npx tsc --noEmit     # typecheck
+npm test             # or npx jest <file>
+npm run lint
+npm run build
+```
+
+When the implementation is ready, say so and wait. Do not verify and report results unprompted —
+finish the work first, then check it once, deliberately.
+
+## Before Committing
+
+**Never run `git commit` without asking for review first.** When a change is ready:
+
+1. Say what changed and why, and point at the files.
+2. Wait for an explicit go-ahead.
+3. Only then commit.
+
+This applies to every change — code, tests, docs, config, plan files, everything. Editing files,
+staging them, and showing a diff are all fine; `git commit` is the gate. Pushing, tagging and
+deploying each need their own separate go-ahead.
+
 ## Commands
 
 ```bash
