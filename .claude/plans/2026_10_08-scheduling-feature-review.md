@@ -306,10 +306,10 @@ Before resuming Step F — roughly half a day:
 1. ~~**Fix `toWeekMonday`** (§4a) and extract `src/util/schedulingDates.ts` — dayjs-based week/day
    helpers shared by UI and algorithm — with unit tests.~~ **DONE 2026-10-08 — see §6.**
 2. ~~**Update the plan document**~~ **DONE 2026-10-08 — see §6.**
-3. **Decide where RTDB rules live** (§3e) and commit the current console rules into this repo.
-4. **Add `removeOverlaps` tests** (§4e).
+3. ~~**Decide where RTDB rules live** (§3e) and commit the current console rules into this repo.~~ **DONE 2026-10-08.**
+4. ~~**Add `removeOverlaps` tests** (§4e).~~ **DONE 2026-10-08.**
 
-Then continue with **Step F** as planned.
+All four done. **Steps F and G** are also complete — see §6.
 
 ---
 
@@ -404,3 +404,38 @@ Remaining from §4 and §5, in the order I would take them:
 - Dead `UNAVAILABLE` label (§4c); student "My Schedule" nav link pointing at a stub (§4d) — both
   ship blockers rather than build blockers.
 - Then **Step F** (LessonCalendar + Calendar tab).
+
+### 2026-10-08 — Steps F and G
+
+**Step F** — `LessonCalendar`, `CancelLessonDialog`, the semester Calendar tab, plus
+`calendarLocalizer.ts` and `isWithinCancellationWindow`. **Step G** — the Scheduling tab,
+`NewRoundDialog`, and `SchedulingRoundPage` in its collecting state.
+
+The recurring theme in both: **the mock data was incoherent, and each time it was the same
+root cause — state hardcoded at authoring time, drifting as the real date moved on.**
+
+- Step F: "scheduled" lessons dated August 2026 — between the two semesters, so belonging to
+  neither, and already past. The Calendar tab would have opened on an empty month.
+- Step G: the open round's deadline was 2026-08-20, long past, so the countdown read as
+  expired and the close button was permanently enabled — neither state reviewable.
+- Step G: semester statuses had drifted too. Spring 2026 (ended in June) was `active`; Fall
+  2026 (running, with 38 confirmed lessons) was `scheduling`, which contradicted its own data.
+
+Everything time-dependent in the mocks is now derived from the clock rather than frozen:
+lesson statuses, the open round's deadline and its submission timestamps. Fixed dates are
+kept only where they are genuinely historical.
+
+Also settled: the cancellation policy contradiction (§3 of the plan). Outside the window is
+"no charge, makeup may be requested"; granting it stays the teacher's decision.
+
+Running totals: **100 tests**, lint clean, build green.
+
+Still open before this branch merges to `main`:
+
+- Student "My Schedule" nav link is live for every student and lands on a stub (fixed by Step J).
+- `AvailabilityLabel.UNAVAILABLE` is unreachable — not offered by the picker, cannot appear in an overlay.
+- `/scheduling/availability-test` route and `AvailabilityCalendarTest.tsx` to be removed.
+- Commented-out `window._auth` debug line in `Firebase.ts`.
+- `totalLessons` vs the frequency shorthand — needed by Step L/N, not before.
+
+Next: **Step H** — `SuggestedScheduleCard` and the round page's suggested state.

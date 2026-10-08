@@ -1038,10 +1038,15 @@ All phases follow the same incremental pattern:
 
 ---
 
-#### Step G — SemesterPage: Scheduling tab + SchedulingRoundPage (collecting state)
+#### ~~Step G — SemesterPage: Scheduling tab + SchedulingRoundPage (collecting state)~~ ✅ DONE
 
-- Scheduling tab: list of rounds (mock: one round in `collecting` status), "New Round" button opens a deadline-picker dialog
-- `src/pages/scheduling/SchedulingRoundPage.tsx` — collecting state: table showing each student's submission status (submitted / pending), deadline countdown, "Close Round & Generate Suggestions" button (disabled until deadline passed or all submitted — mock the condition)
+- Scheduling tab: rounds listed newest first with status chip, deadline and a submitted count; "New Round" opens `NewRoundDialog` (a `DateTimePicker` defaulting a week out, rejecting past times). The button is disabled while a round is still collecting — two open rounds for one semester would leave students with two requests and no way to tell which counts.
+- `src/Components/scheduling/NewRoundDialog.tsx` — deadline picker, bilingual.
+- `src/pages/scheduling/SchedulingRoundPage.tsx` — collecting state: per-student submission table, live deadline countdown (re-rendered once a minute, never finer than minutes), and the "Close round & generate suggestions" button, enabled once the deadline passes or everyone has submitted, with an alert naming which. Non-collecting rounds render a read-only notice. Route wired in `App.tsx`, replacing the placeholder.
+- `formatCountdown` lives in `src/util/schedulingDates.ts` with tests rather than in the page, so it is testable without mounting the route. It clamps at zero so an elapsed deadline cannot render as "-3m".
+- `src/Components/scheduling/SchedulingNav.tsx`, rendered by all three teacher pages: breadcrumbs on desktop, a single back button on mobile. Until this point there was no way back from a semester to the scheduling root, and the round page's back link returned to the semester's first tab rather than the Scheduling tab it came from. Both are fixed by this plus moving the tab into `?tab=` — see Codebase conventions.
+
+**Mock coherence fixed alongside.** The semester statuses had drifted out of sync with their own dates: Spring 2026 (Feb–Jun) was still `active` and Fall 2026 (running, with a confirmed schedule) was `scheduling`. Spring is now `completed` and Fall `active`. Rounds are keyed per semester like enrollments and lessons: Spring has one finalized round, Fall has round 1 finalized (it produced the lessons the Calendar tab shows) plus an open round 2 whose deadline is relative to now, so the countdown and the disabled button are both reviewable.
 
 *Review: see the round in the scheduling tab, click through to the round page, see submission statuses.*
 
@@ -1200,8 +1205,11 @@ Patterns established in this repo that new scheduling code must follow:
 - **RTDB subscriptions:** `onValue(ref(database, path), cb)` with the unsubscribe stored in `useRef<Unsubscribe>` and called in cleanup.
 - **Locale:** `localeManager.registerComponentStrings(ComponentName, TEXTS)` inside `useMemo(() => ..., [])` at the top of each component.
 - **Routing:** add the `<Route>` in `src/App.tsx` and a `RouteInfo` entry (with `hiddenFromAppBar: true`) in `src/data/RouteInfo.tsx`.
+- **Upward navigation:** every scheduling page renders `src/Components/scheduling/SchedulingNav.tsx`. The section nests three levels deep (section → semester → round) and the app bar offers no way back up, so without it the only way out of a round is the browser's back button. The root "Scheduling" crumb is prepended automatically; pass the rest. On a phone the component collapses the trail to a single back button pointing at the nearest ancestor — a full trail is too wide to be usable at that width. The student pages under `/schedule` will need their own root crumb ("My Schedule"), not this one.
+- **Tab state belongs in the URL,** as `?tab=<name>`, not in `useState`. A breadcrumb or link has to be able to point at a *specific* tab — the round page returns to the semester's Scheduling tab, not to whichever tab happened to open first — and it survives a reload. Use named values rather than indices so the URL stays readable, write with `replace: true` so flipping tabs does not fill the history stack, and copy the existing `URLSearchParams` rather than passing a fresh object: the app carries the locale in `?hl=` and a fresh object silently drops it.
 - **No Redux / Zustand** — React context only.
-- **Prettier config:** no trailing commas, `jsxBracketSameLine: true`, `singleQuote: true`, `semi: false`. Run `npx prettier --write <changed file>` after editing.
+- **Prettier config:** no trailing commas, `jsxBracketSameLine: true`, `singleQuote: true`, `semi: false`. Run `npx eslint --fix <changed file>` after editing — **not** `prettier --write`, which moves the JSX closing `>` onto its own line because Prettier 2.7 treats `jsxBracketSameLine` as deprecated while the ESLint plugin still enforces it.
+- **Mobile layouts:** tables do not fit a phone — a five-column enrollment table pushed its delete button off-screen behind a horizontal scroll. Below the `sm` breakpoint, render one bordered container per row with the fields stacked vertically and any action button kept in view. Detect with two separate `useMediaQuery` calls (`'(pointer: coarse)'` and `theme.breakpoints.down('sm')`) assigned to a variable, never OR'd inline, so the hooks cannot short-circuit.
 
 ### Phase 1 simplification: cancellation write path
 
@@ -1508,7 +1516,7 @@ Route: `/scheduling/semesters/:semesterId`
 
 Teacher-only.
 
-**Layout:** MUI `Tabs` — four tabs:
+**Layout:** MUI `Tabs` — four tabs, with the active tab in the URL as `?tab=availability|students|scheduling|calendar`:
 
 1. **Availability** — renders `AvailabilityCalendar` (editable) with the teacher's weekly template. "Add week override" button opens a date-picker + another `AvailabilityCalendar` instance for that week. Auto-saves on change (debounced 1s, similar to homework draft auto-save pattern — `setTimeout` ref cleared on each change).
 
