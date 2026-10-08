@@ -48,6 +48,7 @@ import {
   LABEL_SCORES,
   SCHEDULING_CONFIG
 } from '../../util/scheduling'
+import { formatMinutes, parseDate, parseMinutes, toDayOfWeek } from '../../util/schedulingDates'
 
 // ─── Dayjs setup (module-level, runs once) ────────────────────────────────────
 
@@ -80,9 +81,8 @@ const WeekStartContext = React.createContext<string | undefined>(undefined)
 
 function DayColumnHeader({ date }: { date: Date }) {
   const weekStart = useContext(WeekStartContext)
-  const jsDay = date.getDay()
-  const dayOffset = jsDay === 0 ? 6 : jsDay - 1
-  const actualDate = weekStart ? dayjs(`${weekStart}T12:00:00`).add(dayOffset, 'day') : null
+  const dayOffset = toDayOfWeek(date)
+  const actualDate = weekStart ? parseDate(weekStart).add(dayOffset, 'day') : null
 
   return (
     <Box sx={{ textAlign: 'center', py: weekStart ? 0.75 : 1.25 }}>
@@ -155,16 +155,13 @@ function blockToEvent(
 }
 
 // Convert a calendar Date back to AvailabilityBlock fields.
-// getDay(): 0=Sun,1=Mon,…,6=Sat → our convention: 0=Mon…6=Sun
 function dateToBlockFields(
   start: Date,
   end: Date
 ): Pick<AvailabilityBlock, 'dayOfWeek' | 'startTime' | 'endTime'> {
-  const jsDay = start.getDay()
-  const dayOfWeek = jsDay === 0 ? 6 : jsDay - 1
   const pad = (n: number) => String(n).padStart(2, '0')
   return {
-    dayOfWeek,
+    dayOfWeek: toDayOfWeek(start),
     startTime: `${pad(start.getHours())}:${pad(start.getMinutes())}`,
     endTime: `${pad(end.getHours())}:${pad(end.getMinutes())}`
   }
@@ -177,34 +174,25 @@ function removeOverlaps(
   existing: AvailabilityBlock[],
   incoming: AvailabilityBlock
 ): AvailabilityBlock[] {
-  const toMin = (t: string) => {
-    const [h, m] = t.split(':').map(Number)
-    return h * 60 + m
-  }
-  const toTime = (min: number) => {
-    const h = Math.floor(min / 60)
-    const m = min % 60
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-  }
-  const ns = toMin(incoming.startTime)
-  const ne = toMin(incoming.endTime)
+  const ns = parseMinutes(incoming.startTime)
+  const ne = parseMinutes(incoming.endTime)
   const result: AvailabilityBlock[] = []
   for (const b of existing) {
     if (b.dayOfWeek !== incoming.dayOfWeek) {
       result.push(b)
       continue
     }
-    const bs = toMin(b.startTime)
-    const be = toMin(b.endTime)
+    const bs = parseMinutes(b.startTime)
+    const be = parseMinutes(b.endTime)
     if (be <= ns || bs >= ne) {
       result.push(b) // no overlap
     } else if (bs < ns && be > ne) {
-      result.push({ ...b, endTime: toTime(ns) }) // incoming punches through middle — left fragment
-      result.push({ ...b, startTime: toTime(ne) }) // right fragment
+      result.push({ ...b, endTime: formatMinutes(ns) }) // incoming punches through middle — left fragment
+      result.push({ ...b, startTime: formatMinutes(ne) }) // right fragment
     } else if (bs < ns) {
-      result.push({ ...b, endTime: toTime(ns) }) // overlap at right end of existing — trim right
+      result.push({ ...b, endTime: formatMinutes(ns) }) // overlap at right end of existing — trim right
     } else if (be > ne) {
-      result.push({ ...b, startTime: toTime(ne) }) // overlap at left end of existing — trim left
+      result.push({ ...b, startTime: formatMinutes(ne) }) // overlap at left end of existing — trim left
     }
     // else: existing fully covered by incoming — drop it
   }

@@ -277,9 +277,8 @@ tables, and is unreachable. Either give it a purpose or remove it.
 
 Before resuming Step F — roughly half a day:
 
-1. **Fix `toWeekMonday`** (§4a) and extract `src/util/schedulingDates.ts` — dayjs-based week/day
-   helpers shared by UI and algorithm — with unit tests. Every override written before this fix is
-   wrong, so it gets more expensive with time.
+1. ~~**Fix `toWeekMonday`** (§4a) and extract `src/util/schedulingDates.ts` — dayjs-based week/day
+   helpers shared by UI and algorithm — with unit tests.~~ **DONE 2026-10-08 — see §6.**
 2. **Update the plan document**:
    - rewrite Algorithm Notes against dayjs (§3b)
    - fix the `student_best` sort key (§3a)
@@ -306,3 +305,53 @@ npx eslint src/pages/scheduling src/Components/scheduling src/util/scheduling.ts
 npm ls --depth=0                      # clean tree, no UNMET/invalid
 grep -rn "date-fns" --exclude-dir=node_modules --exclude=package-lock.json .   # only plan doc
 ```
+
+---
+
+## 6. Progress log
+
+### 2026-10-08 — Step 1 done: shared date helpers + `toWeekMonday` fix
+
+**New:** `src/util/schedulingDates.ts` — the single place for scheduling date/time math, used by
+both the UI and (later) the algorithm. Exports `parseDate`, `formatDate`, `toDayOfWeek`,
+`weekStartOf`, `weekStartDate`, `eachDateInRange`, `eachWeekStartInRange`, `daysBetween`,
+`parseMinutes`, `formatMinutes`, `snapUpMinutes`.
+
+Two rules the module enforces, which are what the old code got wrong:
+- Never `new Date('YYYY-MM-DD')` (UTC midnight) and never `.toISOString()` for a calendar day —
+  both shift the day east of UTC. Parsing and formatting are local, via dayjs.
+- Date-only strings are anchored at **local noon**, so `.add(n, 'day')` survives DST transitions.
+
+`weekStartOf` computes Monday from `.day()` arithmetic rather than dayjs `startOf('week')`, on
+purpose: `AvailabilityCalendar` calls `dayjs.updateLocale('en', { weekStart: 1 })` at module scope,
+so `startOf('week')` would make this helper depend on import order.
+
+**Fixed:** `SemesterPage.tsx` — the buggy local `toWeekMonday` is deleted; the page now uses
+`weekStartOf` / `weekStartDate` / `parseDate`. `shouldDisableOverrideDate` now compares at `'day'`
+granularity, which is anchor-independent (behaviour verified identical to the old noon-anchored
+comparisons).
+
+**De-duplicated:** `AvailabilityCalendar.tsx` had two more copies of the `0=Sun → 0=Mon` remap and
+its own `toMin`/`toTime`; all now call the shared helpers. Behaviour-identical, no other changes to
+that file.
+
+**Tests:** `src/util/schedulingDates.test.ts`, 41 tests. The regression was verified by temporarily
+restoring the old implementation — 8 tests fail, all on the production path.
+
+An important detail that shaped the tests: a date-only *string* input does **not** reproduce the
+bug, because noon-anchoring masks it. The failing path is a **local-midnight `Dayjs`**, which is
+exactly what the MUI DatePicker hands back. The tests exercise that input explicitly — testing only
+strings would have given false confidence.
+
+**`jest.config.js`:** now pins `process.env.TZ = 'Europe/Bucharest'` before Jest spawns workers.
+Without a fixed zone east of UTC these regression tests silently pass everywhere, and date tests
+for the Step L algorithm would be non-deterministic. The first test in the file asserts the pin is
+still in place.
+
+**Verification:** `tsc --noEmit` clean · 79/79 tests across 6 suites · `npm run build` succeeds
+(+37 B) · eslint clean on all touched files.
+
+> Note for future edits: `npx prettier --write` on a `.tsx` file **breaks** JSX bracket placement
+> here even though CLAUDE.md suggests it for targeted fixes — Prettier 2.7.1 reports
+> `jsxBracketSameLine` as deprecated and moves the closing `>` to its own line, which the ESLint
+> prettier plugin then rejects. Use `npx eslint --fix <file>` for `.tsx` instead.

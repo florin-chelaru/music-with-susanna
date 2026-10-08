@@ -37,6 +37,7 @@ import {
   StudentEnrollment,
   WeeklyAvailability
 } from '../../util/scheduling'
+import { parseDate, weekStartDate, weekStartOf } from '../../util/schedulingDates'
 import {
   MOCK_ENROLLMENTS_FALL,
   MOCK_ENROLLMENTS_SPRING,
@@ -137,16 +138,6 @@ function statusChipColor(status: SemesterStatus): 'default' | 'primary' | 'succe
   return 'default'
 }
 
-// Snap any date to the Monday of its ISO week (Mon=1 … Sun=7 convention).
-function toWeekMonday(date: Dayjs): string {
-  const jsDate = date.toDate()
-  const day = jsDate.getDay() // 0=Sun … 6=Sat
-  const diff = day === 0 ? -6 : 1 - day
-  const monday = new Date(jsDate)
-  monday.setDate(monday.getDate() + diff)
-  return monday.toISOString().slice(0, 10)
-}
-
 // Format a YYYY-MM-DD week-start string for display.
 function formatWeekStart(weekStart: string, locale: SupportedLocale): string {
   const fmt = new Intl.DateTimeFormat(locale === SupportedLocale.RO_RO ? 'ro-RO' : 'en-US', {
@@ -154,7 +145,7 @@ function formatWeekStart(weekStart: string, locale: SupportedLocale): string {
     day: 'numeric',
     year: 'numeric'
   })
-  return fmt.format(new Date(`${weekStart}T12:00:00`))
+  return fmt.format(parseDate(weekStart).toDate())
 }
 
 function statusLabel(status: SemesterStatus, t: SemesterPageTexts): string {
@@ -270,18 +261,18 @@ export default function SemesterPage() {
   // A week is valid if: it overlaps the semester AND it hasn't fully passed.
   function shouldDisableOverrideDate(date: Dayjs): boolean {
     if (!semester) return true
-    const monday = dayjs(`${toWeekMonday(date)}T12:00:00`)
+    const monday = weekStartOf(date)
     const sunday = monday.add(6, 'day')
-    if (sunday.isBefore(dayjs().startOf('day'))) return true
+    if (sunday.isBefore(dayjs(), 'day')) return true
     return (
-      monday.isAfter(dayjs(`${semester.endDate}T12:00:00`)) ||
-      sunday.isBefore(dayjs(`${semester.startDate}T12:00:00`))
+      monday.isAfter(parseDate(semester.endDate), 'day') ||
+      sunday.isBefore(parseDate(semester.startDate), 'day')
     )
   }
 
   function handleAddOverride() {
     if (!newOverrideDate) return
-    const weekStart = toWeekMonday(newOverrideDate)
+    const weekStart = weekStartDate(newOverrideDate)
     if (!(weekStart in availability.weekOverrides)) {
       handleOverrideChange(weekStart, [...availability.weeklyTemplate.blocks])
     }
@@ -392,8 +383,8 @@ export default function SemesterPage() {
                   }}
                   format="D MMM YYYY"
                   shouldDisableDate={shouldDisableOverrideDate}
-                  minDate={dayjs(semester.startDate)}
-                  maxDate={dayjs(semester.endDate)}
+                  minDate={parseDate(semester.startDate)}
+                  maxDate={parseDate(semester.endDate)}
                   slotProps={{ textField: { size: 'small' } }}
                 />
                 <Button variant="contained" size="small" onClick={handleAddOverride}>

@@ -3,6 +3,11 @@
  * https://jestjs.io/docs/configuration
  */
 
+// Pin the timezone so date-sensitive tests are deterministic and run in the zone the app
+// actually targets (every Semester is configured as Europe/Bucharest). Must be set before
+// Jest spawns its workers, which inherit this env.
+process.env.TZ = 'Europe/Bucharest'
+
 module.exports = {
   // All imported modules in your tests should be mocked automatically
   // automock: false,
