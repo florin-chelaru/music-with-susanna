@@ -39,6 +39,16 @@ Two caveats:
 - A snapshot is a record of one moment, not necessarily what is live now. Confirm against the console or CLI before deploying anything derived from one.
 - There is still no `database.rules.json` or `firebase.json` in this repo — rules are edited and deployed from the Firebase console. These snapshots are history, not a deploy source.
 
+## Before Committing
+
+**Never run `git commit` without asking for review first.** When a change is ready:
+
+1. Say what changed and why, and point at the files.
+2. Wait for an explicit go-ahead.
+3. Only then commit.
+
+This applies to every change — code, tests, docs, config, plan files, everything. Editing files, staging them, and showing a diff are all fine; `git commit` is the gate. Pushing, tagging and deploying each need their own separate go-ahead.
+
 ## Commands
 
 ```bash
