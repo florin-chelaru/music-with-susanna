@@ -1,6 +1,11 @@
 # Scheduling Feature
 
 > Status: Implementation in progress — Steps A, B, C, D, and E complete
+>
+> Review (2026-10-08): see [2026_10_08-scheduling-feature-review.md](./2026_10_08-scheduling-feature-review.md)
+> for current status, a fixed build break, and corrections this plan still needs
+> (stale date-fns algorithm section, duplicate `student_best`/`balanced` strategies,
+> missing security-rules file, `toWeekMonday` timezone bug).
 
 ---
 

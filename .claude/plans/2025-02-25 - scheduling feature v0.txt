@@ -1,0 +1,242 @@
+scheduling feature
+
+- slots
+  - id
+  - owner_id: Optional[UUID4] = None
+  - client_id: Optional[UUID4] = None
+  - client_preferred_times: List[datetime]
+  - start_time  # picked by the teacher
+  - duration
+  - description
+  - status (see below)
+
+- for any time, you can assign one or many slots
+
+- slot_policies
+  - id
+  - slot_id
+  - policy_type
+    - cancellation
+  - parameters
+
+
+use cases:
+
+1. 
+
+- teacher has 3 students: Ana, Barbara and Chris
+- one has 45 minute lessons, one 30 minute, one 1h
+- the lessons are regular: every monday, tuesday and wednesday respectively, at 10, 11 and 12.
+- in order to schedule the lessons, the teacher outlines her availability
+  - the availability is between 9 and 15 on Mon and Tu, and between 11 and 17 on Wed and Thu
+- clients are assigned lesson durations:
+  - Ana has 45 min lessons
+  - Barbara has 30m
+  - Chris 1h
+- they are also each assigned a number of slots. Ana has 4 slots this month; Barbara has 8, Chris has 2
+- when a user wants to pick a time, they select any option in the available interval, in 5 minute increments
+  - Ana adds to cart: Mon at 9:10 + 45m = 9:55
+  - she clicks a checkbox: recurring, where available, every... day, week, month; for how many occurrences? min 1, max as long as Susanna marked the time as available. and max as many slots as they have. for starters, we just allow picking them within a month, starting the previous month.
+  - see the selected slots. some may not be available
+  - she completes the reservation and now there's a set of slots created: 
+    id, owner_id: Susanna, client_id: Ana, start_time: Tu, Feb 18, at 9:10, duration: 45m.
+
+- what about group slots?
+  - each client may receive one or multiple group slots. the teacher creates the slot with everything except the time
+  - the slot already has all its members:
+    - group_slots
+      - id
+      - owner
+      - clients: List[UUID4]
+      - client_preferences: Dict[UUID4, List[datetime]] (client_id -> List[start_time])
+      - client_choices: Dict[UUID4, datetime]  # maybe later
+      - duration
+      - start_time: Optional[datetime]
+      - description
+      - teacher_confirmed: bool
+      - student_confirmed: bool
+      - locked: bool
+      - status: 
+        - initiated by owner (assigned to the students), 
+        - students picked their preferences from the teacher available intervals
+        - teacher picks the time when they are going to do the lesson
+        - student confirms
+        - teacher locks the slot
+        - cancellation is requested by the student
+        - teacher accepts cancellation request, and slot is marked as cancelled
+
+- when a time is picked for a slot, that interval automatically becomes unavailable for the teacher
+  - availability intervals
+
+- select count(*) from slots 
+  where owner=Susanna
+  and end_time>interval.start_time
+  and start_time<interval.end_time
+  and end_time>selection.start_time-5m
+  and start_time<selection.end_time+5m
+  - if count > 0:
+    selection is invalid
+
+We create an availability interval. But there needs to be a class that we do it for.
+The class has:
+- id
+- teacher - for now, just one teacher
+- students
+- name
+
+
+POST /classes/
+{
+	"name": "Violin with Bob and Ana",
+	"student_label": "Vioară Semestrul 2, An Școlar 2024-2025",
+	"teacher_id": susanna_id
+	"students": [ana_id, bob_id]
+}
+
+Response:
+{
+	id: ...,
+	teacher: susanna_id,
+    students: [ana_id, bob_id],
+    name: "Violin with Bob and Ana",
+    scheduling_open: true
+}
+
+
+Who creates a class?
+- a teacher
+
+
+create_availability:
+
+POST /classes/{class_id}/availability
+
+{
+    user_id: bob_id,
+    role: student/teacher,
+	intervals: [
+	  {
+	    start_time: ...
+	    end_time: ...
+	    available: true/false
+	  }
+	]
+}
+
+create slot:
+
+POST /classes/{class_id}/slots
+
+{
+	duration: 45m,
+}
+
+Response:
+
+{
+	id: ...,
+	class_id: ...,
+    duration: 45m,
+    start_time: null,
+}
+
+slot choices
+
+POST /classes/{class_id}/slots/{slot_id}/choices
+
+{
+	student_id: ...,
+	nchoices: 3
+}
+
+GET /classes/{class_id}/slots/{slot_id}/choices?student_id=bob
+
+[
+  {
+    class_id: ...,
+    slot_id: ...,
+    id: ...,
+    student_id: bob,
+    start_time: '2025-02-25 15:40:00'
+  },
+  {
+    class_id: ...,
+    slot_id: ...,
+    id: ...,
+    student_id: bob,
+    start_time: '2025-02-26 16:00:00'
+  },
+  {
+    class_id: ...,
+    slot_id: ...,
+    id: ...,
+    student_id: bob,
+    start_time: null // unset yet
+  }
+]
+
+but then i want to get all the slots for all the classes:
+
+GET /classes/-/slots/
+GET /classes/-/availability?role=student&user_id=bob
+
+Ok so here's the flow.
+
+1. Su has 3 students:
+   - Anna, Bob and Chris
+
+She creates four classes:
+   - "Anna" / student_label: "Vioară Semestrul 2, An Școlar 2024-2025" - c1
+   - "Bob" / "Vioară Semestrul 2, An Școlar 2024-2025" - c2
+   - "Chris" / "Vioară Semestrul 2, An Școlar 2024-2025" - c3
+   - "Anna and Bob Group Class" / "Lecție Vioară de Grup — Anna și Bob" - c4
+
+
+
+2. For each class, each student and the teacher creates an availability interval:
+
+POST /classes/c1/availability
+
+{
+    user_id: anna,
+    role: student,  // perhaps not necessary
+	intervals: [
+	  {
+	    start_time: ...
+	    end_time: ...
+	    available: true/false
+	  }
+	]
+}
+
+POST /classes/c1/availability
+
+{
+    user_id: su,
+    role: teacher,
+	intervals: [
+	  {
+	    start_time: ...
+	    end_time: ...
+	    available: true/false
+	  }
+	]
+}
+
+PATCH /classes/c1/availability/
+
+{
+	user_id: anna,
+	intervals: [
+	  // new list, overrides the old one; or null, which means no change
+	],
+	status: draft (only visible to student) / published (visible to the teacher as well)
+}
+
+
+// if c1.scheduling_open == false: 400! Scheduling is closed for this class, no more availability changes can be made.
+
+...
+
+
+3. The user 
