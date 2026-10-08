@@ -3,6 +3,7 @@ import {
   AvailabilityLabel,
   LABEL_SCORES,
   computeCombinedScore,
+  isWithinCancellationWindow,
   removeOverlaps,
   SCHEDULING_CONFIG
 } from './scheduling'
@@ -138,5 +139,34 @@ describe('removeOverlaps', () => {
       block(MON, '12:00', '13:00'),
       block(MON, '14:00', '15:00')
     ])
+  })
+})
+
+// ─── isWithinCancellationWindow ───────────────────────────────────────────────
+
+describe('isWithinCancellationWindow', () => {
+  const NOW = new Date('2026-10-08T12:00:00Z').getTime()
+  const hours = (n: number) => NOW + n * 60 * 60 * 1000
+
+  test('a lesson further away than the window is outside it', () => {
+    expect(isWithinCancellationWindow(hours(25), 24, NOW)).toBe(false)
+  })
+
+  test('a lesson closer than the window is inside it', () => {
+    expect(isWithinCancellationWindow(hours(23), 24, NOW)).toBe(true)
+  })
+
+  test('exactly at the window boundary counts as outside', () => {
+    expect(isWithinCancellationWindow(hours(24), 24, NOW)).toBe(false)
+  })
+
+  // A no-show has to behave like a late cancellation, not a free one.
+  test('a lesson already in the past is inside the window', () => {
+    expect(isWithinCancellationWindow(hours(-1), 24, NOW)).toBe(true)
+  })
+
+  test('respects a per-student window override', () => {
+    expect(isWithinCancellationWindow(hours(40), 48, NOW)).toBe(true)
+    expect(isWithinCancellationWindow(hours(40), 24, NOW)).toBe(false)
   })
 })

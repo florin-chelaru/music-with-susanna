@@ -26,13 +26,18 @@ import 'dayjs/locale/ro'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AvailabilityCalendar from '../../Components/scheduling/AvailabilityCalendar'
+import CancelLessonDialog, {
+  CancelLessonOptions
+} from '../../Components/scheduling/CancelLessonDialog'
 import EnrollmentDialog from '../../Components/scheduling/EnrollmentDialog'
+import LessonCalendar from '../../Components/scheduling/LessonCalendar'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
 import {
   AvailabilityBlock,
+  LessonInstance,
   SemesterStatus,
   StudentEnrollment,
   WeeklyAvailability
@@ -41,6 +46,8 @@ import { parseDate, weekStartDate, weekStartOf } from '../../util/schedulingDate
 import {
   MOCK_ENROLLMENTS_FALL,
   MOCK_ENROLLMENTS_SPRING,
+  MOCK_LESSON_INSTANCES_FALL,
+  MOCK_LESSON_INSTANCES_SPRING,
   MOCK_LOCATIONS,
   MOCK_SEMESTER_IDS,
   MOCK_SEMESTERS,
@@ -243,6 +250,52 @@ export default function SemesterPage() {
     return []
   })
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false)
+
+  // ── Lesson state ─────────────────────────────────────────────────────────────
+
+  const [lessons, setLessons] = useState<LessonInstance[]>(() => {
+    if (semesterId === MOCK_SEMESTER_IDS.spring2026) return [...MOCK_LESSON_INSTANCES_SPRING]
+    if (semesterId === MOCK_SEMESTER_IDS.fall2026) return [...MOCK_LESSON_INSTANCES_FALL]
+    return []
+  })
+  const [cancelTarget, setCancelTarget] = useState<LessonInstance | null>(null)
+
+  function handleConfirmCancel({ cancelAllForward }: CancelLessonOptions) {
+    const target = cancelTarget
+    if (!target) return
+    // TODO (Step Q): write the Cancellation record, update RTDB, notify the other party.
+    // `reason` and `offerMakeup` are collected already but have nowhere to go until then.
+    setLessons((prev) =>
+      prev.map((l) => {
+        if (l.id === target.id) return { ...l, status: 'canceled' }
+        const laterForSameStudent =
+          cancelAllForward &&
+          l.studentId === target.studentId &&
+          l.scheduledStart > target.scheduledStart &&
+          l.status === 'scheduled'
+        return laterForSameStudent ? { ...l, status: 'canceled' } : l
+      })
+    )
+    setCancelTarget(null)
+  }
+
+  // The calendar opens on today when the semester is running, and on its start date otherwise,
+  // so a past or future semester does not open on an empty month.
+  const calendarDefaultDate = useMemo(() => {
+    if (!semester) return new Date()
+    const today = dayjs()
+    const from = parseDate(semester.startDate)
+    const to = parseDate(semester.endDate)
+    if (today.isBefore(from, 'day')) return from.toDate()
+    if (today.isAfter(to, 'day')) return to.toDate()
+    return today.toDate()
+  }, [semester])
+
+  const cancelWindowHours = useMemo(() => {
+    if (!cancelTarget || !semester) return semester?.defaultCancellationWindowHours ?? 24
+    const enrollment = enrollments.find((e) => e.studentId === cancelTarget.studentId)
+    return enrollment?.cancellationWindowHours ?? semester.defaultCancellationWindowHours
+  }, [cancelTarget, enrollments, semester])
 
   function handleAddStudent(enrollment: StudentEnrollment) {
     setEnrollments((prev) => [...prev, enrollment])
@@ -503,8 +556,38 @@ export default function SemesterPage() {
         </Box>
       )}
 
-      {/* ── Placeholder tabs ───────────────────────────────────────────────── */}
-      {tab > 1 && <Typography color="text.secondary">{t.comingSoon}</Typography>}
+      {/* ── Scheduling tab (not built yet) ─────────────────────────────────── */}
+      {tab === 2 && <Typography color="text.secondary">{t.comingSoon}</Typography>}
+
+      {/* ── Calendar tab ───────────────────────────────────────────────────── */}
+      {tab === 3 && (
+        <Box>
+          <LessonCalendar
+            lessons={lessons}
+            students={MOCK_STUDENTS}
+            locationName={location?.name}
+            defaultDate={calendarDefaultDate}
+            onCancel={(lesson) => {
+              setCancelTarget(lesson)
+            }}
+            onExportIcs={() => {
+              // TODO (Step R): generate and download the .ics file
+            }}
+          />
+          <CancelLessonDialog
+            key={cancelTarget?.id ?? 'none'}
+            open={Boolean(cancelTarget)}
+            lesson={cancelTarget}
+            studentName={cancelTarget ? MOCK_STUDENTS[cancelTarget.studentId]?.name : undefined}
+            cancellationWindowHours={cancelWindowHours}
+            mode="teacher"
+            onClose={() => {
+              setCancelTarget(null)
+            }}
+            onConfirm={handleConfirmCancel}
+          />
+        </Box>
+      )}
     </Container>
   )
 }

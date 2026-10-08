@@ -25,18 +25,8 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { TimePicker } from '@mui/x-date-pickers/TimePicker'
 import dayjs, { Dayjs } from 'dayjs'
-import isBetween from 'dayjs/plugin/isBetween'
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import isLeapYear from 'dayjs/plugin/isLeapYear'
-import localeData from 'dayjs/plugin/localeData'
-import localizedFormat from 'dayjs/plugin/localizedFormat'
-import minMax from 'dayjs/plugin/minMax'
-import updateLocale from 'dayjs/plugin/updateLocale'
-import utc from 'dayjs/plugin/utc'
-import 'dayjs/locale/ro'
 import React, { useContext, useMemo, useRef, useState } from 'react'
-import { Calendar, dayjsLocalizer } from 'react-big-calendar'
+import { Calendar } from 'react-big-calendar'
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
@@ -49,23 +39,8 @@ import {
   SCHEDULING_CONFIG,
   removeOverlaps
 } from '../../util/scheduling'
+import { localizer } from '../../util/calendarLocalizer'
 import { parseDate, toDayOfWeek } from '../../util/schedulingDates'
-
-// ─── Dayjs setup (module-level, runs once) ────────────────────────────────────
-
-dayjs.extend(isBetween)
-dayjs.extend(isSameOrAfter)
-dayjs.extend(isSameOrBefore)
-dayjs.extend(localeData)
-dayjs.extend(localizedFormat)
-dayjs.extend(minMax)
-dayjs.extend(utc)
-dayjs.extend(isLeapYear)
-dayjs.extend(updateLocale)
-// Force Monday week start for both locales
-dayjs.updateLocale('en', { weekStart: 1 })
-
-const localizer = dayjsLocalizer(dayjs)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const DnDCalendar = withDragAndDrop(Calendar as any)

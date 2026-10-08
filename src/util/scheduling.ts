@@ -276,3 +276,16 @@ export function removeOverlaps(
   }
   return result
 }
+
+// True when a cancellation lands inside the policy window — i.e. close enough to the lesson
+// that the late-cancellation terms apply. A lesson already in the past is always inside the
+// window, which is what makes a no-show behave like a late cancellation.
+//
+// Stored on the Cancellation record as `withinWindow`.
+export function isWithinCancellationWindow(
+  scheduledStart: number,
+  windowHours: number,
+  now: number = Date.now()
+): boolean {
+  return scheduledStart - now < windowHours * 60 * 60 * 1000
+}
