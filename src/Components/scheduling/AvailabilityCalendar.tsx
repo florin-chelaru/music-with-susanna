@@ -40,6 +40,7 @@ import {
   removeOverlaps
 } from '../../util/scheduling'
 import { localizer } from '../../util/calendarLocalizer'
+import { calendarShellSx, timeGridSx } from './calendarStyles'
 import { parseDate, toDayOfWeek } from '../../util/schedulingDates'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -649,116 +650,7 @@ export default function AvailabilityCalendar({
   // Built once per theme change so dark/light mode colours are correct without
   // hardcoding any hex values.
 
-  const calendarSx = useMemo(() => {
-    const d = theme.palette.divider
-    const paper = theme.palette.background.paper
-    const textSec = theme.palette.text.secondary
-    const primary = theme.palette.primary.main
-    const hover = theme.palette.action.hover
-    const selected = theme.palette.action.selected
-
-    return {
-      // Outer shell: rounded corners + theme border
-      border: `1px solid ${d}`,
-      borderRadius: '8px',
-      overflow: 'hidden',
-      backgroundColor: paper,
-
-      '& .rbc-calendar': {
-        backgroundColor: paper,
-        color: theme.palette.text.primary,
-        fontFamily: theme.typography.fontFamily,
-        fontSize: '0.8125rem'
-      },
-
-      '& .rbc-time-view': { border: 'none' },
-
-      // Header row
-      '& .rbc-time-header': { borderBottom: `1px solid ${d}` },
-      // No borderRight on the gutter — it has an inline width set by the library, and a
-      // border would make it 1 px narrower than the time-gutter below, misaligning columns.
-      '& .rbc-time-header-gutter': { backgroundColor: paper },
-      // The separator between gutter and day headers comes from the content side instead.
-      '& .rbc-time-header-content': { borderLeft: 'none' },
-      '& .rbc-header': { border: 'none', backgroundColor: paper },
-
-      // Hide the empty all-day row (only timed blocks are used)
-      '& .rbc-allday-cell': { display: 'none' },
-
-      // Time content area
-      '& .rbc-time-content': {
-        borderTop: `1px solid ${d}`,
-        backgroundColor: paper
-      },
-
-      // Time gutter (left column with hour labels)
-      '& .rbc-time-gutter': { backgroundColor: paper },
-      '& .rbc-label': {
-        fontSize: '0.6875rem',
-        color: textSec,
-        paddingRight: '8px',
-        lineHeight: 1
-      },
-
-      // Slot groups and day columns
-      '& .rbc-timeslot-group': {
-        border: 'none',
-        minHeight: '36px'
-      },
-      // All day columns carry borderLeft — the first one provides the gutter separator,
-      // which aligns with rbc-time-header-content's borderLeft above.
-      '& .rbc-day-slot': { borderLeft: `1px solid ${d}` },
-      // Remove finer slot borders within each group (keep only hour boundaries)
-      '& .rbc-day-slot .rbc-time-slot': { border: 'none' },
-
-      // Today column tint
-      '& .rbc-today': { backgroundColor: hover },
-
-      // Events: reset library defaults; actual colours come from eventPropGetter
-      '& .rbc-event': {
-        border: 'none !important',
-        borderRadius: '4px !important',
-        // Extra left padding so text sits clear of the 3 px accent bar
-        padding: '1px 6px 1px 8px !important',
-        fontSize: '0.75rem',
-        fontWeight: 500,
-        boxShadow: 'none !important',
-        '&:focus': { outline: 'none' }
-      },
-      '& .rbc-event.rbc-selected': { boxShadow: 'none !important' },
-      '& .rbc-event-label': { fontSize: '0.625rem', opacity: 0.85 },
-      '& .rbc-event-content': { fontSize: '0.75rem' },
-
-      // Drag-to-create selection box
-      '& .rbc-slot-selection': {
-        backgroundColor: selected,
-        border: `2px solid ${primary}`,
-        borderRadius: '4px'
-      },
-
-      // Current-time indicator with leading dot
-      '& .rbc-current-time-indicator': {
-        height: '2px',
-        backgroundColor: primary,
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          left: '-4px',
-          top: '-3px',
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          backgroundColor: primary
-        }
-      },
-
-      // DnD drag ghost
-      '& .rbc-addons-dnd-drag-preview': {
-        opacity: 0.75,
-        borderRadius: '4px'
-      }
-    }
-  }, [theme])
+  const calendarSx = useMemo(() => ({ ...calendarShellSx(theme), ...timeGridSx(theme) }), [theme])
 
   // ── Time bounds ──────────────────────────────────────────────────────────────
 

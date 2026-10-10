@@ -9,6 +9,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { localizer } from '../../util/calendarLocalizer'
+import { calendarShellSx, timeGridSx, toolbarSx } from './calendarStyles'
 import { LessonInstance, LessonStatus } from '../../util/scheduling'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
@@ -203,65 +204,21 @@ export default function LessonCalendar({
 
   const calendarSx = useMemo(() => {
     const d = theme.palette.divider
-    const paper = theme.palette.background.paper
     return {
-      border: `1px solid ${d}`,
-      borderRadius: '8px',
-      overflow: 'hidden',
-      backgroundColor: paper,
-      p: 1.5,
+      ...calendarShellSx(theme),
+      ...timeGridSx(theme),
+      ...toolbarSx(theme),
 
-      '& .rbc-calendar': {
-        backgroundColor: paper,
-        color: theme.palette.text.primary,
-        fontFamily: theme.typography.fontFamily,
-        fontSize: '0.8125rem',
-        minHeight: 520
-      },
-      '& .rbc-toolbar': {
-        marginBottom: theme.spacing(1.5),
-        flexWrap: 'wrap',
-        gap: theme.spacing(1)
-      },
-      '& .rbc-toolbar button': {
-        color: theme.palette.text.primary,
-        borderColor: d,
-        borderRadius: '6px'
-      },
-      '& .rbc-toolbar button:hover': { backgroundColor: theme.palette.action.hover },
-      '& .rbc-toolbar button.rbc-active': {
-        backgroundColor: theme.palette.action.selected,
-        borderColor: d,
-        boxShadow: 'none'
-      },
-      '& .rbc-toolbar-label': { fontWeight: 600 },
-      '& .rbc-month-view, & .rbc-time-view, & .rbc-agenda-view': {
+      // Month and agenda views, which the other calendars do not use.
+      '& .rbc-calendar': { ...calendarShellSx(theme)['& .rbc-calendar'], minHeight: 520 },
+      '& .rbc-month-view, & .rbc-agenda-view': {
         border: `1px solid ${d}`,
         borderRadius: '6px',
         overflow: 'hidden'
       },
-      '& .rbc-header': {
-        border: 'none',
-        borderBottom: `1px solid ${d}`,
-        padding: theme.spacing(0.75, 0.5),
-        fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.06em',
-        fontSize: '0.6875rem',
-        color: theme.palette.text.secondary
-      },
       '& .rbc-month-row + .rbc-month-row': { borderTop: `1px solid ${d}` },
       '& .rbc-day-bg + .rbc-day-bg': { borderLeft: `1px solid ${d}` },
       '& .rbc-off-range-bg': { backgroundColor: theme.palette.action.hover },
-      '& .rbc-today': { backgroundColor: alpha(theme.palette.primary.main, 0.08) },
-      '& .rbc-event': {
-        borderRadius: '4px',
-        border: 'none',
-        padding: '1px 4px',
-        fontSize: '0.75rem'
-      },
-      '& .rbc-event:focus': { outline: 'none' },
-      '& .rbc-event.rbc-selected': { boxShadow: 'none' },
       '& .rbc-show-more': { color: theme.palette.primary.main, fontSize: '0.6875rem' },
       '& .rbc-agenda-view table': { borderColor: d },
       '& .rbc-agenda-view table tbody > tr > td': { borderColor: d }
