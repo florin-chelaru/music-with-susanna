@@ -24,8 +24,11 @@ import { SupportedLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
 import { RoundStatus, SchedulingRound, SuggestionStrategy } from '../../util/scheduling'
+import EditableScheduleCalendar, {
+  EditableSlot
+} from '../../Components/scheduling/EditableScheduleCalendar'
 import SuggestedScheduleCard from '../../Components/scheduling/SuggestedScheduleCard'
-import { formatCountdown } from '../../util/schedulingDates'
+import { formatCountdown, parseDate } from '../../util/schedulingDates'
 import {
   MOCK_ENROLLMENTS_FALL,
   MOCK_ENROLLMENTS_SPRING,
@@ -66,6 +69,10 @@ interface SchedulingRoundPageTexts {
   confirmSchedule: string
   pickOne: string
   selectedHint: string
+  adjustTitle: string
+  adjustHint: string
+  chooseDifferent: string
+  confirmedBanner: string
 }
 
 const EN_US: SchedulingRoundPageTexts = {
@@ -94,7 +101,13 @@ const EN_US: SchedulingRoundPageTexts = {
   confirmSchedule: 'Confirm schedule',
   pickOne: 'Pick a suggestion to continue.',
   selectedHint:
-    'Confirming generates every lesson for the rest of the semester and notifies the students.'
+    'Confirming generates every lesson for the rest of the semester and notifies the students.',
+  adjustTitle: 'Adjust the schedule',
+  adjustHint:
+    'Drag a lesson to move it, or drag its edge to change the length. A move that clashes with another lesson is refused.',
+  chooseDifferent: 'Choose a different suggestion',
+  confirmedBanner:
+    'Schedule confirmed. Every lesson for the rest of the semester would now be created and the students notified.'
 }
 
 const RO_RO: SchedulingRoundPageTexts = {
@@ -122,7 +135,13 @@ const RO_RO: SchedulingRoundPageTexts = {
     'Trei moduri de a încadra pe toată lumea. Alege-l pe cel mai apropiat de ce vrei — îl poți ajusta înainte de confirmare.',
   confirmSchedule: 'Confirmă orarul',
   pickOne: 'Alege o sugestie pentru a continua.',
-  selectedHint: 'Confirmarea generează toate lecțiile din restul semestrului și notifică elevii.'
+  selectedHint: 'Confirmarea generează toate lecțiile din restul semestrului și notifică elevii.',
+  adjustTitle: 'Ajustează orarul',
+  adjustHint:
+    'Trage o lecție pentru a o muta sau trage de margine pentru a-i schimba durata. O mutare care se suprapune cu altă lecție este refuzată.',
+  chooseDifferent: 'Alege altă sugestie',
+  confirmedBanner:
+    'Orar confirmat. Toate lecțiile din restul semestrului ar fi create acum, iar elevii notificați.'
 }
 
 const TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -162,6 +181,14 @@ function enrollmentsFor(semesterId: string | undefined) {
 // Order shown to the teacher: own preference first, then the students', then the compromise.
 const STRATEGY_ORDER: SuggestionStrategy[] = ['teacher_best', 'student_best', 'balanced']
 
+// Open the editor on the week the schedule starts, not on today — the suggestion may begin
+// after the round's deadline, so today's week can be empty.
+function firstSlotDate(slots: EditableSlot[]): Date | undefined {
+  if (slots.length === 0) return undefined
+  const earliest = slots.map((slot) => slot.date).sort((a, b) => a.localeCompare(b))[0]
+  return parseDate(earliest).toDate()
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function SchedulingRoundPage() {
@@ -196,6 +223,15 @@ export default function SchedulingRoundPage() {
   const enrollments = enrollmentsFor(semesterId)
 
   const [selectedStrategy, setSelectedStrategy] = useState<SuggestionStrategy | null>(null)
+  // Set once a suggestion is chosen. The teacher edits this copy, never the suggestion itself,
+  // so backing out and picking a different strategy starts clean.
+  const [editedSlots, setEditedSlots] = useState<EditableSlot[] | null>(null)
+  const [confirmed, setConfirmed] = useState(false)
+
+  function handleUseSuggestion(strategy: SuggestionStrategy) {
+    setSelectedStrategy(strategy)
+    setEditedSlots(MOCK_SUGGESTIONS[strategy].slots.map((slot) => ({ ...slot })))
+  }
 
   // The countdown re-renders once a minute; it is never shown finer than minutes.
   const [now, setNow] = useState(() => Date.now())
@@ -277,37 +313,75 @@ export default function SchedulingRoundPage() {
             {t.suggestionsHint}
           </Typography>
 
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 2,
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
-              mb: 3
-            }}>
-            {STRATEGY_ORDER.map((strategy) => (
-              <SuggestedScheduleCard
-                key={strategy}
-                strategy={strategy}
-                suggestion={MOCK_SUGGESTIONS[strategy]}
-                students={MOCK_STUDENTS}
-                selected={selectedStrategy === strategy}
-                onUse={setSelectedStrategy}
-              />
-            ))}
-          </Box>
+          {confirmed ? (
+            <Alert severity="success">{t.confirmedBanner}</Alert>
+          ) : editedSlots ? (
+            <Box>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={1}
+                sx={{ mb: 1 }}>
+                <Typography variant="subtitle2" fontWeight={600}>
+                  {t.adjustTitle}
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    setEditedSlots(null)
+                    setSelectedStrategy(null)
+                  }}>
+                  {t.chooseDifferent}
+                </Button>
+              </Stack>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                {t.adjustHint}
+              </Typography>
 
-          <Alert severity={selectedStrategy ? 'success' : 'info'} sx={{ mb: 2 }}>
-            {selectedStrategy ? t.selectedHint : t.pickOne}
-          </Alert>
-          <Button
-            variant="contained"
-            disabled={!selectedStrategy}
-            onClick={() => {
-              // TODO (Step I): load the chosen suggestion into an editable calendar, then
-              // (Step O) write the confirmed schedule and generate the lesson instances.
-            }}>
-            {t.confirmSchedule}
-          </Button>
+              <EditableScheduleCalendar
+                slots={editedSlots}
+                students={MOCK_STUDENTS}
+                onChange={setEditedSlots}
+                defaultDate={firstSlotDate(editedSlots)}
+              />
+
+              <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
+                {t.selectedHint}
+              </Alert>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  // TODO (Step O): write the confirmed schedule, generate the lesson
+                  // instances and advance the round to `finalized`.
+                  setConfirmed(true)
+                }}>
+                {t.confirmSchedule}
+              </Button>
+            </Box>
+          ) : (
+            <>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 2,
+                  gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+                  mb: 3
+                }}>
+                {STRATEGY_ORDER.map((strategy) => (
+                  <SuggestedScheduleCard
+                    key={strategy}
+                    strategy={strategy}
+                    suggestion={MOCK_SUGGESTIONS[strategy]}
+                    students={MOCK_STUDENTS}
+                    selected={selectedStrategy === strategy}
+                    onUse={handleUseSuggestion}
+                  />
+                ))}
+              </Box>
+              <Alert severity="info">{t.pickOne}</Alert>
+            </>
+          )}
         </Box>
       ) : round.status !== 'collecting' ? (
         <Alert severity="info">{t.notCollecting}</Alert>

@@ -289,3 +289,35 @@ export function isWithinCancellationWindow(
 ): boolean {
   return scheduledStart - now < windowHours * 60 * 60 * 1000
 }
+
+// A time span on one specific date. Both SuggestedSlot and LessonSlot satisfy this.
+export interface TimeSpan {
+  date: string // "YYYY-MM-DD"
+  startTime: string // "HH:mm"
+  endTime: string // "HH:mm"
+}
+
+// The first lesson `candidate` clashes with, or null when it fits.
+//
+// Two lessons clash when they overlap OR sit closer together than the minimum break — the
+// teacher needs a gap between students, so back-to-back is a conflict, not a tight fit.
+// Lessons on different dates never clash.
+//
+// Returns the offending lesson rather than a boolean so callers can say *what* it collided
+// with. Step L's assignment pass needs the same rule.
+export function findConflict<T extends TimeSpan>(
+  candidate: TimeSpan,
+  others: T[],
+  minBreakMinutes: number = SCHEDULING_CONFIG.MIN_BREAK_MINUTES
+): T | null {
+  const start = parseMinutes(candidate.startTime)
+  const end = parseMinutes(candidate.endTime)
+  for (const other of others) {
+    if (other.date !== candidate.date) continue
+    const otherStart = parseMinutes(other.startTime)
+    const otherEnd = parseMinutes(other.endTime)
+    const clears = end + minBreakMinutes <= otherStart || otherEnd + minBreakMinutes <= start
+    if (!clears) return other
+  }
+  return null
+}
