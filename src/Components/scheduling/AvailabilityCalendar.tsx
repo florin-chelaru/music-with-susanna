@@ -112,13 +112,24 @@ const LABEL_TITLE_RO: Record<AvailabilityLabel, string> = {
   [AvailabilityLabel.UNAVAILABLE]: 'Indisponibil'
 }
 
+// The overlay layer is always the other party's availability — the teacher's, shown behind a
+// student's own. Fading alone was not enough to say so: students read the faded blocks as
+// their own, pre-filled. The label has to name whose they are.
+const OVERLAY_OWNER_EN = 'Teacher'
+const OVERLAY_OWNER_RO = 'Profesor'
+
+function overlayTitle(labelTitle: string, owner: string): string {
+  return `${labelTitle} (${owner})`
+}
+
 // ─── Conversion helpers ───────────────────────────────────────────────────────
 
 function blockToEvent(
   block: AvailabilityBlock,
   id: string,
   labelTitles: Record<AvailabilityLabel, string>,
-  isOverlay = false
+  isOverlay = false,
+  overlayOwner = OVERLAY_OWNER_EN
 ): CalEvent {
   const day = new Date(REFERENCE_DATE)
   day.setDate(day.getDate() + block.dayOfWeek)
@@ -128,7 +139,15 @@ function blockToEvent(
   start.setHours(sh, sm, 0, 0)
   const end = new Date(day)
   end.setHours(eh, em, 0, 0)
-  return { id, title: labelTitles[block.label], start, end, block, isOverlay }
+  const labelTitle = labelTitles[block.label]
+  return {
+    id,
+    title: isOverlay ? overlayTitle(labelTitle, overlayOwner) : labelTitle,
+    start,
+    end,
+    block,
+    isOverlay
+  }
 }
 
 // Convert a calendar Date back to AvailabilityBlock fields.
@@ -350,8 +369,9 @@ function MobileAvailabilityCalendar({
             sx={{
               display: 'flex',
               alignItems: 'center',
+              border: `1px solid ${alpha(labelColors[block.label], 0.4)}`,
               borderLeft: `3px solid ${alpha(labelColors[block.label], 0.4)}`,
-              backgroundColor: alpha(labelColors[block.label], 0.06),
+              backgroundColor: 'transparent',
               borderRadius: 1,
               px: 1.5,
               py: 1,
@@ -362,7 +382,7 @@ function MobileAvailabilityCalendar({
                 {block.startTime} – {block.endTime}
               </Typography>
               <Typography variant="caption" sx={{ color: alpha(labelColors[block.label], 0.55) }}>
-                {labelTitles[block.label]}
+                {overlayTitle(labelTitles[block.label], isRo ? OVERLAY_OWNER_RO : OVERLAY_OWNER_EN)}
               </Typography>
             </Box>
           </Box>
@@ -513,7 +533,15 @@ export default function AvailabilityCalendar({
   const events = useMemo(
     () => [
       ...blocks.map((b, i) => blockToEvent(b, `main-${i}`, labelTitles)),
-      ...overlayBlocks.map((b, i) => blockToEvent(b, `overlay-${i}`, labelTitles, true))
+      ...overlayBlocks.map((b, i) =>
+        blockToEvent(
+          b,
+          `overlay-${i}`,
+          labelTitles,
+          true,
+          isRo ? OVERLAY_OWNER_RO : OVERLAY_OWNER_EN
+        )
+      )
     ],
     [blocks, overlayBlocks, dayjsLocale, labelTitles]
   )
@@ -634,10 +662,24 @@ export default function AvailabilityCalendar({
     const ev = event as CalEvent
     const color = LABEL_COLORS[ev.block.label]
     return {
+      className: ev.isOverlay ? 'rbc-event--overlay' : 'rbc-event--own',
       style: {
-        backgroundColor: alpha(color, ev.isOverlay ? 0.07 : isSelected ? 0.28 : 0.15),
-        border: 'none',
-        borderLeft: `3px solid ${ev.isOverlay ? alpha(color, 0.35) : color}`,
+        // The other party's availability is an outline, the student's own is filled. Same
+        // colours either way, so which times the teacher prefers is still readable.
+        //
+        // The fill has to be genuinely opaque, not a tint: the two layers are stacked, so a
+        // translucent block lets the overlay's label show through and both become unreadable.
+        // A solid paper background carries the tint as a flat gradient on top of it, which
+        // looks identical to alpha() but actually hides what is behind.
+        backgroundColor: ev.isOverlay ? 'transparent' : theme.palette.background.paper,
+        backgroundImage: ev.isOverlay
+          ? 'none'
+          : `linear-gradient(${alpha(color, isSelected ? 0.28 : 0.15)}, ${alpha(
+              color,
+              isSelected ? 0.28 : 0.15
+            )})`,
+        border: ev.isOverlay ? `1px solid ${alpha(color, 0.5)}` : 'none',
+        borderLeft: ev.isOverlay ? `3px solid ${alpha(color, 0.5)}` : `3px solid ${color}`,
         borderRadius: '4px',
         color,
         cursor: ev.isOverlay || !editable ? 'default' : 'pointer',
@@ -650,7 +692,35 @@ export default function AvailabilityCalendar({
   // Built once per theme change so dark/light mode colours are correct without
   // hardcoding any hex values.
 
-  const calendarSx = useMemo(() => ({ ...calendarShellSx(theme), ...timeGridSx(theme) }), [theme])
+  const calendarSx = useMemo(
+    () => ({
+      ...calendarShellSx(theme),
+      ...timeGridSx(theme),
+      // With an overlay present, react-big-calendar treats the two layers as colliding events
+      // and splits the column between them, truncating both labels. Both layers instead span
+      // the full width, stacked: the teacher's outline behind, the student's filled blocks on
+      // top at 95%, leaving the outline's right edge visible. The student's fill is opaque, so
+      // where the two coincide only one label is readable rather than two overlapping.
+      //
+      // Safe to pin the widths because a student's own blocks never overlap each other —
+      // removeOverlaps clips them on the way in.
+      ...(overlayBlocks.length > 0
+        ? {
+            '& .rbc-event--overlay': {
+              left: '0 !important',
+              width: '100% !important',
+              zIndex: 0
+            },
+            '& .rbc-event--own': {
+              left: '0 !important',
+              width: '95% !important',
+              zIndex: 1
+            }
+          }
+        : {})
+    }),
+    [theme, overlayBlocks.length]
+  )
 
   // ── Time bounds ──────────────────────────────────────────────────────────────
 
