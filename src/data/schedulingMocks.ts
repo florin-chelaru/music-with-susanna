@@ -2,6 +2,7 @@ import {
   AvailabilityBlock,
   AvailabilityLabel,
   computeCombinedScore,
+  scoreForDayTime,
   LABEL_SCORES,
   LessonInstance,
   Location,
@@ -13,7 +14,7 @@ import {
   SuggestedSlot,
   WeeklyAvailability
 } from '../util/scheduling'
-import { parseMinutes, toDayOfWeek } from '../util/schedulingDates'
+import { toDayOfWeek } from '../util/schedulingDates'
 
 // ─── IDs ─────────────────────────────────────────────────────────────────────
 
@@ -355,15 +356,7 @@ const BARBARA_MONDAYS = ['2026-10-19', '2026-11-02'] // bi-weekly, per her enrol
 
 // The score a block list gives one specific date and time, or 0 when nothing covers it.
 function scoreAt(blocks: AvailabilityBlock[], date: string, startTime: string): number {
-  const dayOfWeek = toDayOfWeek(date)
-  const minutes = parseMinutes(startTime)
-  const covering = blocks.find(
-    (b) =>
-      b.dayOfWeek === dayOfWeek &&
-      parseMinutes(b.startTime) <= minutes &&
-      minutes < parseMinutes(b.endTime)
-  )
-  return covering?.score ?? 0
+  return scoreForDayTime(blocks, toDayOfWeek(date), startTime)
 }
 
 function suggest(
@@ -559,3 +552,28 @@ export const MOCK_LESSON_INSTANCES_FALL: LessonInstance[] = [
   // Chris — weekly Mon 11:00 (45 min)
   ...fallSeries('li-fa-chr', MOCK_STUDENT_IDS.chris, 11, 45, 1)
 ]
+
+// ─── Lookups ──────────────────────────────────────────────────────────────────
+//
+// Every page that renders a semester needs the same three lookups, and each had grown its own
+// copy of the switch. They live here so adding a semester means touching one file.
+
+export function enrollmentsForSemester(semesterId: string | undefined): StudentEnrollment[] {
+  if (semesterId === MOCK_SEMESTER_IDS.spring2026) return MOCK_ENROLLMENTS_SPRING
+  if (semesterId === MOCK_SEMESTER_IDS.fall2026) return MOCK_ENROLLMENTS_FALL
+  if (semesterId === MOCK_SEMESTER_IDS.spring2027) return MOCK_ENROLLMENTS_SPRING2027
+  return []
+}
+
+export function roundsForSemester(semesterId: string | undefined): SchedulingRound[] {
+  if (semesterId === MOCK_SEMESTER_IDS.spring2026) return MOCK_ROUNDS_SPRING
+  if (semesterId === MOCK_SEMESTER_IDS.fall2026) return MOCK_ROUNDS_FALL
+  if (semesterId === MOCK_SEMESTER_IDS.spring2027) return MOCK_ROUNDS_SPRING2027
+  return []
+}
+
+export function lessonsForSemester(semesterId: string | undefined): LessonInstance[] {
+  if (semesterId === MOCK_SEMESTER_IDS.spring2026) return MOCK_LESSON_INSTANCES_SPRING
+  if (semesterId === MOCK_SEMESTER_IDS.fall2026) return MOCK_LESSON_INSTANCES_FALL
+  return []
+}

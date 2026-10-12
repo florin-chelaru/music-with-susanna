@@ -342,3 +342,22 @@ export function applyCancellation(
     return laterForSameStudent ? { ...lesson, status: 'canceled' } : lesson
   })
 }
+
+// The score a block list gives one weekday and time of day, or 0 when nothing covers it.
+//
+// 0 means "not available", which is why it doubles as the hard-block value in
+// computeCombinedScore: an uncovered time and an explicitly refused one are the same thing.
+export function scoreForDayTime(
+  blocks: AvailabilityBlock[],
+  dayOfWeek: number,
+  startTime: string
+): number {
+  const minutes = parseMinutes(startTime)
+  const covering = blocks.find(
+    (b) =>
+      b.dayOfWeek === dayOfWeek &&
+      parseMinutes(b.startTime) <= minutes &&
+      minutes < parseMinutes(b.endTime)
+  )
+  return covering?.score ?? 0
+}

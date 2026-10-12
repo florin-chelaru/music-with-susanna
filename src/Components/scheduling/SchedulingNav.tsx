@@ -13,10 +13,15 @@ export interface SchedulingCrumb {
 
 export interface SchedulingNavProps {
   /**
-   * Crumbs below the root. The root "Scheduling" entry is always prepended, and becomes a
-   * link as soon as anything follows it.
+   * Crumbs below the root. The section's root entry is always prepended, and becomes a link
+   * as soon as anything follows it.
    */
   items?: SchedulingCrumb[]
+  /**
+   * Which section this page belongs to. The teacher's pages hang off /scheduling, the
+   * student's off /schedule, and a student must never be sent to the teacher's root.
+   */
+  section?: 'teacher' | 'student'
 }
 
 /**
@@ -28,7 +33,7 @@ export interface SchedulingNavProps {
  * On a phone a full trail is too wide to be useful, so it collapses to a single back button
  * pointing at the nearest ancestor — the same destination the last clickable crumb would have.
  */
-export default function SchedulingNav({ items = [] }: SchedulingNavProps) {
+export default function SchedulingNav({ items = [], section = 'teacher' }: SchedulingNavProps) {
   const navigate = useNavigate()
   const theme = useTheme()
   // Two separate useMediaQuery calls, never OR'd inline — hooks must not short-circuit.
@@ -37,8 +42,13 @@ export default function SchedulingNav({ items = [] }: SchedulingNavProps) {
   const isMobile = isTouch || isSmallScreen
   const strings = useContext<LocaleHandler>(LocaleContext).globalStringList
 
+  const root =
+    section === 'student'
+      ? { label: strings.mySchedule, path: '/schedule' }
+      : { label: strings.scheduling, path: '/scheduling' }
+
   const crumbs: SchedulingCrumb[] = [
-    { label: strings.scheduling, to: items.length > 0 ? '/scheduling' : undefined },
+    { label: root.label, to: items.length > 0 ? root.path : undefined },
     ...items
   ]
 

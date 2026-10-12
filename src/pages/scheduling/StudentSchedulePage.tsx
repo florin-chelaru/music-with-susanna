@@ -24,18 +24,16 @@ import { applyCancellation, LessonInstance, SchedulingRound, Semester } from '..
 import { formatCountdown } from '../../util/schedulingDates'
 import { useNow } from '../../util/useNow'
 import {
-  MOCK_ENROLLMENTS_FALL,
-  MOCK_ENROLLMENTS_SPRING2027,
-  MOCK_LESSON_INSTANCES_FALL,
-  MOCK_ROUNDS_FALL,
-  MOCK_ROUNDS_SPRING2027,
+  enrollmentsForSemester,
+  lessonsForSemester,
   MOCK_SEMESTER_IDS,
   MOCK_SEMESTERS,
   MOCK_SUBMISSIONS_BY_ROUND,
   MOCK_TEACHER_ID,
   MOCK_TEACHER_NAME,
   MOCK_TEACHER_SUBJECT,
-  MOCK_VIEWING_STUDENT_ID
+  MOCK_VIEWING_STUDENT_ID,
+  roundsForSemester
 } from '../../data/schedulingMocks'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
@@ -109,13 +107,17 @@ function openRequestsFor(studentId: string): OpenRequest[] {
   const bySemester: Array<{ semesterId: string; rounds: SchedulingRound[]; enrolled: boolean }> = [
     {
       semesterId: MOCK_SEMESTER_IDS.fall2026,
-      rounds: MOCK_ROUNDS_FALL,
-      enrolled: MOCK_ENROLLMENTS_FALL.some((e) => e.studentId === studentId)
+      rounds: roundsForSemester(MOCK_SEMESTER_IDS.fall2026),
+      enrolled: enrollmentsForSemester(MOCK_SEMESTER_IDS.fall2026).some(
+        (e) => e.studentId === studentId
+      )
     },
     {
       semesterId: MOCK_SEMESTER_IDS.spring2027,
-      rounds: MOCK_ROUNDS_SPRING2027,
-      enrolled: MOCK_ENROLLMENTS_SPRING2027.some((e) => e.studentId === studentId)
+      rounds: roundsForSemester(MOCK_SEMESTER_IDS.spring2027),
+      enrolled: enrollmentsForSemester(MOCK_SEMESTER_IDS.spring2027).some(
+        (e) => e.studentId === studentId
+      )
     }
   ]
 
@@ -140,7 +142,9 @@ function openRequestsFor(studentId: string): OpenRequest[] {
 }
 
 function lessonsFor(studentId: string): LessonInstance[] {
-  return MOCK_LESSON_INSTANCES_FALL.filter((lesson) => lesson.studentId === studentId)
+  return lessonsForSemester(MOCK_SEMESTER_IDS.fall2026).filter(
+    (lesson) => lesson.studentId === studentId
+  )
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────

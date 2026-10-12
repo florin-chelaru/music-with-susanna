@@ -3,7 +3,6 @@ import {
   Button,
   Chip,
   Container,
-  Divider,
   IconButton,
   Stack,
   Tab,
@@ -20,14 +19,12 @@ import {
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
-import dayjs, { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import 'dayjs/locale/ro'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import AvailabilityCalendar from '../../Components/scheduling/AvailabilityCalendar'
+import WeekOverridesSection from '../../Components/scheduling/WeekOverridesSection'
 import CancelLessonDialog, {
   CancelLessonOptions
 } from '../../Components/scheduling/CancelLessonDialog'
@@ -49,7 +46,7 @@ import {
   StudentEnrollment,
   WeeklyAvailability
 } from '../../util/scheduling'
-import { parseDate, weekStartDate, weekStartOf } from '../../util/schedulingDates'
+import { parseDate } from '../../util/schedulingDates'
 import {
   MOCK_ENROLLMENTS_FALL,
   MOCK_ENROLLMENTS_SPRING,
@@ -192,16 +189,6 @@ function statusChipColor(status: SemesterStatus): 'default' | 'primary' | 'succe
   if (status === 'scheduling') return 'primary'
   if (status === 'active') return 'success'
   return 'default'
-}
-
-// Format a YYYY-MM-DD week-start string for display.
-function formatWeekStart(weekStart: string, locale: SupportedLocale): string {
-  const fmt = new Intl.DateTimeFormat(locale === SupportedLocale.RO_RO ? 'ro-RO' : 'en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  })
-  return fmt.format(parseDate(weekStart).toDate())
 }
 
 function roundStatusLabel(status: RoundStatus, t: SemesterPageTexts): string {
@@ -423,37 +410,14 @@ export default function SemesterPage() {
 
   // ── Week override picker ─────────────────────────────────────────────────────
 
-  const [newOverrideDate, setNewOverrideDate] = useState<Dayjs | null>(null)
-  const [showOverridePicker, setShowOverridePicker] = useState(false)
-
-  // A week is valid if: it overlaps the semester AND it hasn't fully passed.
-  function shouldDisableOverrideDate(date: Dayjs): boolean {
-    if (!semester) return true
-    const monday = weekStartOf(date)
-    const sunday = monday.add(6, 'day')
-    if (sunday.isBefore(dayjs(), 'day')) return true
-    return (
-      monday.isAfter(parseDate(semester.endDate), 'day') ||
-      sunday.isBefore(parseDate(semester.startDate), 'day')
-    )
-  }
-
-  function handleAddOverride() {
-    if (!newOverrideDate) return
-    const weekStart = weekStartDate(newOverrideDate)
-    if (!(weekStart in availability.weekOverrides)) {
-      handleOverrideChange(weekStart, [...availability.weeklyTemplate.blocks])
-    }
-    setNewOverrideDate(null)
-    setShowOverridePicker(false)
+  // A new override starts from the weekly template, so the teacher edits from what they
+  // normally do rather than from an empty week.
+  function handleAddOverride(weekStart: string) {
+    if (weekStart in availability.weekOverrides) return
+    handleOverrideChange(weekStart, [...availability.weeklyTemplate.blocks])
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
-
-  const sortedOverrides = useMemo(
-    () => Object.entries(availability.weekOverrides).sort(([a], [b]) => a.localeCompare(b)),
-    [availability.weekOverrides]
-  )
 
   if (!semester) {
     return (
@@ -522,81 +486,14 @@ export default function SemesterPage() {
             onChange={handleTemplateChange}
           />
 
-          {/* Week overrides */}
-          <Stack
-            direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-            sx={{ mt: 4, mb: 1.5 }}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              {t.weekOverrides}
-            </Typography>
-            <Button
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setShowOverridePicker((v) => !v)
-              }}>
-              {t.addOverride}
-            </Button>
-          </Stack>
-
-          {showOverridePicker && (
-            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={dayjsLocale}>
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                <DatePicker
-                  label={t.weekOf}
-                  value={newOverrideDate}
-                  onChange={(v) => {
-                    setNewOverrideDate(v)
-                  }}
-                  format="D MMM YYYY"
-                  shouldDisableDate={shouldDisableOverrideDate}
-                  minDate={parseDate(semester.startDate)}
-                  maxDate={parseDate(semester.endDate)}
-                  slotProps={{ textField: { size: 'small' } }}
-                />
-                <Button variant="contained" size="small" onClick={handleAddOverride}>
-                  {t.addOverride}
-                </Button>
-              </Stack>
-            </LocalizationProvider>
-          )}
-
-          {sortedOverrides.length === 0 && !showOverridePicker && (
-            <Typography variant="body2" color="text.secondary">
-              —
-            </Typography>
-          )}
-
-          {sortedOverrides.map(([weekStart, { blocks }]) => (
-            <Box key={weekStart} sx={{ mb: 3 }}>
-              <Divider sx={{ mb: 2 }} />
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ mb: 1 }}>
-                <Typography variant="body2" fontWeight={500}>
-                  {t.weekOf} {formatWeekStart(weekStart, localeManager.locale as SupportedLocale)}
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() => {
-                    handleRemoveOverride(weekStart)
-                  }}>
-                  <DeleteOutlineIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-              <AvailabilityCalendar
-                blocks={blocks}
-                weekStart={weekStart}
-                onChange={(newBlocks) => {
-                  handleOverrideChange(weekStart, newBlocks)
-                }}
-              />
-            </Box>
-          ))}
+          <WeekOverridesSection
+            overrides={availability.weekOverrides}
+            semesterStart={semester.startDate}
+            semesterEnd={semester.endDate}
+            onAdd={handleAddOverride}
+            onChange={handleOverrideChange}
+            onRemove={handleRemoveOverride}
+          />
         </Box>
       )}
 

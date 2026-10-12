@@ -31,17 +31,12 @@ import SuggestedScheduleCard from '../../Components/scheduling/SuggestedSchedule
 import { formatCountdown, parseDate } from '../../util/schedulingDates'
 import { useNow } from '../../util/useNow'
 import {
-  MOCK_ENROLLMENTS_FALL,
-  MOCK_ENROLLMENTS_SPRING,
-  MOCK_ENROLLMENTS_SPRING2027,
-  MOCK_ROUNDS_FALL,
-  MOCK_ROUNDS_SPRING,
-  MOCK_ROUNDS_SPRING2027,
-  MOCK_SUGGESTIONS,
-  MOCK_SEMESTER_IDS,
+  enrollmentsForSemester,
   MOCK_SEMESTERS,
   MOCK_STUDENTS,
-  MOCK_SUBMISSIONS_BY_ROUND
+  MOCK_SUBMISSIONS_BY_ROUND,
+  MOCK_SUGGESTIONS,
+  roundsForSemester
 } from '../../data/schedulingMocks'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
@@ -165,20 +160,6 @@ export function roundStatusLabel(status: RoundStatus, t: SchedulingRoundPageText
   }
 }
 
-function roundsFor(semesterId: string | undefined): SchedulingRound[] {
-  if (semesterId === MOCK_SEMESTER_IDS.spring2026) return MOCK_ROUNDS_SPRING
-  if (semesterId === MOCK_SEMESTER_IDS.fall2026) return MOCK_ROUNDS_FALL
-  if (semesterId === MOCK_SEMESTER_IDS.spring2027) return MOCK_ROUNDS_SPRING2027
-  return []
-}
-
-function enrollmentsFor(semesterId: string | undefined) {
-  if (semesterId === MOCK_SEMESTER_IDS.spring2026) return MOCK_ENROLLMENTS_SPRING
-  if (semesterId === MOCK_SEMESTER_IDS.fall2026) return MOCK_ENROLLMENTS_FALL
-  if (semesterId === MOCK_SEMESTER_IDS.spring2027) return MOCK_ENROLLMENTS_SPRING2027
-  return []
-}
-
 // Order shown to the teacher: own preference first, then the students', then the compromise.
 const STRATEGY_ORDER: SuggestionStrategy[] = ['teacher_best', 'student_best', 'balanced']
 
@@ -220,8 +201,8 @@ export default function SchedulingRoundPage() {
   }, [user.loading, user.uid, user.role])
 
   const semester = MOCK_SEMESTERS.find((s) => s.id === semesterId)
-  const round = roundsFor(semesterId).find((r) => r.id === roundId)
-  const enrollments = enrollmentsFor(semesterId)
+  const round = roundsForSemester(semesterId).find((r) => r.id === roundId)
+  const enrollments = enrollmentsForSemester(semesterId)
 
   const [selectedStrategy, setSelectedStrategy] = useState<SuggestionStrategy | null>(null)
   // Set once a suggestion is chosen. The teacher edits this copy, never the suggestion itself,
