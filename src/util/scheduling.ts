@@ -22,7 +22,13 @@ export const SCHEDULING_CONFIG = {
   TEACHER_WEIGHT: 0.7,
   STUDENT_WEIGHT: 0.3,
   MIN_STUDENT_PREFERENCES: 3,
-  MIN_PREFERRED_PREFERENCES: 1
+  MIN_PREFERRED_PREFERENCES: 1,
+  // Caps the per-week search so a pathologically tight week cannot hang the browser. The best
+  // placement found so far is kept when it runs out, which is never worse than the greedy
+  // answer because greedy is the first branch explored.
+  MAX_SEARCH_NODES_PER_WEEK: 200000,
+  // Granularity of the teacher-weight sweep. Finer finds narrower bands at linear cost.
+  WEIGHT_SWEEP_STEP: 0.1
 } as const
 
 // dayOfWeek: 0=Mon, 1=Tue, ..., 6=Sun (matches react-big-calendar with weekStartsOn:1)
@@ -61,15 +67,16 @@ export interface Semester {
   createdAt: number
 }
 
-export type LessonPeriod = 'week' | 'biweek' | 'month'
+/** How a student's lessons spread across the weeks of a semester. */
+export type LessonDistribution = 'even' | 'start' | 'end'
 
 export interface StudentEnrollment {
   studentId: string
   lessonDurationMinutes: number
+  /** Authoritative: the teacher types this, and the solver fits exactly this many lessons. */
   totalLessons: number
+  distribution?: LessonDistribution // defaults to 'even'
   cancellationWindowHours?: number // falls back to semester default when absent
-  lessonsPerPeriod?: number // UI-derived; used for display only
-  period?: LessonPeriod // UI-derived; used for display only
 }
 
 export type RoundStatus = 'collecting' | 'ready' | 'suggested' | 'finalized'
@@ -225,14 +232,20 @@ export const schedulingPaths = {
 }
 
 // Combined slot score. Returns 0 if either party has a hard block (score 0).
-// Formula: teacherScore × TEACHER_WEIGHT + studentScore × STUDENT_WEIGHT
-// Max score is 10 (when both are PREFERRED and weights sum to 1).
-export function computeCombinedScore(teacherScore: number, studentScore: number): number {
+//
+// Formula: teacherScore × teacherWeight + studentScore × (1 − teacherWeight). The weights sum
+// to 1, so the result stays on the same 0–10 scale as its inputs at every weight.
+//
+// The weight is a parameter because the suggestion engine sweeps it: one formula produces the
+// whole range from "best for the teacher" to "best for the students". It defaults to the
+// configured weight for callers that just want the house blend.
+export function computeCombinedScore(
+  teacherScore: number,
+  studentScore: number,
+  teacherWeight: number = SCHEDULING_CONFIG.TEACHER_WEIGHT
+): number {
   if (teacherScore === 0 || studentScore === 0) return 0
-  return (
-    teacherScore * SCHEDULING_CONFIG.TEACHER_WEIGHT +
-    studentScore * SCHEDULING_CONFIG.STUDENT_WEIGHT
-  )
+  return teacherScore * teacherWeight + studentScore * (1 - teacherWeight)
 }
 
 // Clip every existing block that overlaps `incoming` on the same day.
@@ -360,4 +373,38 @@ export function scoreForDayTime(
       minutes < parseMinutes(b.endTime)
   )
   return covering?.score ?? 0
+}
+
+// How many lessons a student gets in each week of the semester.
+//
+// Replaces the old `targetSpacing` heuristic and its 0.8 fudge factor: the quota is decided up
+// front and the solver simply fills it. The enrollment dialog draws its preview from this same
+// function, so what the teacher is shown and what they get cannot disagree.
+//
+//   even  → lesson i lands in week floor(i × weeks / total), spreading the surplus through the
+//           term and, when there are fewer lessons than weeks, spacing them out instead of
+//           clustering. This is what keeps a bi-weekly student bi-weekly.
+//   start → every week gets floor(total / weeks) and the first (total mod weeks) weeks get one
+//           extra. With fewer lessons than weeks this front-loads them and leaves the tail
+//           empty, which is a real choice but is NOT bi-weekly.
+//   end   → the same, reversed.
+export function weeklyQuota(
+  totalLessons: number,
+  weeks: number,
+  distribution: LessonDistribution = 'even'
+): number[] {
+  if (weeks <= 0 || totalLessons <= 0) return new Array(Math.max(0, weeks)).fill(0)
+
+  if (distribution === 'even') {
+    const quota = new Array(weeks).fill(0)
+    for (let i = 0; i < totalLessons; i++) {
+      quota[Math.floor((i * weeks) / totalLessons)]++
+    }
+    return quota
+  }
+
+  const base = Math.floor(totalLessons / weeks)
+  const remainder = totalLessons % weeks
+  const quota = Array.from({ length: weeks }, (_, week) => base + (week < remainder ? 1 : 0))
+  return distribution === 'end' ? quota.reverse() : quota
 }

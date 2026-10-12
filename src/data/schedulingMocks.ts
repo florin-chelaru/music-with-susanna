@@ -157,23 +157,17 @@ export const MOCK_ENROLLMENTS_SPRING: StudentEnrollment[] = [
   {
     studentId: MOCK_STUDENT_IDS.ana,
     lessonDurationMinutes: 45,
-    totalLessons: 20,
-    lessonsPerPeriod: 1,
-    period: 'week'
+    totalLessons: 20
   },
   {
     studentId: MOCK_STUDENT_IDS.barbara,
     lessonDurationMinutes: 60,
-    totalLessons: 10,
-    lessonsPerPeriod: 1,
-    period: 'biweek'
+    totalLessons: 10
   },
   {
     studentId: MOCK_STUDENT_IDS.chris,
     lessonDurationMinutes: 45,
-    totalLessons: 20,
-    lessonsPerPeriod: 1,
-    period: 'week'
+    totalLessons: 20
   }
 ]
 
@@ -182,23 +176,17 @@ export const MOCK_ENROLLMENTS_FALL: StudentEnrollment[] = [
   {
     studentId: MOCK_STUDENT_IDS.ana,
     lessonDurationMinutes: 45,
-    totalLessons: 15,
-    lessonsPerPeriod: 1,
-    period: 'week'
+    totalLessons: 15
   },
   {
     studentId: MOCK_STUDENT_IDS.barbara,
     lessonDurationMinutes: 60,
-    totalLessons: 8,
-    lessonsPerPeriod: 1,
-    period: 'biweek'
+    totalLessons: 8
   },
   {
     studentId: MOCK_STUDENT_IDS.chris,
     lessonDurationMinutes: 45,
-    totalLessons: 15,
-    lessonsPerPeriod: 1,
-    period: 'week'
+    totalLessons: 15
   }
 ]
 
