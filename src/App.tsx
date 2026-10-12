@@ -27,6 +27,7 @@ import VideoChannel from './pages/VideoChannel'
 import SchedulingPage from './pages/scheduling/SchedulingPage'
 import SchedulingRoundPage from './pages/scheduling/SchedulingRoundPage'
 import SemesterPage from './pages/scheduling/SemesterPage'
+import StudentSchedulePage from './pages/scheduling/StudentSchedulePage'
 import AvailabilityCalendarTest from './pages/scheduling/AvailabilityCalendarTest'
 import AnnouncementProvider from './store/AnnouncementProvider'
 import FabPositionProvider from './store/FabPositionProvider'
@@ -93,7 +94,7 @@ function App() {
                           path="/scheduling/semesters/:semesterId/rounds/:roundId"
                           element={<SchedulingRoundPage />}
                         />
-                        <Route path="/schedule" element={<div>My Schedule — coming soon</div>} />
+                        <Route path="/schedule" element={<StudentSchedulePage />} />
                         <Route
                           path="/schedule/rounds/:teacherId/:semesterId/:roundId"
                           element={<div>Submit Availability — coming soon</div>}
