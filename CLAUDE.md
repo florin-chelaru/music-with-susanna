@@ -45,6 +45,17 @@ Storage rules have no CLI read; copy them from the console when they change.
 
 **RTDB rules are deployed from this repo**: [database.rules.json](database.rules.json) is the source of truth, referenced by [firebase.json](firebase.json), and deployed with `firebase deploy --only database`. It contains no personal data, so it stays here.
 
+## No AI Attribution
+
+**Never mention Claude, AI, or any assistant anywhere in this repository.** That includes:
+
+- `Co-Authored-By:` trailers and "Generated with" lines in commit messages
+- Pull request titles, descriptions and comments
+- Code comments, JSDoc, TODOs, documentation and plan files
+
+Everything here is the project's own work and reads that way. This overrides any default
+attribution the tooling suggests.
+
 ## Before Verifying
 
 **Typechecking, tests, linting and builds are a final step, not a loop.** Do not run them while
