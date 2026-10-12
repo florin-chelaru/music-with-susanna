@@ -1,8 +1,17 @@
 # Scheduling Feature
 
-> Status: Implementation in progress — Steps A through I complete (all on mock data; no RTDB wiring yet).
-> Shared date helpers (`src/util/schedulingDates.ts`) landed 2026-10-08; this document was
-> corrected the same day (see the review linked below for what changed and why).
+> Status: Implementation in progress — Steps A through L complete (all on mock data; no RTDB
+> wiring yet). Shared date helpers (`src/util/schedulingDates.ts`) landed 2026-10-08; this
+> document was corrected the same day (see the review linked below for what changed and why).
+>
+> Built 2026-10-12 — the solver is wired into the round page and the editor is complete.
+> Corrections this produced, folded into the sections below: the weight sweep is clamped to
+> [0.1, 0.9] rather than [0, 1]; cards show no total score, only the per-side averages;
+> `unscheduledStudentIds` became `missedLessonsByStudent`; and **more students do not by
+> themselves produce more suggestions** — a student's crossover weight is fixed by the labels on
+> their options, so students who all trade the same pair of labels share one hinge. The solver
+> costs 301 ms for seven students across the full sweep, so none of the cost fallbacks below
+> were needed.
 >
 > Design review 2026-10-12 — decisions folded into the sections below:
 > one weighted formula swept across its parameter replaces the three fixed strategies, with the
@@ -15,8 +24,9 @@
 > Review (2026-10-08): see [2026_10_08-scheduling-feature-review.md](./2026_10_08-scheduling-feature-review.md)
 > for the full findings and the progress log. The corrections it identified have been applied to
 > this document, and the `toWeekMonday` timezone bug is fixed in code. Still open from that review:
-> exporting the live Firebase rules into this repo (Step M2), tests for `removeOverlaps`, the dead
-> `UNAVAILABLE` label, and the student "My Schedule" nav link that currently leads to a stub.
+> exporting the live Firebase rules into this repo (Step M2), tests for `removeOverlaps`, and the
+> dead `UNAVAILABLE` label. The student "My Schedule" nav link no longer leads to a stub — Step J
+> built the page it points at.
 
 ---
 
@@ -153,11 +163,17 @@ if teacher_score == 0 or student_score == 0: combined = 0   (hard block)
 else: combined = T × teacher_score + (1 − T) × student_score
 ```
 
-`T = 1` is purely the teacher's preference, `T = 0` purely the students', `T = 0.5` an even
-trade. Scores stay on the 0–10 scale at every weight, so a combined score always reads the
-same way.
+`T = 0.5` is an even trade, and higher values favour the teacher. Scores stay on the 0–10 scale
+at every weight, so a combined score always reads the same way.
 
-**Generating the options.** Sweep `T` from 0 to 1 in steps of 0.1, run the solver at each,
+**The sweep never reaches 0 or 1.** At either end one side's score is multiplied by zero and
+drops out of the formula entirely, leaving the solver nothing to break ties with: among
+placements that score identically for the favoured side it picks arbitrarily, handing the other
+side a merely "available" slot where a "preferred" one was free at no cost. `WEIGHT_SWEEP_MIN`
+and `WEIGHT_SWEEP_MAX` clamp it to 0.1 and 0.9, which keeps a tenth of the weight on the other
+side as a tiebreak.
+
+**Generating the options.** Sweep `T` from 0.1 to 0.9 in steps of 0.1, run the solver at each,
 and **deduplicate the resulting schedules**. The outcome is piecewise-constant in `T` — there
 are finitely many candidate assignments, so the result jumps at thresholds and is identical
 in between — which means a slider would have dead zones and three fixed samples would be
@@ -170,23 +186,33 @@ every ~4th). Scroll rather than shrink. If the sweep produces more than 10, say 
 cohort whose schedule changes that many times across the range is genuinely contested, and
 that is information the teacher wants.
 
-Label each card with the weight range that produces it ("favours you — 0.6 to 1.0"), which
+Label each card with the weight range that produces it ("favours you — 0.6 to 0.9"), which
 teaches where the real decision boundaries are.
 
-**What each card displays** (plain numbers, not percentages):
-- the total combined score for the schedule,
-- the teacher's average score and the students' average score, so the trade-off the cards
-  exist to show is legible without decoding a single blended figure.
+**What each card displays** (plain numbers, not percentages): the teacher's average score and
+the students' average score, and nothing else at the schedule level.
 
-Because each card is optimized at a different weight, its *own* objective value is not
-comparable with another card's. The teacher and student averages are, so those carry the
-comparison.
+**No total score is shown.** Each card is optimised at its own weight, so its objective value
+always flatters its own objective and cannot be compared with another card's — which is the only
+comparison a teacher is actually making. This was got wrong three times before it was removed: a
+percentage, then the raw sum ("352 out of what?"), then a 0–100 normalisation. All three were
+totals, and the problem was never the scale. The two averages sit on the same 0–10 scale at every
+weight, so they carry the comparison. The per-student rows show each side's own score for the
+same reason; a blended per-student figure is weighted differently on every card, so the same
+number means a different thing card to card.
 
-**Cost.** The sweep multiplies solver work by ~11/3 compared with the original three
-strategies. If that proves too slow, two fallbacks, in order: run cheap feasibility
-backtracking across all weights and the expensive bound only on distinct survivors; or stop
-sampling uniformly and **binary-search the thresholds**, which finds exact boundaries in a
-logarithmic number of runs and removes the risk of a 0.1 step skipping a narrow band.
+**Why adding students does not add options.** The weight only changes the answer where it changes
+a ranking, and a student's crossover is fixed by which labels the two sides put on their options.
+A student choosing between a slot they prefer on a day the teacher merely tolerates `(6,10)` and
+one they tolerate on a day the teacher prefers `(10,6)` crosses at `10 − 4T = 6 + 4T`, i.e.
+`T = 0.5` — and so does every other student with that same pairing, however much they compete for
+the same hours. More bands require different pairings: `(2,10)` against `(10,6)` crosses at 1/3,
+`(6,10)` against `(10,2)` at 2/3. The mock cohort is built to cover all three.
+
+**Cost.** Measured at **301 ms** for seven students over a 15-week semester across the full
+sweep — branch-and-bound prunes far harder than the node cap suggests. The fallbacks drafted here
+(cheap feasibility first, or binary-searching the thresholds) are not needed and are kept only in
+case a much larger cohort changes that.
 
 Every weight places every student before optimizing anything else. A student who cannot be
 placed is not dropped silently — see Conflicts below.
@@ -1111,7 +1137,7 @@ Sort by most constrained:
 
 - ~~**Algorithm sophistication**~~ **Settled 2026-10-12:** per-week backtracking with a time
   cap and a greedy fallback, per the solver options document. Original note kept for context:
-  the pass is greedy with no backtracking. Beyond producing suboptimal totals as the cohort grows, it means a student can land in `unscheduledStudentIds` because earlier picks took the slots they could have used — not because no feasible slot existed. Accepted for Phase 1 (≤ 20 students); the Step L tests should include a case that documents this rather than asserting it cannot happen. A constraint solver (e.g. or-tools) could replace the pass later without changing the data model.
+  the pass is greedy with no backtracking. Beyond producing suboptimal totals as the cohort grows, it means a student can land in `missedLessonsByStudent` (then called `unscheduledStudentIds`) because earlier picks took the slots they could have used — not because no feasible slot existed. Accepted for Phase 1 (≤ 20 students); the Step L tests should include a case that documents this rather than asserting it cannot happen. A constraint solver (e.g. or-tools) could replace the pass later without changing the data model.
 - ~~**"Balanced" is not actually a third strategy."**~~ **Settled 2026-10-12:** replaced by a
   single weighted formula swept across its parameter, with the distinct schedules shown. See
   Schedule Suggestion. Original finding kept for context: With `TEACHER_WEIGHT = 0.7` and label scores {2, 6, 10}, the largest possible student-score swing is `0.3 × (10 − 2) = 2.4`, while the smallest gap between two distinct teacher scores is `0.7 × 4 = 2.8`. The student term can therefore never overturn a teacher-score difference, which makes `balanced` exactly `teacher_best` with a student-score tiebreak — verified exhaustively over the score set. So the three cards are really teacher-first (date tiebreak), teacher-first (student tiebreak), and student-first. Settle this before Step L: either lower `TEACHER_WEIGHT` below 0.5, widen the label scores, or drop to two strategies and be honest about it. Exposing the weights as a teacher-adjustable slider in Phase 2 would also make it moot.
@@ -1244,17 +1270,39 @@ shrinking.
 
 ---
 
-#### Step I — SchedulingRoundPage: editable confirmed view (DnD)
+#### ~~Step I — SchedulingRoundPage: editable confirmed view~~ ✅ DONE
 
-- After "Use This": load the selected suggestion slots into a `react-big-calendar` week view with DnD enabled; one event per student (colored by combined score)
-- On drop/resize: validate no overlap + min-break; show inline error if violated, snap back if invalid
-- "Confirm Schedule" button (no RTDB write yet — just advances mock state and shows a success banner)
+Built as planned, then extended considerably once the real solver's output was reviewable. What
+landed beyond the original three bullets:
 
-*Review: drag student slots around, see conflict detection, confirm the schedule.*
+- **Month, week and agenda views**, matching `LessonCalendar` — a term is three or four months
+  long, and stepping through it a week at a time was the only way to see what the solver produced.
+  A month cell has no time axis, so a drop there changes the day only and the lesson keeps its own
+  times; taking the dropped `Date`'s time would move a 10:00 lesson to whatever hour the cell maps
+  to.
+- **A context menu on each lesson**: move to a chosen date and time, revert to the suggested time,
+  or remove a hand-placed one. This is the only way to edit from the agenda, where there is
+  nothing to drag.
+- **Revert**, per lesson and in bulk. `EditableSlot.original` captures the solver's placement on
+  the *first* move and is never overwritten, so repeated drags still revert to the suggestion
+  rather than to the previous drag. Dragging a lesson back onto its suggested time clears the
+  marker instead of recording a move to where it already belonged.
+- **A Move/Schedule dialog** (`MoveLessonDialog`) with a `DateTimePicker` stepping at
+  `SLOT_SNAP_MINUTES`. The lesson keeps its enrolled length — the teacher picks a start, the end
+  follows — and a clashing time reports *inside* the dialog so another can be tried.
+- **A list of lessons the solver could not place**, each with a Schedule button. Without it there
+  was no way at all to add a missing lesson; see Step L4 for the part that is still missing.
+- **Live satisfaction averages** over the edited schedule, so the teacher can tell whether their
+  version is better or worse than the suggestion they started from, and **score previews** for the
+  time being picked in the dialog.
+- **Moved and hand-placed lessons are rescored** against their new time. The calendar holds no
+  availability of its own, so the page passes a `scoreAt` callback; without it a lesson the
+  teacher placed would wear a score nobody computed. This also settles the "moved lessons keep a
+  stale score" item — the fade on a moved lesson now means only "you changed this".
 
 ---
 
-#### Step J — StudentSchedulePage
+#### ~~Step J — StudentSchedulePage~~ ✅ DONE
 
 - `src/pages/scheduling/StudentSchedulePage.tsx` — two sections:
   1. Pending availability requests (mock: one open round with deadline); "Submit Availability" navigates to `StudentAvailabilityPage`
@@ -1264,7 +1312,7 @@ shrinking.
 
 ---
 
-#### Step K — StudentAvailabilityPage
+#### ~~Step K — StudentAvailabilityPage~~ ✅ DONE
 
 - `src/pages/scheduling/StudentAvailabilityPage.tsx` — full submission UI: `AvailabilityCalendar` in overlay mode (teacher blocks as background), student draws their own blocks, week-override section, validation banner (preference count, Preferred minimum), Submit button
 
@@ -1276,7 +1324,22 @@ shrinking.
 
 ---
 
-#### Step L — Algorithm
+#### ~~Step L — Algorithm~~ ✅ DONE
+
+Landed as described, with these differences from the plan:
+
+- `getScoreAtTime` is `scoreForDayTime` and lives in `util/scheduling.ts`, shared with the pages
+  that score a hand-placed lesson.
+- **`unscheduledStudentIds` became `missedLessonsByStudent`.** The original was a `Set` filled
+  inside the per-week loop, so one week a student was away flagged them as entirely
+  unschedulable — a student could show a full row of scores and a "could not be scheduled"
+  warning at the same time. The record counts lessons the solver could not place, and a caller
+  tells "short one lesson" from "placed nowhere at all" by whether the student has any slots.
+- The planned test *(a)* — `student_best` and `balanced` return different schedules — is obsolete;
+  the fixed strategies no longer exist. Test *(b)*, the week-override key agreement, is in place.
+- **Benchmarked**: 301 ms for seven students over 15 weeks across the full nine-weight sweep.
+
+Original plan text follows.
 
 - `src/util/schedulingAlgorithm.ts` — `getEffectiveBlocksForDate`, `getScoreAtTime`, `getScoreForSpan`, `generateAllCandidates`, `computeSchedule` (one weight), `generateAllSuggestions` (sweeps the weight and deduplicates)
 - Per-student **weekly quota** from `totalLessons` and `distribution`, replacing `targetSpacing` and its `0.8` factor. The same function renders the enrollment dialog's preview.
@@ -1305,6 +1368,33 @@ shrinking.
 - Delete `AvailabilityLabel.UNAVAILABLE` — unreachable, since the picker never offers it and an overlay can never contain one.
 - Delete `carriedForward` from `StudentSubmission` if Step P2 did not end up using it.
 - `React.lazy()` the scheduling routes in `App.tsx`, with a short comment explaining why: react-big-calendar, dayjs and the MUI date pickers add ~134 kB gzipped, and without the split every visitor to the public portfolio downloads the scheduling system to read a biography.
+
+---
+
+#### Step L4 — Show the candidate times (next)
+
+**The problem.** Picking a time is blind. The Schedule and Move dialogs rate a time only *after*
+it has been chosen, so finding a slot that suits a student means guessing and checking one time
+at a time — and the teacher cannot see the hours that student actually offered. The score preview
+makes a bad guess visible; it does not make a good one findable.
+
+What the teacher needs is the **overlap** of their own availability with that student's, for the
+week in question, with the times already taken by other lessons removed. All three pieces exist:
+`getEffectiveBlocksForDate` resolves either side's blocks for a date, `generateAllCandidates`
+already enumerates exactly this set for the solver, and `findConflict` removes what is taken.
+
+Three approaches, to be decided before building:
+
+1. **Overlay on the calendar** — while a lesson is selected, shade the student's available hours
+   behind the grid, the way `AvailabilityCalendar` already does in overlay mode. Shows the shape
+   of the week at a glance; only works in the time-grid views, not month or agenda.
+2. **A ranked list in the dialog** — offer the free slots for that student, best score first, as
+   choosable rows. Works in every view and from the unscheduled list, where there is no lesson on
+   the calendar to select; less good at conveying the week's shape.
+3. **Both** — the overlay for orientation, the list for picking.
+
+The list alone is probably the smaller, more useful first move, since the unscheduled-lesson flow
+starts from a panel rather than from the calendar. Decide before building.
 
 ---
 
