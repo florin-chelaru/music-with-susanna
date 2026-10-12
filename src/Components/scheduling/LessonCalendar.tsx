@@ -94,6 +94,15 @@ export interface LessonCalendarProps {
   lessons: LessonInstance[]
   /** Teacher view: maps studentId → display name. Omit for the student view. */
   students?: Record<string, { name: string }>
+  /**
+   * Student view: what is being taught, from the teacher's `subject` on their user record.
+   * An event titled only "Lesson" tells a student nothing — the production data already has
+   * two teachers, one teaching violin and one teaching computer science.
+   *
+   * TODO (Step P): a student's lessons can come from several teachers, so this becomes a
+   * per-lesson lookup rather than one subject for the whole calendar.
+   */
+  subject?: string
   locationName?: string
   /** Omit to hide the cancel affordance entirely. */
   onCancel?: (lesson: LessonInstance) => void
@@ -106,6 +115,7 @@ export interface LessonCalendarProps {
 export default function LessonCalendar({
   lessons,
   students,
+  subject,
   locationName,
   onCancel,
   onExportIcs,
@@ -151,8 +161,16 @@ export default function LessonCalendar({
     }
   }
 
-  const titleFor = (lesson: LessonInstance): string =>
-    students ? students[lesson.studentId]?.name ?? lesson.studentId : t.lesson
+  // A teacher sees which student the lesson is with; a student sees what it is.
+  //
+  // `subject` is free text the teacher typed, and the stored values are inconsistently cased
+  // ("violin" but "Computer Science"), so only the first letter is forced — title-casing every
+  // word would mangle subjects that are already written properly.
+  const titleFor = (lesson: LessonInstance): string => {
+    if (students) return students[lesson.studentId]?.name ?? lesson.studentId
+    if (!subject) return t.lesson
+    return subject.charAt(0).toUpperCase() + subject.slice(1)
+  }
 
   // ── Events ───────────────────────────────────────────────────────────────────
 
@@ -264,6 +282,29 @@ export default function LessonCalendar({
           eventPropGetter={eventPropGetter}
         />
       </Box>
+
+      {/* Only the statuses actually present, so the legend never explains a colour that is
+          not on screen. */}
+      <Stack direction="row" spacing={1.5} flexWrap="wrap" sx={{ mt: 1 }}>
+        {(['scheduled', 'completed', 'canceled', 'rescheduled'] as LessonStatus[])
+          .filter((status) => lessons.some((lesson) => lesson.status === status))
+          .map((status) => (
+            <Stack key={status} direction="row" alignItems="center" spacing={0.5}>
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '2px',
+                  backgroundColor: alpha(statusColor[status], 0.3),
+                  borderLeft: `3px solid ${statusColor[status]}`
+                }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                {statusLabel(status)}
+              </Typography>
+            </Stack>
+          ))}
+      </Stack>
 
       <Popover
         open={Boolean(selected)}

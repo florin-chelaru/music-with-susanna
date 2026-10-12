@@ -18,6 +18,14 @@ import { parseMinutes, toDayOfWeek } from '../util/schedulingDates'
 // ─── IDs ─────────────────────────────────────────────────────────────────────
 
 export const MOCK_TEACHER_ID = 'mock-teacher-001'
+export const MOCK_TEACHER_NAME = 'Susanna Johnson-Chelaru'
+// Teachers carry a free-text `subject` on their user record (users/{uid}/subject).
+export const MOCK_TEACHER_SUBJECT = 'violin'
+
+// Until the student pages are wired to RTDB (Step P) there is no logged-in student to read,
+// so the student views render this mock student's data. Chris has a pending submission in the
+// open round and lessons in the active semester, which exercises both sections of the page.
+export const MOCK_VIEWING_STUDENT_ID = 'student-chris'
 
 export const MOCK_LOCATION_IDS = {
   home: 'loc-home',
