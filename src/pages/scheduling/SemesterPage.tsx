@@ -40,6 +40,7 @@ import { SupportedLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
 import {
+  applyCancellation,
   AvailabilityBlock,
   LessonInstance,
   RoundStatus,
@@ -389,17 +390,7 @@ export default function SemesterPage() {
     if (!target) return
     // TODO (Step Q): write the Cancellation record, update RTDB, notify the other party.
     // `reason` and `offerMakeup` are collected already but have nowhere to go until then.
-    setLessons((prev) =>
-      prev.map((l) => {
-        if (l.id === target.id) return { ...l, status: 'canceled' }
-        const laterForSameStudent =
-          cancelAllForward &&
-          l.studentId === target.studentId &&
-          l.scheduledStart > target.scheduledStart &&
-          l.status === 'scheduled'
-        return laterForSameStudent ? { ...l, status: 'canceled' } : l
-      })
-    )
+    setLessons((prev) => applyCancellation(prev, target, cancelAllForward))
     setCancelTarget(null)
   }
 

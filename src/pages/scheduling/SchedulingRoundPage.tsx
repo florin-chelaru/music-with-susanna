@@ -29,6 +29,7 @@ import EditableScheduleCalendar, {
 } from '../../Components/scheduling/EditableScheduleCalendar'
 import SuggestedScheduleCard from '../../Components/scheduling/SuggestedScheduleCard'
 import { formatCountdown, parseDate } from '../../util/schedulingDates'
+import { useNow } from '../../util/useNow'
 import {
   MOCK_ENROLLMENTS_FALL,
   MOCK_ENROLLMENTS_SPRING,
@@ -233,16 +234,7 @@ export default function SchedulingRoundPage() {
     setEditedSlots(MOCK_SUGGESTIONS[strategy].slots.map((slot) => ({ ...slot })))
   }
 
-  // The countdown re-renders once a minute; it is never shown finer than minutes.
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const id = setInterval(() => {
-      setNow(Date.now())
-    }, 60000)
-    return () => {
-      clearInterval(id)
-    }
-  }, [])
+  const now = useNow()
 
   if (!semester || !round) {
     return (

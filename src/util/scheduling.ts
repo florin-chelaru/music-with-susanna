@@ -321,3 +321,24 @@ export function findConflict<T extends TimeSpan>(
   }
   return null
 }
+
+// Apply a cancellation to a list of lessons, returning a new list.
+//
+// `cancelAllForward` also cancels that student's later scheduled lessons — scoped to the
+// student even in a view that only ever holds one student's lessons, so the rule is the same
+// wherever it runs. Lessons already completed or canceled are left alone.
+export function applyCancellation(
+  lessons: LessonInstance[],
+  target: LessonInstance,
+  cancelAllForward: boolean
+): LessonInstance[] {
+  return lessons.map((lesson) => {
+    if (lesson.id === target.id) return { ...lesson, status: 'canceled' }
+    const laterForSameStudent =
+      cancelAllForward &&
+      lesson.studentId === target.studentId &&
+      lesson.scheduledStart > target.scheduledStart &&
+      lesson.status === 'scheduled'
+    return laterForSameStudent ? { ...lesson, status: 'canceled' } : lesson
+  })
+}
