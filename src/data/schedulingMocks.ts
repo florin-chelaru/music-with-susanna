@@ -1,20 +1,15 @@
 import {
   AvailabilityBlock,
   AvailabilityLabel,
-  computeCombinedScore,
-  scoreForDayTime,
   LABEL_SCORES,
   LessonInstance,
   Location,
   SchedulingRound,
-  ScheduleSuggestion,
   Semester,
   StudentEnrollment,
   StudentSubmission,
-  SuggestedSlot,
   WeeklyAvailability
 } from '../util/scheduling'
-import { toDayOfWeek } from '../util/schedulingDates'
 
 // ─── IDs ─────────────────────────────────────────────────────────────────────
 
@@ -42,7 +37,11 @@ export const MOCK_SEMESTER_IDS = {
 export const MOCK_STUDENT_IDS = {
   ana: 'student-ana',
   barbara: 'student-barbara',
-  chris: 'student-chris'
+  chris: 'student-chris',
+  diana: 'student-diana',
+  elena: 'student-elena',
+  flavia: 'student-flavia',
+  george: 'student-george'
 } as const
 
 export const MOCK_ROUND_ID = 'round-001'
@@ -51,7 +50,11 @@ export const MOCK_ROUND_ID = 'round-001'
 export const MOCK_STUDENTS: Record<string, { name: string; email: string }> = {
   [MOCK_STUDENT_IDS.ana]: { name: 'Ana Ionescu', email: 'ana@example.com' },
   [MOCK_STUDENT_IDS.barbara]: { name: 'Barbara Pop', email: 'barbara@example.com' },
-  [MOCK_STUDENT_IDS.chris]: { name: 'Chris Munteanu', email: 'chris@example.com' }
+  [MOCK_STUDENT_IDS.chris]: { name: 'Chris Munteanu', email: 'chris@example.com' },
+  [MOCK_STUDENT_IDS.diana]: { name: 'Diana Radu', email: 'diana@example.com' },
+  [MOCK_STUDENT_IDS.elena]: { name: 'Elena Marin', email: 'elena@example.com' },
+  [MOCK_STUDENT_IDS.flavia]: { name: 'Flavia Dumitru', email: 'flavia@example.com' },
+  [MOCK_STUDENT_IDS.george]: { name: 'George Stan', email: 'george@example.com' }
 }
 
 // ─── Locations ───────────────────────────────────────────────────────────────
@@ -171,7 +174,10 @@ export const MOCK_ENROLLMENTS_SPRING: StudentEnrollment[] = [
   }
 ]
 
-// Fall 2026 (scheduling): same students, same pattern
+// Fall 2026. Diana and Elena joined after round 1 was finalized, which is why the Calendar tab
+// has no lessons for them: their first lessons come out of round 2, the round whose suggestions
+// are waiting. Five students is also what makes the weight sweep interesting — three were never
+// enough to contest the teacher's narrow Tue/Thu windows.
 export const MOCK_ENROLLMENTS_FALL: StudentEnrollment[] = [
   {
     studentId: MOCK_STUDENT_IDS.ana,
@@ -185,6 +191,26 @@ export const MOCK_ENROLLMENTS_FALL: StudentEnrollment[] = [
   },
   {
     studentId: MOCK_STUDENT_IDS.chris,
+    lessonDurationMinutes: 45,
+    totalLessons: 15
+  },
+  {
+    studentId: MOCK_STUDENT_IDS.diana,
+    lessonDurationMinutes: 60,
+    totalLessons: 12
+  },
+  {
+    studentId: MOCK_STUDENT_IDS.elena,
+    lessonDurationMinutes: 45,
+    totalLessons: 10
+  },
+  {
+    studentId: MOCK_STUDENT_IDS.flavia,
+    lessonDurationMinutes: 45,
+    totalLessons: 12
+  },
+  {
+    studentId: MOCK_STUDENT_IDS.george,
     lessonDurationMinutes: 45,
     totalLessons: 15
   }
@@ -269,6 +295,47 @@ const CHRIS_PREFERENCES = [
   block(0, '11:00', '13:00', AvailabilityLabel.LAST_RESORT) // Mon last resort
 ]
 
+// Diana pulls hardest against the teacher. She can only come on the two days the teacher merely
+// tolerates, and her fallback is the Saturday the teacher rates last resort — so there is no
+// cheap way to move her, and whoever else wants Tue or Thu has to give way instead.
+const DIANA_PREFERENCES = [
+  block(1, '10:00', '12:00', AvailabilityLabel.PREFERRED), // Tue preferred
+  block(3, '10:00', '12:00', AvailabilityLabel.PREFERRED), // Thu preferred
+  block(5, '10:00', '12:00', AvailabilityLabel.AVAILABLE) // Sat available
+]
+
+// Elena wants the same Tuesday as Chris and Diana, but unlike Diana she has a Wednesday the
+// teacher loves. She is the one the solver moves first as the weight swings towards the teacher,
+// which is what makes the middle of the sweep produce schedules rather than one flat answer.
+const ELENA_PREFERENCES = [
+  block(1, '10:00', '12:00', AvailabilityLabel.PREFERRED), // Tue preferred
+  block(2, '11:00', '13:00', AvailabilityLabel.AVAILABLE), // Wed available
+  block(4, '09:00', '11:00', AvailabilityLabel.LAST_RESORT) // Fri last resort
+]
+
+// The weight only changes the answer where it changes the ranking, and a student's crossover is
+// fixed by which labels the two sides put on their options. Chris, Diana and Elena all trade a
+// 10-for-the-student/6-for-the-teacher slot against a 6/10 one, and 10 − 4w = 6 + 4w crosses at
+// 0.5 — so they all flip at once and the sweep collapses to one hinge however many students
+// compete. These two are shaped to cross elsewhere, which is what gives the sweep more bands.
+
+// Saturday mornings are all Flavia can really do, and Saturday is the teacher's last resort:
+// 10 − 8w against the 6 + 4w of a weekday she merely tolerates. Crosses at 1/3.
+const FLAVIA_PREFERENCES = [
+  block(5, '10:00', '12:00', AvailabilityLabel.PREFERRED), // Sat preferred
+  block(0, '09:00', '11:00', AvailabilityLabel.AVAILABLE), // Mon available
+  block(2, '11:00', '13:00', AvailabilityLabel.AVAILABLE) // Wed available
+]
+
+// George wants Thursday, and everything else is a real imposition on him rather than a mild one:
+// 10 − 4w against 2 + 8w. Crosses at 2/3, so he gives up Thursday only once the teacher's own
+// preference dominates.
+const GEORGE_PREFERENCES = [
+  block(3, '10:00', '12:00', AvailabilityLabel.PREFERRED), // Thu preferred
+  block(4, '09:00', '11:00', AvailabilityLabel.LAST_RESORT), // Fri last resort
+  block(0, '11:00', '13:00', AvailabilityLabel.LAST_RESORT) // Mon last resort
+]
+
 export const MOCK_SUBMISSIONS_FALL_R2: Record<string, StudentSubmission> = {
   [MOCK_STUDENT_IDS.ana]: {
     studentId: MOCK_STUDENT_IDS.ana,
@@ -290,6 +357,35 @@ export const MOCK_SUBMISSIONS_FALL_R2: Record<string, StudentSubmission> = {
     status: 'submitted',
     submittedAt: NOW - 7 * DAY_MS,
     recurringPreferences: CHRIS_PREFERENCES,
+    weekOverrides: {}
+  },
+  [MOCK_STUDENT_IDS.diana]: {
+    studentId: MOCK_STUDENT_IDS.diana,
+    status: 'submitted',
+    submittedAt: NOW - 7 * DAY_MS,
+    recurringPreferences: DIANA_PREFERENCES,
+    weekOverrides: {}
+  },
+  [MOCK_STUDENT_IDS.elena]: {
+    studentId: MOCK_STUDENT_IDS.elena,
+    status: 'submitted',
+    submittedAt: NOW - 6 * DAY_MS,
+    recurringPreferences: ELENA_PREFERENCES,
+    // School trip — one week out, so her term is one lesson short however it is scheduled.
+    weekOverrides: { '2026-10-19': { blocks: [] } }
+  },
+  [MOCK_STUDENT_IDS.flavia]: {
+    studentId: MOCK_STUDENT_IDS.flavia,
+    status: 'submitted',
+    submittedAt: NOW - 6 * DAY_MS,
+    recurringPreferences: FLAVIA_PREFERENCES,
+    weekOverrides: {}
+  },
+  [MOCK_STUDENT_IDS.george]: {
+    studentId: MOCK_STUDENT_IDS.george,
+    status: 'submitted',
+    submittedAt: NOW - 5 * DAY_MS,
+    recurringPreferences: GEORGE_PREFERENCES,
     weekOverrides: {}
   }
 }
@@ -314,6 +410,32 @@ export const MOCK_SUBMISSIONS_SPRING2027_R1: Record<string, StudentSubmission> =
     status: 'pending',
     recurringPreferences: [],
     weekOverrides: {}
+  },
+  [MOCK_STUDENT_IDS.diana]: {
+    studentId: MOCK_STUDENT_IDS.diana,
+    status: 'submitted',
+    submittedAt: NOW - 0.2 * DAY_MS,
+    recurringPreferences: DIANA_PREFERENCES,
+    weekOverrides: {}
+  },
+  [MOCK_STUDENT_IDS.elena]: {
+    studentId: MOCK_STUDENT_IDS.elena,
+    status: 'pending',
+    recurringPreferences: [],
+    weekOverrides: {}
+  },
+  [MOCK_STUDENT_IDS.flavia]: {
+    studentId: MOCK_STUDENT_IDS.flavia,
+    status: 'submitted',
+    submittedAt: NOW - 0.1 * DAY_MS,
+    recurringPreferences: FLAVIA_PREFERENCES,
+    weekOverrides: {}
+  },
+  [MOCK_STUDENT_IDS.george]: {
+    studentId: MOCK_STUDENT_IDS.george,
+    status: 'pending',
+    recurringPreferences: [],
+    weekOverrides: {}
   }
 }
 
@@ -325,98 +447,10 @@ export const MOCK_SUBMISSIONS_BY_ROUND: Record<string, Record<string, StudentSub
 
 // ─── Schedule suggestions ─────────────────────────────────────────────────────
 //
-// Round 2's three strategies, waiting for the teacher to pick one.
-//
-// Every score is LOOKED UP from the teacher's availability and the student's own submission
-// rather than written by hand. Hand-written scores drifted away from the blocks they were
-// supposed to come from: an earlier version scored Chris's Wednesday slots 6 for a teacher
-// who marks Wednesday as preferred, and claimed Chris was unschedulable while two hours of
-// the teacher's Monday block sat empty.
-//
-// The placements also respect the constraints the real algorithm will enforce:
-// MIN_BREAK_MINUTES between lessons on a day, and each student's enrolled cadence —
-// Barbara is bi-weekly, so she appears every other Monday, not every Monday.
-
-const SUGGESTION_MONDAYS = ['2026-10-19', '2026-10-26', '2026-11-02']
-const SUGGESTION_TUESDAYS = ['2026-10-20', '2026-10-27', '2026-11-03']
-const SUGGESTION_WEDNESDAYS = ['2026-10-21', '2026-10-28', '2026-11-04']
-const BARBARA_MONDAYS = ['2026-10-19', '2026-11-02'] // bi-weekly, per her enrollment
-
-// The score a block list gives one specific date and time, or 0 when nothing covers it.
-function scoreAt(blocks: AvailabilityBlock[], date: string, startTime: string): number {
-  return scoreForDayTime(blocks, toDayOfWeek(date), startTime)
-}
-
-function suggest(
-  studentId: string,
-  dates: string[],
-  startTime: string,
-  endTime: string
-): SuggestedSlot[] {
-  const studentBlocks = MOCK_SUBMISSIONS_FALL_R2[studentId].recurringPreferences
-  const teacherBlocks = MOCK_TEACHER_AVAILABILITY.weeklyTemplate.blocks
-  return dates.map((date) => {
-    const teacherScore = scoreAt(teacherBlocks, date, startTime)
-    const studentScore = scoreAt(studentBlocks, date, startTime)
-    return {
-      studentId,
-      date,
-      startTime,
-      endTime,
-      teacherScore,
-      studentScore,
-      combinedScore: computeCombinedScore(teacherScore, studentScore)
-    }
-  })
-}
-
-const totalOf = (slots: SuggestedSlot[]): number =>
-  Math.round(slots.reduce((sum, slot) => sum + slot.combinedScore, 0) * 10) / 10
-
-// Ana and Barbara want exactly what the teacher wants, so every strategy places them the same
-// way. Chris is where the strategies part company.
-const ANA_SLOTS = suggest(MOCK_STUDENT_IDS.ana, SUGGESTION_MONDAYS, '09:00', '09:45')
-const BARBARA_SLOTS = suggest(MOCK_STUDENT_IDS.barbara, BARBARA_MONDAYS, '10:00', '11:00')
-const SETTLED_SLOTS = [...ANA_SLOTS, ...BARBARA_SLOTS]
-
-// Teacher first: Monday is one of the teacher's preferred days, and 11:15 clears Barbara's
-// 11:00 finish by more than MIN_BREAK_MINUTES. Chris only tolerates it.
-const TEACHER_BEST_SLOTS = [
-  ...SETTLED_SLOTS,
-  ...suggest(MOCK_STUDENT_IDS.chris, SUGGESTION_MONDAYS, '11:15', '12:00')
-]
-
-// Students first: Chris gets the Tuesday he asked for, which costs the teacher a day they
-// rate merely "available".
-const STUDENT_BEST_SLOTS = [
-  ...SETTLED_SLOTS,
-  ...suggest(MOCK_STUDENT_IDS.chris, SUGGESTION_TUESDAYS, '10:00', '10:45')
-]
-
-// Balanced: Wednesday is preferred by the teacher *and* liked better by Chris than Monday, so
-// it beats both of the above on the combined score.
-const BALANCED_SLOTS = [
-  ...SETTLED_SLOTS,
-  ...suggest(MOCK_STUDENT_IDS.chris, SUGGESTION_WEDNESDAYS, '09:00', '09:45')
-]
-
-export const MOCK_SUGGESTIONS: Record<string, ScheduleSuggestion> = {
-  teacher_best: {
-    slots: TEACHER_BEST_SLOTS,
-    unscheduledStudentIds: [],
-    totalScore: totalOf(TEACHER_BEST_SLOTS)
-  },
-  student_best: {
-    slots: STUDENT_BEST_SLOTS,
-    unscheduledStudentIds: [],
-    totalScore: totalOf(STUDENT_BEST_SLOTS)
-  },
-  balanced: {
-    slots: BALANCED_SLOTS,
-    unscheduledStudentIds: [],
-    totalScore: totalOf(BALANCED_SLOTS)
-  }
-}
+// There is no suggestion fixture any more. The round page runs the real solver over the
+// teacher's availability and the round's submissions, so what the cards show is what the
+// algorithm produces. The hand-written fixture that used to live here kept drifting out of
+// agreement with the data it was supposed to be derived from.
 
 // ─── Lesson instances (Spring 2026 active semester) ───────────────────────────
 

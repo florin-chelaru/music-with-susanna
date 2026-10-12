@@ -23,19 +23,40 @@ import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleP
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
-import { RoundStatus, SchedulingRound, SuggestionStrategy } from '../../util/scheduling'
+import {
+  computeCombinedScore,
+  RoundStatus,
+  SchedulingRound,
+  scoreForDayTime,
+  SlotScores,
+  SlotTime
+} from '../../util/scheduling'
+import {
+  generateAllSuggestions,
+  getEffectiveBlocksForDate,
+  pickSpread,
+  SchedulingInput,
+  WeightedSuggestion
+} from '../../util/schedulingAlgorithm'
 import EditableScheduleCalendar, {
-  EditableSlot
+  EditableSlot,
+  UnscheduledLesson
 } from '../../Components/scheduling/EditableScheduleCalendar'
 import SuggestedScheduleCard from '../../Components/scheduling/SuggestedScheduleCard'
-import { formatCountdown, parseDate } from '../../util/schedulingDates'
+import {
+  formatCountdown,
+  formatMinutes,
+  parseDate,
+  parseMinutes,
+  toDayOfWeek
+} from '../../util/schedulingDates'
 import { useNow } from '../../util/useNow'
 import {
   enrollmentsForSemester,
   MOCK_SEMESTERS,
   MOCK_STUDENTS,
   MOCK_SUBMISSIONS_BY_ROUND,
-  MOCK_SUGGESTIONS,
+  MOCK_TEACHER_AVAILABILITY,
   roundsForSemester
 } from '../../data/schedulingMocks'
 
@@ -160,9 +181,6 @@ export function roundStatusLabel(status: RoundStatus, t: SchedulingRoundPageText
   }
 }
 
-// Order shown to the teacher: own preference first, then the students', then the compromise.
-const STRATEGY_ORDER: SuggestionStrategy[] = ['teacher_best', 'student_best', 'balanced']
-
 // Open the editor on the week the schedule starts, not on today — the suggestion may begin
 // after the round's deadline, so today's week can be empty.
 function firstSlotDate(slots: EditableSlot[]): Date | undefined {
@@ -204,16 +222,83 @@ export default function SchedulingRoundPage() {
   const round = roundsForSemester(semesterId).find((r) => r.id === roundId)
   const enrollments = enrollmentsForSemester(semesterId)
 
-  const [selectedStrategy, setSelectedStrategy] = useState<SuggestionStrategy | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+
+  // TODO (Step O): run this when the teacher closes the round and persist the result, rather
+  // than recomputing on every render of a round that is already `suggested`.
+  const suggestions: WeightedSuggestion[] = useMemo(() => {
+    if (!semester || !round) return []
+    const schedulingInput: SchedulingInput = {
+      semesterStart: semester.startDate,
+      semesterEnd: semester.endDate,
+      teacherAvailability: MOCK_TEACHER_AVAILABILITY,
+      enrollments: enrollmentsForSemester(semester.id),
+      submissions: MOCK_SUBMISSIONS_BY_ROUND[round.id] ?? {}
+    }
+    return pickSpread(generateAllSuggestions(schedulingInput))
+  }, [semester, round])
   // Set once a suggestion is chosen. The teacher edits this copy, never the suggestion itself,
   // so backing out and picking a different strategy starts clean.
   const [editedSlots, setEditedSlots] = useState<EditableSlot[] | null>(null)
   const [confirmed, setConfirmed] = useState(false)
 
-  function handleUseSuggestion(strategy: SuggestionStrategy) {
-    setSelectedStrategy(strategy)
-    setEditedSlots(MOCK_SUGGESTIONS[strategy].slots.map((slot) => ({ ...slot })))
+  function handleUseSuggestion(index: number) {
+    setSelectedIndex(index)
+    setEditedSlots(suggestions[index].slots.map((slot) => ({ ...slot })))
   }
+
+  const submissions = round ? MOCK_SUBMISSIONS_BY_ROUND[round.id] ?? {} : {}
+
+  // What a time is worth to each side, for a lesson the teacher places or moves by hand. The
+  // solver scores its own output; anything the teacher does afterwards has to be scored here,
+  // because the calendar holds no availability data.
+  const scoreAt = (studentId: string, time: SlotTime): SlotScores => {
+    const dayOfWeek = toDayOfWeek(time.date)
+    const teacherBlocks = getEffectiveBlocksForDate(
+      MOCK_TEACHER_AVAILABILITY.weeklyTemplate.blocks,
+      MOCK_TEACHER_AVAILABILITY.weekOverrides,
+      time.date
+    )
+    const submission = submissions[studentId]
+    const studentBlocks = submission
+      ? getEffectiveBlocksForDate(
+          submission.recurringPreferences,
+          submission.weekOverrides,
+          time.date
+        )
+      : []
+    const teacherScore = scoreForDayTime(teacherBlocks, dayOfWeek, time.startTime)
+    const studentScore = scoreForDayTime(studentBlocks, dayOfWeek, time.startTime)
+    const weight = selectedIndex !== null ? suggestions[selectedIndex].weightFrom : undefined
+    return {
+      teacherScore,
+      studentScore,
+      combinedScore: computeCombinedScore(teacherScore, studentScore, weight)
+    }
+  }
+
+  // One entry per lesson the student is owed but has no time for: what the solver could not
+  // place, less whatever the teacher has already placed by hand.
+  const unscheduled: UnscheduledLesson[] = useMemo(() => {
+    if (selectedIndex === null || !editedSlots || !semester) return []
+    const missed = suggestions[selectedIndex].missedLessonsByStudent
+    return Object.entries(missed).flatMap(([studentId, count]) => {
+      const placedByHand = editedSlots.filter(
+        (slot) => slot.studentId === studentId && slot.added === true
+      ).length
+      const enrollment = enrollments.find((e) => e.studentId === studentId)
+      const minutes = enrollment?.lessonDurationMinutes ?? 45
+      // The picker opens on the student's existing lessons where there are any, so the teacher
+      // only has to change the day rather than build a time from scratch.
+      const existing = editedSlots.find((slot) => slot.studentId === studentId)
+      const seed: SlotTime = {
+        date: existing?.date ?? semester.startDate,
+        startTime: existing?.startTime ?? '09:00',
+        endTime: existing?.endTime ?? formatMinutes(parseMinutes('09:00') + minutes)
+      }
+      return Array.from({ length: Math.max(0, count - placedByHand) }, () => ({ studentId, seed }))
+    })
+  }, [selectedIndex, editedSlots, suggestions, semester, enrollments])
 
   const now = useNow()
 
@@ -303,7 +388,7 @@ export default function SchedulingRoundPage() {
                   size="small"
                   onClick={() => {
                     setEditedSlots(null)
-                    setSelectedStrategy(null)
+                    setSelectedIndex(null)
                   }}>
                   {t.chooseDifferent}
                 </Button>
@@ -317,6 +402,8 @@ export default function SchedulingRoundPage() {
                 students={MOCK_STUDENTS}
                 onChange={setEditedSlots}
                 defaultDate={firstSlotDate(editedSlots)}
+                unscheduled={unscheduled}
+                scoreAt={scoreAt}
               />
 
               <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
@@ -341,14 +428,17 @@ export default function SchedulingRoundPage() {
                   gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
                   mb: 3
                 }}>
-                {STRATEGY_ORDER.map((strategy) => (
+                {suggestions.map((suggestion, index) => (
                   <SuggestedScheduleCard
-                    key={strategy}
-                    strategy={strategy}
-                    suggestion={MOCK_SUGGESTIONS[strategy]}
+                    key={`${suggestion.weightFrom}-${suggestion.weightTo}`}
+                    weightFrom={suggestion.weightFrom}
+                    weightTo={suggestion.weightTo}
+                    suggestion={suggestion}
                     students={MOCK_STUDENTS}
-                    selected={selectedStrategy === strategy}
-                    onUse={handleUseSuggestion}
+                    selected={selectedIndex === index}
+                    onUse={() => {
+                      handleUseSuggestion(index)
+                    }}
                   />
                 ))}
               </Box>

@@ -9,7 +9,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { localizer } from '../../util/calendarLocalizer'
-import { calendarShellSx, timeGridSx, toolbarSx } from './calendarStyles'
+import { calendarShellSx, monthAgendaSx, timeGridSx, toolbarSx } from './calendarStyles'
 import { LessonInstance, LessonStatus } from '../../util/scheduling'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
@@ -220,28 +220,15 @@ export default function LessonCalendar({
 
   // ── Styling ──────────────────────────────────────────────────────────────────
 
-  const calendarSx = useMemo(() => {
-    const d = theme.palette.divider
-    return {
-      ...calendarShellSx(theme),
+  const calendarSx = useMemo(
+    () => ({
+      ...calendarShellSx(theme, { minHeight: 520 }),
       ...timeGridSx(theme),
-      ...toolbarSx(theme),
-
-      // Month and agenda views, which the other calendars do not use.
-      '& .rbc-calendar': { ...calendarShellSx(theme)['& .rbc-calendar'], minHeight: 520 },
-      '& .rbc-month-view, & .rbc-agenda-view': {
-        border: `1px solid ${d}`,
-        borderRadius: '6px',
-        overflow: 'hidden'
-      },
-      '& .rbc-month-row + .rbc-month-row': { borderTop: `1px solid ${d}` },
-      '& .rbc-day-bg + .rbc-day-bg': { borderLeft: `1px solid ${d}` },
-      '& .rbc-off-range-bg': { backgroundColor: theme.palette.action.hover },
-      '& .rbc-show-more': { color: theme.palette.primary.main, fontSize: '0.6875rem' },
-      '& .rbc-agenda-view table': { borderColor: d },
-      '& .rbc-agenda-view table tbody > tr > td': { borderColor: d }
-    }
-  }, [theme])
+      ...monthAgendaSx(theme),
+      ...toolbarSx(theme)
+    }),
+    [theme]
+  )
 
   // ── Render ───────────────────────────────────────────────────────────────────
 

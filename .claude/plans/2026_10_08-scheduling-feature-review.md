@@ -439,3 +439,50 @@ Still open before this branch merges to `main`:
 - `totalLessons` vs the frequency shorthand — needed by Step L/N, not before.
 
 Next: **Step H** — `SuggestedScheduleCard` and the round page's suggested state.
+
+### 2026-10-12 — Step L wiring, the edit tools, and the mock rebuild
+
+The round page now runs the real solver instead of hand-written fixtures. Everything below came
+out of reviewing what it actually produced.
+
+**The score display was wrong three times before it was right.** A percentage, then a raw sum
+("352 out of what?"), then a 0–100 figure — all of them totals, and a total is optimised at its
+own card's teacher weight, so each card flatters its own objective and none can be compared with
+another. Dropped entirely. The two per-side averages are the headline now, on the same 0–10 scale
+at every weight, and the per-student rows show each side's own score rather than the blend.
+
+**The weight sweep no longer reaches 0 or 1.** At either end one side's score is multiplied by
+zero, leaving the solver nothing to break ties with: it would hand out an "available" slot where
+a "preferred" one scored identically for the favoured side. Clamped to [0.1, 0.9].
+
+**`unscheduledStudentIds` was counting the wrong thing.** It was a Set filled inside the per-week
+loop, so one week a student is away flagged them as entirely unschedulable — Barbara showed a
+full row of scores and a "could not be scheduled" warning at once. Replaced by
+`missedLessonsByStudent`, which distinguishes "short one lesson" from "placed nowhere at all".
+
+**Adding students does not by itself add suggestions.** Five students produced three schedules,
+because a student's crossover weight is fixed by the labels on their options, and Chris, Diana
+and Elena all traded a 10/6 slot against a 6/10 one — `10 − 4w = 6 + 4w` crosses at 0.5 for all
+of them, so one hinge however much they compete. Flavia (prefers the teacher's last-resort
+Saturday, crossing at 1/3) and George (fallbacks that are real impositions, crossing at 2/3) were
+added to spread the crossovers. Seven students, five distinct schedules, 301 ms for the full
+sweep — the earlier worry about solver cost was unfounded.
+
+Also landed: month/week/agenda views on the round calendar (agenda has nothing to drag, which is
+why the context menu matters); revert-to-suggestion per lesson and in bulk, with `original`
+captured on the first move only; a Move/Schedule dialog; the unscheduled-lessons list; live
+satisfaction averages over the edited schedule; and score previews in the dialog. Moves and
+hand-placed lessons are rescored against their new time rather than carrying a stale number.
+
+Shared extractions: `monthAgendaSx` in `calendarStyles.ts`, `scoreDisplay.tsx`
+(`scoreColor`/`formatScore`/`ScoreChip`/`SatisfactionSummary`), `averageScore` and `SlotTime` /
+`SlotScores` in `util/scheduling.ts`.
+
+Running totals: **141 tests**, lint clean, typecheck clean.
+
+Next, and the reason to pause here: **picking a time is blind.** The Schedule and Move dialogs
+only tell you what a time is worth *after* you have chosen it, so finding a slot that suits the
+student means guessing and checking. The teacher should be able to see the candidate times — the
+overlap of their own availability with that student's — rather than probe for them one at a time.
+Options worth weighing: overlaying the student's availability on the calendar while a lesson is
+selected, offering a ranked list of free slots in the dialog, or both.

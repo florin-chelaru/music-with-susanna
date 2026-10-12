@@ -11,6 +11,7 @@ import {
   AvailabilityBlock,
   AvailabilityLabel,
   LABEL_SCORES,
+  SCHEDULING_CONFIG,
   StudentSubmission,
   weeklyQuota
 } from './scheduling'
@@ -144,7 +145,7 @@ describe('computeSchedule', () => {
     const data = input()
     const result = computeSchedule(data, generateAllCandidates(data), 0.5)
     expect(result.slots).toHaveLength(4) // two students × two weeks
-    expect(result.unscheduledStudentIds).toEqual([])
+    expect(result.missedLessonsByStudent).toEqual({})
   })
 
   // Both want the same three-hour window, so the solver has to separate them.
@@ -164,8 +165,26 @@ describe('computeSchedule', () => {
       }
     })
     const result = computeSchedule(data, generateAllCandidates(data), 0.5)
-    expect(result.unscheduledStudentIds).toContain('bob')
+    expect(result.missedLessonsByStudent.bob).toBe(2) // both of bob's lessons
+    expect(result.slots.some((s) => s.studentId === 'bob')).toBe(false)
     expect(result.slots.some((s) => s.studentId === 'ana')).toBe(true)
+  })
+
+  // Missing one week is not the same as being unschedulable. Counting a single bad week as
+  // "could not be scheduled" made a student who is away for one week of the term show a full
+  // set of scores and a cannot-schedule warning at the same time.
+  test('a student away for one week loses that lesson, not the whole term', () => {
+    const data = input({
+      submissions: {
+        ana: submission([block(MON, '09:00', '12:00', AvailabilityLabel.PREFERRED)]),
+        bob: submission([block(MON, '09:00', '12:00', AvailabilityLabel.PREFERRED)], {
+          '2026-01-12': { blocks: [] }
+        })
+      }
+    })
+    const result = computeSchedule(data, generateAllCandidates(data), 0.5)
+    expect(result.missedLessonsByStudent.bob).toBe(1)
+    expect(result.slots.filter((s) => s.studentId === 'bob')).toHaveLength(1)
   })
 
   test('a fully blocked week produces no lessons for it', () => {
@@ -229,8 +248,17 @@ describe('generateAllSuggestions', () => {
       expect(s.weightFrom).toBeLessThanOrEqual(s.weightTo)
     })
     const ascending = [...suggestions].reverse()
-    expect(ascending[0].weightFrom).toBe(0)
-    expect(ascending[ascending.length - 1].weightTo).toBe(1)
+    expect(ascending[0].weightFrom).toBe(SCHEDULING_CONFIG.WEIGHT_SWEEP_MIN)
+    expect(ascending[ascending.length - 1].weightTo).toBe(SCHEDULING_CONFIG.WEIGHT_SWEEP_MAX)
+  })
+
+  // Neither end of the sweep may zero out a side's score: with nothing to break ties on, the
+  // solver would give the unfavoured side an "available" slot where a "preferred" one was free.
+  test('the sweep never drops either side out of the formula', () => {
+    generateAllSuggestions(contested).forEach((s) => {
+      expect(s.weightFrom).toBeGreaterThan(0)
+      expect(s.weightTo).toBeLessThan(1)
+    })
   })
 
   test('the extremes genuinely differ', () => {

@@ -59,8 +59,21 @@ export interface PlacedSlot extends SuggestedSlot {
 
 export interface SchedulingResult {
   slots: PlacedSlot[]
-  /** Students with no feasible candidate at all — not merely a crowded week. */
-  unscheduledStudentIds: string[]
+  /**
+   * Lessons the solver could not place anywhere, counted per student.
+   *
+   * A week the student is away for costs them one lesson; it does not make them unschedulable.
+   * A student who misses every lesson is the genuinely unschedulable case, and a caller tells
+   * the two apart by whether that student has any slots.
+   */
+  missedLessonsByStudent: Record<string, number>
+  /**
+   * Raw sum of the placed lessons' scores, less the gap penalty.
+   *
+   * Only ever compared between runs at the same weight, to rank and deduplicate the sweep. Each
+   * suggestion is optimised at its own weight, so one card's total says nothing against
+   * another's and it is deliberately not shown — the per-side averages are.
+   */
   totalScore: number
 }
 
@@ -361,7 +374,7 @@ export function computeSchedule(
   )
 
   const placed: Array<Omit<PlacedSlot, 'seriesId'>> = []
-  const unscheduled = new Set<string>()
+  const missedLessonsByStudent: Record<string, number> = {}
 
   weeks.forEach((weekStart, weekIndex) => {
     // The first and last weeks of a semester are usually partial.
@@ -398,8 +411,8 @@ export function computeSchedule(
     })
 
     // Whatever the search could not fit is shown as a conflicted lesson rather than dropped —
-    // a problem the teacher can see and move is more useful than a student who vanished. Only
-    // a student with no candidate at all this week is genuinely unschedulable.
+    // a problem the teacher can see and move is more useful than a student who vanished. A week
+    // offering the student no candidate at all costs them that one lesson, counted below.
     const shortfall = new Map<string, number>()
     demands.forEach((studentId) => shortfall.set(studentId, (shortfall.get(studentId) ?? 0) + 1))
     placement.placed.forEach((candidate) =>
@@ -412,7 +425,7 @@ export function computeSchedule(
           .slice()
           .sort((a, b) => score(b, teacherWeight) - score(a, teacherWeight))[0]
         if (!fallback) {
-          unscheduled.add(studentId)
+          missedLessonsByStudent[studentId] = (missedLessonsByStudent[studentId] ?? 0) + 1
           continue
         }
         placed.push({
@@ -425,15 +438,11 @@ export function computeSchedule(
   })
 
   const slots = assignSeriesIds(placed)
-  return {
-    slots,
-    unscheduledStudentIds: [...unscheduled],
-    totalScore: computeTotalScore(slots)
-  }
+  return { slots, missedLessonsByStudent, totalScore: computeTotalScore(slots) }
 }
 
 /**
- * Every distinct schedule across the full range of teacher weights.
+ * Every distinct schedule the teacher-weight sweep can reach.
  *
  * The outcome is piecewise-constant in the weight — there are finitely many candidate
  * assignments — so a slider would sit motionless through wide stretches and three fixed
@@ -447,7 +456,11 @@ export function generateAllSuggestions(input: SchedulingInput): WeightedSuggesti
   const suggestions: WeightedSuggestion[] = []
   let previousSignature: string | null = null
 
-  for (let weight = 0; weight <= 1 + 1e-9; weight += step) {
+  for (
+    let weight = SCHEDULING_CONFIG.WEIGHT_SWEEP_MIN;
+    weight <= SCHEDULING_CONFIG.WEIGHT_SWEEP_MAX + 1e-9;
+    weight += step
+  ) {
     const rounded = Math.round(weight * 100) / 100
     const result = computeSchedule(input, candidates, rounded)
     const signature = result.slots

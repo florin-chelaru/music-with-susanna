@@ -1,48 +1,121 @@
-import { Alert, Box, Collapse, useTheme } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Button,
+  Collapse,
+  Divider,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Stack,
+  Typography,
+  useTheme
+} from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import ScheduleIcon from '@mui/icons-material/Schedule'
+import UndoIcon from '@mui/icons-material/Undo'
 import { alpha } from '@mui/material/styles'
 import dayjs from 'dayjs'
-import { useContext, useMemo, useState } from 'react'
-import { Calendar, Views } from 'react-big-calendar'
+import { SyntheticEvent, useContext, useMemo, useState } from 'react'
+import { Calendar, View, Views } from 'react-big-calendar'
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { localizer } from '../../util/calendarLocalizer'
-import { calendarShellSx, timeGridSx, toolbarSx } from './calendarStyles'
+import { calendarShellSx, monthAgendaSx, timeGridSx, toolbarSx } from './calendarStyles'
 import {
-  AvailabilityLabel,
-  LABEL_SCORES,
   SCHEDULING_CONFIG,
+  SlotScores,
+  SlotTime,
   SuggestedSlot,
   findConflict
 } from '../../util/scheduling'
 import { formatDate, parseDate } from '../../util/schedulingDates'
+import MoveLessonDialog from './MoveLessonDialog'
+import { SatisfactionSummary, scoreColor } from './scoreDisplay'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
 interface EditableScheduleCalendarTexts {
   conflictWith: string
+  month: string
   week: string
+  agenda: string
   today: string
   back: string
   next: string
+  date: string
+  time: string
+  lesson: string
+  noLessons: string
+  changedOne: string
+  changedMany: string
+  resetAll: string
+  moveTo: string
+  revertToSuggestion: string
+  removeLesson: string
+  needTimeOne: string
+  needTimeMany: string
+  scheduleIt: string
+  averages: string
+  satisfactionYou: string
+  satisfactionStudents: string
 }
 
 const EN_US: EditableScheduleCalendarTexts = {
   conflictWith: 'That time overlaps {name}.',
+  month: 'Month',
   week: 'Week',
+  agenda: 'Agenda',
   today: 'Today',
   back: 'Back',
-  next: 'Next'
+  next: 'Next',
+  date: 'Date',
+  time: 'Time',
+  lesson: 'Lesson',
+  noLessons: 'No lessons in this range.',
+  changedOne: '1 lesson moved',
+  changedMany: '{n} lessons moved',
+  resetAll: 'Undo all',
+  moveTo: 'Move to…',
+  revertToSuggestion: 'Revert to suggestion',
+  removeLesson: 'Remove this lesson',
+  needTimeOne: 'One lesson still needs a time',
+  needTimeMany: '{n} lessons still need a time',
+  scheduleIt: 'Schedule',
+  averages: 'Average satisfaction, as edited',
+  satisfactionYou: 'You',
+  satisfactionStudents: 'Your students'
 }
 
 const RO_RO: EditableScheduleCalendarTexts = {
   conflictWith: 'Ora se suprapune cu {name}.',
+  month: 'Lună',
   week: 'Săptămână',
+  agenda: 'Agendă',
   today: 'Astăzi',
   back: 'Înapoi',
-  next: 'Înainte'
+  next: 'Înainte',
+  date: 'Data',
+  time: 'Ora',
+  lesson: 'Lecție',
+  noLessons: 'Nicio lecție în acest interval.',
+  changedOne: 'O lecție mutată',
+  changedMany: '{n} lecții mutate',
+  resetAll: 'Anulează tot',
+  moveTo: 'Mută la…',
+  revertToSuggestion: 'Revino la propunere',
+  removeLesson: 'Șterge lecția',
+  needTimeOne: 'O lecție așteaptă o oră',
+  needTimeMany: '{n} lecții așteaptă o oră',
+  scheduleIt: 'Programează',
+  averages: 'Satisfacție medie, după modificări',
+  satisfactionYou: 'Tu',
+  satisfactionStudents: 'Elevii tăi'
 }
 
 const TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -58,9 +131,40 @@ const TEXTS = new Map<SupportedLocale, LocalizedData>([
  * `moved` records the override so Step O can tell a hand-placed lesson from a generated one.
  * The score still describes the slot's ORIGINAL time — moving a lesson does not currently
  * recompute it against the teacher's and student's availability at the new time.
+ *
+ * `original` keeps where the solver put it, captured on the FIRST move and never overwritten,
+ * so three drags in a row still revert to the suggestion rather than to the second drag.
+ *
+ * `added` marks a lesson the teacher placed by hand, which the solver never proposed. It has no
+ * suggestion to revert to, so it is removed rather than reverted.
  */
 export interface EditableSlot extends SuggestedSlot {
   moved?: boolean
+  original?: SlotTime
+  added?: boolean
+}
+
+/** A lesson the student is owed that has no time yet. */
+export interface UnscheduledLesson {
+  studentId: string
+  /** Where the picker opens, and the length the lesson will have. */
+  seed: SlotTime
+}
+
+/**
+ * Puts a slot back where the solver placed it.
+ *
+ * Dropping `original` matters as much as restoring the times: its absence is what marks the
+ * slot as untouched again, for the counter and for the faded styling.
+ */
+function reverted(slot: EditableSlot): EditableSlot {
+  if (!slot.original) return slot
+  const { original, ...rest } = slot
+  return { ...rest, ...original, moved: false }
+}
+
+function sameTime(a: SlotTime, b: SlotTime): boolean {
+  return a.date === b.date && a.startTime === b.startTime && a.endTime === b.endTime
 }
 
 interface SlotEvent {
@@ -76,6 +180,14 @@ export interface EditableScheduleCalendarProps {
   students: Record<string, { name: string }>
   onChange: (slots: EditableSlot[]) => void
   defaultDate?: Date
+  /** Lessons the solver could not place and the teacher has not placed yet. */
+  unscheduled?: UnscheduledLesson[]
+  /**
+   * Rates a time for a student. The calendar holds no availability of its own, so placing or
+   * moving a lesson asks the caller what the new time is worth — without this a hand-placed
+   * lesson would wear a score nobody computed.
+   */
+  scoreAt?: (studentId: string, time: SlotTime) => SlotScores
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,7 +202,9 @@ export default function EditableScheduleCalendar({
   slots,
   students,
   onChange,
-  defaultDate
+  defaultDate,
+  unscheduled = [],
+  scoreAt
 }: EditableScheduleCalendarProps) {
   const theme = useTheme()
   const localeManager = useContext<LocaleHandler>(LocaleContext)
@@ -103,8 +217,35 @@ export default function EditableScheduleCalendar({
   const dayjsLocale = isRo ? 'ro' : 'en'
   dayjs.locale(dayjsLocale)
 
+  // Month first, matching the lesson calendar. A term is three or four months long, and
+  // stepping through it a week at a time was the only way to see what the solver produced.
+  const [view, setView] = useState<View>(Views.MONTH)
   const [date, setDate] = useState<Date>(defaultDate ?? new Date())
   const [error, setError] = useState<string | null>(null)
+  const [selected, setSelected] = useState<{ index: number; anchor: HTMLElement } | null>(null)
+  // The lesson the Move dialog is editing, kept apart from `selected` so closing the menu does
+  // not close the dialog it opened.
+  const [moving, setMoving] = useState<number | null>(null)
+  const [moveError, setMoveError] = useState<string | null>(null)
+  // The outstanding lesson being given a time, as an index into `unscheduled`.
+  const [scheduling, setScheduling] = useState<number | null>(null)
+
+  const messages = useMemo(
+    () => ({
+      month: t.month,
+      week: t.week,
+      day: t.lesson,
+      agenda: t.agenda,
+      today: t.today,
+      previous: t.back,
+      next: t.next,
+      date: t.date,
+      time: t.time,
+      event: t.lesson,
+      noEventsInRange: t.noLessons
+    }),
+    [t]
+  )
 
   const events: SlotEvent[] = useMemo(
     () =>
@@ -123,24 +264,14 @@ export default function EditableScheduleCalendar({
     [slots, students]
   )
 
-  // Score colours match the availability labels, so a number reads the same way everywhere.
-  function scoreColor(score: number): string {
-    if (score >= LABEL_SCORES[AvailabilityLabel.PREFERRED] - 1) return theme.palette.success.main
-    if (score >= LABEL_SCORES[AvailabilityLabel.AVAILABLE]) return theme.palette.primary.main
-    return theme.palette.warning.main
-  }
-
-  // A moved lesson keeps its original score, which no longer describes where it now sits, so
-  // it is drawn outlined and neutral rather than wearing a colour it has not earned.
   // react-big-calendar types this callback against its own Event, so the concrete event type
   // is recovered by a cast — the same approach AvailabilityCalendar uses.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const eventPropGetter = (raw: any) => {
     const event = raw as SlotEvent
-    const color = scoreColor(event.slot.combinedScore)
-    // A moved lesson keeps its colour but fades: its score describes where it used to sit,
-    // so the colour is still indicative rather than exact. Fading says "you changed this"
-    // without dropping the colour that makes the grid readable at a glance.
+    const color = scoreColor(theme, event.slot.combinedScore)
+    // The colour is accurate — a move rescores the lesson against its new time. The fade is
+    // purely "you changed this", so the teacher can pick their own edits out of the grid.
     const moved = event.slot.moved === true
     return {
       style: {
@@ -158,22 +289,104 @@ export default function EditableScheduleCalendar({
   // MIN_BREAK_MINUTES is passed as 0 on purpose: the break is a constraint for the algorithm
   // to respect when it generates a schedule, not a rule to impose on the teacher. Dropping
   // one lesson immediately after another is a legitimate thing to want.
-  function applyMove(index: number, start: Date, end: Date) {
-    const candidate = {
-      date: formatDate(start),
-      startTime: timeOf(start),
-      endTime: timeOf(end)
-    }
+  const nameOf = (studentId: string): string => students[studentId]?.name ?? studentId
+
+  function conflictMessage(index: number, candidate: SlotTime): string | null {
     const others = slots.filter((_, i) => i !== index)
     const clash = findConflict(candidate, others, 0)
+    return clash ? t.conflictWith.replace('{name}', nameOf(clash.studentId)) : null
+  }
+
+  function applyMove(index: number, candidate: SlotTime) {
+    const clash = conflictMessage(index, candidate)
     if (clash) {
-      const name = students[clash.studentId]?.name ?? clash.studentId
-      setError(t.conflictWith.replace('{name}', name))
+      setError(clash)
       return
     }
     setError(null)
-    onChange(slots.map((slot, i) => (i === index ? { ...slot, ...candidate, moved: true } : slot)))
+
+    const slot = slots[index]
+    const original = slot.original ?? {
+      date: slot.date,
+      startTime: slot.startTime,
+      endTime: slot.endTime
+    }
+    // A moved lesson is worth what its NEW time is worth. Carrying the old score over meant the
+    // colour described where the lesson used to be, which is why moved lessons were faded out
+    // rather than recoloured.
+    const scores = scoreAt?.(slot.studentId, candidate)
+    onChange(
+      slots.map((current, i) => {
+        if (i !== index) return current
+        // Dragging a lesson back onto its suggested time is an undo, not a third edit, so it
+        // clears the marker rather than recording a move to where it already belonged.
+        if (sameTime(original, candidate)) {
+          return reverted({ ...current, original, ...scoreAt?.(current.studentId, original) })
+        }
+        return { ...current, ...candidate, ...scores, moved: true, original }
+      })
+    )
   }
+
+  // Gives an outstanding lesson a time, appending it as a new slot the solver never proposed.
+  function scheduleUnplaced(entry: UnscheduledLesson, candidate: SlotTime) {
+    const clash = findConflict(candidate, slots, 0)
+    if (clash) {
+      setMoveError(t.conflictWith.replace('{name}', nameOf(clash.studentId)))
+      return
+    }
+    setMoveError(null)
+    setScheduling(null)
+    const scores = scoreAt?.(entry.studentId, candidate) ?? {
+      teacherScore: 0,
+      studentScore: 0,
+      combinedScore: 0
+    }
+    onChange([...slots, { studentId: entry.studentId, ...candidate, ...scores, added: true }])
+  }
+
+  function removeSlot(index: number) {
+    setSelected(null)
+    onChange(slots.filter((_, i) => i !== index))
+  }
+
+  function revertOne(index: number) {
+    setError(null)
+    setSelected(null)
+    onChange(slots.map((slot, i) => (i === index ? reverted(slot) : slot)))
+  }
+
+  function revertAll() {
+    setError(null)
+    setSelected(null)
+    onChange(slots.map(reverted))
+  }
+
+  // "Mon, 12 Oct, 10:00–10:45". Short enough to sit on one line next to a label.
+  function formatSlotTime(time: SlotTime): string {
+    const day = parseDate(time.date).locale(dayjsLocale).format('ddd, D MMM')
+    return `${day}, ${time.startTime}–${time.endTime}`
+  }
+
+  // Picking a time by hand reports a clash inside the dialog rather than behind it, so the
+  // teacher can try another time without reopening anything.
+  function handleMoveConfirm(candidate: SlotTime) {
+    if (moving === null) return
+    const clash = conflictMessage(moving, candidate)
+    if (clash) {
+      setMoveError(clash)
+      return
+    }
+    applyMove(moving, candidate)
+    setMoving(null)
+    setMoveError(null)
+  }
+
+  const movedCount = slots.filter((slot) => slot.moved === true).length
+  const selectedEvent = selected ? events[selected.index] : null
+  const selectedOriginal = selectedEvent?.slot.original
+  const movingEvent = moving !== null ? events[moving] : null
+  const schedulingEntry = scheduling !== null ? unscheduled[scheduling] : null
 
   // Drag and resize deliver the same shape. react-big-calendar types the argument against its
   // own Event, so the concrete type is recovered by a cast, and start/end are normalised since
@@ -185,11 +398,31 @@ export default function EditableScheduleCalendar({
       start: Date | string
       end: Date | string
     }
-    applyMove(event.index, new Date(start), new Date(end))
+    // A month cell has no time axis, so a drop there means "this day", nothing about the hour.
+    // Taking the dropped Date's time would move the lesson to wherever the cell happens to map
+    // to; keeping the slot's own times moves the day and leaves the hour alone.
+    if (view === Views.MONTH) {
+      applyMove(event.index, {
+        date: formatDate(new Date(start)),
+        startTime: event.slot.startTime,
+        endTime: event.slot.endTime
+      })
+      return
+    }
+    applyMove(event.index, {
+      date: formatDate(new Date(start)),
+      startTime: timeOf(new Date(start)),
+      endTime: timeOf(new Date(end))
+    })
   }
 
   const calendarSx = useMemo(
-    () => ({ ...calendarShellSx(theme), ...timeGridSx(theme), ...toolbarSx(theme) }),
+    () => ({
+      ...calendarShellSx(theme, { minHeight: 520 }),
+      ...timeGridSx(theme),
+      ...monthAgendaSx(theme),
+      ...toolbarSx(theme)
+    }),
     [theme]
   )
 
@@ -206,19 +439,80 @@ export default function EditableScheduleCalendar({
         </Alert>
       </Collapse>
 
+      {unscheduled.length > 0 && (
+        <Alert severity="warning" sx={{ mb: 1.5 }}>
+          <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+            {unscheduled.length === 1
+              ? t.needTimeOne
+              : t.needTimeMany.replace('{n}', String(unscheduled.length))}
+          </Typography>
+          <Stack spacing={0.5}>
+            {unscheduled.map((entry, index) => (
+              <Stack
+                key={`${entry.studentId}-${index}`}
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={2}>
+                <Typography variant="body2">{nameOf(entry.studentId)}</Typography>
+                <Button
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={() => {
+                    setScheduling(index)
+                    setMoveError(null)
+                  }}>
+                  {t.scheduleIt}
+                </Button>
+              </Stack>
+            ))}
+          </Stack>
+        </Alert>
+      )}
+
+      {/* Recomputed from the slots as they stand, so the figures answer "is my version better
+          or worse than what was suggested?" while the teacher is still editing. */}
+      <Stack
+        direction="row"
+        alignItems="flex-end"
+        justifyContent="space-between"
+        spacing={2}
+        sx={{ mb: 1.5 }}>
+        <SatisfactionSummary
+          slots={slots}
+          caption={t.averages}
+          teacherLabel={t.satisfactionYou}
+          studentLabel={t.satisfactionStudents}
+        />
+        <Collapse in={movedCount > 0}>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography variant="caption" color="text.secondary">
+              {movedCount === 1 ? t.changedOne : t.changedMany.replace('{n}', String(movedCount))}
+            </Typography>
+            <Button size="small" startIcon={<UndoIcon />} onClick={revertAll}>
+              {t.resetAll}
+            </Button>
+          </Stack>
+        </Collapse>
+      </Stack>
+
       <Box sx={calendarSx}>
         <DnDCalendar
           localizer={localizer}
           culture={dayjsLocale}
           key={dayjsLocale}
           events={events}
-          defaultView={Views.WEEK}
-          views={[Views.WEEK]}
+          views={[Views.MONTH, Views.WEEK, Views.AGENDA]}
+          view={view}
+          onView={(v: View) => {
+            setView(v)
+          }}
           date={date}
           onNavigate={(d: Date) => {
             setDate(d)
           }}
-          messages={{ week: t.week, today: t.today, previous: t.back, next: t.next }}
+          messages={messages}
+          popup
           step={SCHEDULING_CONFIG.SLOT_SNAP_MINUTES}
           timeslots={1}
           min={dayjs(date).hour(8).minute(0).second(0).toDate()}
@@ -227,9 +521,102 @@ export default function EditableScheduleCalendar({
           resizable
           onEventDrop={handleInteraction}
           onEventResize={handleInteraction}
+          // Typed against react-big-calendar's own Event, so the concrete type is recovered by
+          // a cast — the same approach the drag handlers above use.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onSelectEvent={(raw: any, e: SyntheticEvent<HTMLElement>) => {
+            setSelected({ index: (raw as SlotEvent).index, anchor: e.currentTarget })
+          }}
           eventPropGetter={eventPropGetter}
         />
       </Box>
+
+      {/* Every view reaches this menu, which is the only way to move a lesson from the agenda
+          — there is nothing to drag in a list. */}
+      <Menu
+        open={Boolean(selectedEvent)}
+        anchorEl={selected?.anchor ?? null}
+        onClose={() => {
+          setSelected(null)
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}>
+        <Box sx={{ px: 2, pb: 1 }}>
+          <Typography variant="subtitle2" fontWeight={600}>
+            {selectedEvent?.title}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {selectedEvent && formatSlotTime(selectedEvent.slot)}
+          </Typography>
+        </Box>
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            setMoving(selected?.index ?? null)
+            setMoveError(null)
+            setSelected(null)
+          }}>
+          <ListItemIcon>
+            <ScheduleIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>{t.moveTo}</ListItemText>
+        </MenuItem>
+        {selectedOriginal && selectedEvent && (
+          <MenuItem
+            onClick={() => {
+              revertOne(selectedEvent.index)
+            }}>
+            <ListItemIcon>
+              <UndoIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText
+              primary={t.revertToSuggestion}
+              secondary={formatSlotTime(selectedOriginal)}
+            />
+          </MenuItem>
+        )}
+        {/* A hand-placed lesson has no suggestion behind it, so removing is the only way back. */}
+        {selectedEvent?.slot.added === true && (
+          <MenuItem
+            onClick={() => {
+              removeSlot(selectedEvent.index)
+            }}>
+            <ListItemIcon>
+              <DeleteOutlineIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t.removeLesson}</ListItemText>
+          </MenuItem>
+        )}
+      </Menu>
+
+      <MoveLessonDialog
+        open={moving !== null}
+        studentName={movingEvent?.title ?? ''}
+        slot={movingEvent?.slot ?? null}
+        scoreAt={movingEvent ? (time) => scoreAt?.(movingEvent.slot.studentId, time) : undefined}
+        error={moveError}
+        onClose={() => {
+          setMoving(null)
+          setMoveError(null)
+        }}
+        onConfirm={handleMoveConfirm}
+      />
+
+      <MoveLessonDialog
+        open={scheduling !== null}
+        mode="schedule"
+        studentName={schedulingEntry ? nameOf(schedulingEntry.studentId) : ''}
+        slot={schedulingEntry?.seed ?? null}
+        scoreAt={schedulingEntry ? (time) => scoreAt?.(schedulingEntry.studentId, time) : undefined}
+        error={moveError}
+        onClose={() => {
+          setScheduling(null)
+          setMoveError(null)
+        }}
+        onConfirm={(time) => {
+          if (schedulingEntry) scheduleUnplaced(schedulingEntry, time)
+        }}
+      />
     </Box>
   )
 }

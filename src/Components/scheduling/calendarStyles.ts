@@ -6,10 +6,16 @@ import { Theme } from '@mui/material'
 // schedule — and each had grown its own copy of these rules, so they drifted apart visually.
 // The blocks below are composed with object spread, so their keys are kept disjoint: the
 // shell owns the container and the event chrome, the time grid owns everything inside a
-// week view, and the toolbar owns the navigation bar.
+// week view, the month/agenda block owns those two views, and the toolbar owns the
+// navigation bar.
 
-/** Container chrome, base typography, headers and events. Every calendar uses this. */
-export function calendarShellSx(theme: Theme) {
+/**
+ * Container chrome, base typography, headers and events. Every calendar uses this.
+ *
+ * `minHeight` keeps a month grid from collapsing when a month holds few lessons. It is a
+ * per-calendar layout choice rather than a shared constant, so each caller passes its own.
+ */
+export function calendarShellSx(theme: Theme, options: { minHeight?: number } = {}) {
   const d = theme.palette.divider
   const paper = theme.palette.background.paper
 
@@ -24,7 +30,8 @@ export function calendarShellSx(theme: Theme) {
       backgroundColor: paper,
       color: theme.palette.text.primary,
       fontFamily: theme.typography.fontFamily,
-      fontSize: '0.8125rem'
+      fontSize: '0.8125rem',
+      ...(options.minHeight !== undefined && { minHeight: options.minHeight })
     },
 
     '& .rbc-header': { border: 'none', backgroundColor: paper },
@@ -117,6 +124,25 @@ export function timeGridSx(theme: Theme) {
 
     // DnD drag ghost
     '& .rbc-addons-dnd-drag-preview': { opacity: 0.75, borderRadius: '4px' }
+  }
+}
+
+/** The month grid and the agenda table. Used by any calendar offering more than a week view. */
+export function monthAgendaSx(theme: Theme) {
+  const d = theme.palette.divider
+
+  return {
+    '& .rbc-month-view, & .rbc-agenda-view': {
+      border: `1px solid ${d}`,
+      borderRadius: '6px',
+      overflow: 'hidden'
+    },
+    '& .rbc-month-row + .rbc-month-row': { borderTop: `1px solid ${d}` },
+    '& .rbc-day-bg + .rbc-day-bg': { borderLeft: `1px solid ${d}` },
+    '& .rbc-off-range-bg': { backgroundColor: theme.palette.action.hover },
+    '& .rbc-show-more': { color: theme.palette.primary.main, fontSize: '0.6875rem' },
+    '& .rbc-agenda-view table': { borderColor: d },
+    '& .rbc-agenda-view table tbody > tr > td': { borderColor: d }
   }
 }
 

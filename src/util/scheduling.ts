@@ -28,7 +28,13 @@ export const SCHEDULING_CONFIG = {
   // answer because greedy is the first branch explored.
   MAX_SEARCH_NODES_PER_WEEK: 200000,
   // Granularity of the teacher-weight sweep. Finer finds narrower bands at linear cost.
-  WEIGHT_SWEEP_STEP: 0.1
+  WEIGHT_SWEEP_STEP: 0.1,
+  // The sweep never reaches 0 or 1. At either end one side's score drops out of the formula
+  // entirely, so the solver has nothing to break ties with and will hand out a merely-available
+  // slot where a preferred one scored the same for the favoured side. Keeping a tenth of the
+  // weight on the other side costs the favoured side almost nothing and stops that happening.
+  WEIGHT_SWEEP_MIN: 0.1,
+  WEIGHT_SWEEP_MAX: 0.9
 } as const
 
 // dayOfWeek: 0=Mon, 1=Tue, ..., 6=Sun (matches react-big-calendar with weekStartsOn:1)
@@ -108,11 +114,24 @@ export interface SuggestedSlot {
   combinedScore: number
 }
 
+/** When a lesson sits: the three fields a move or resize can change. */
+export type SlotTime = Pick<SuggestedSlot, 'date' | 'startTime' | 'endTime'>
+
+/** How well a time suits both sides. Recomputed whenever a lesson is placed by hand. */
+export type SlotScores = Pick<SuggestedSlot, 'teacherScore' | 'studentScore' | 'combinedScore'>
+
+/** Mean of a set of scores, 0 for an empty set rather than NaN. */
+export function averageScore(values: number[]): number {
+  return values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length)
+}
+
 export type SuggestionStrategy = 'teacher_best' | 'student_best' | 'balanced'
 
 export interface ScheduleSuggestion {
   slots: SuggestedSlot[]
-  unscheduledStudentIds: string[]
+  /** Lessons the solver could not place, per student. See SchedulingResult for the semantics. */
+  missedLessonsByStudent: Record<string, number>
+  /** Raw sum of the placed lessons' scores, less the gap penalty. Used to rank internally. */
   totalScore: number
 }
 
