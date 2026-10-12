@@ -34,7 +34,12 @@ export function calendarShellSx(theme: Theme) {
 
     // Events: reset library defaults; actual colours come from each eventPropGetter
     '& .rbc-event': {
-      border: 'none !important',
+      // No `!important` here on purpose. It would also override the inline border-left each
+      // calendar's eventPropGetter sets, so the 3 px accent bar the padding below makes room
+      // for never actually rendered. This rule is specific enough to beat the library's own
+      // `.rbc-event` border on its own, while still losing to an inline style — which is
+      // exactly the precedence we want.
+      border: 'none',
       borderRadius: '4px !important',
       // Extra left padding so text sits clear of the 3 px accent bar
       padding: '1px 6px 1px 8px !important',
