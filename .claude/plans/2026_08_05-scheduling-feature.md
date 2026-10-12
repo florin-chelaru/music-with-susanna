@@ -1,8 +1,16 @@
 # Scheduling Feature
 
-> Status: Implementation in progress — Steps A, B, C, D, and E complete.
+> Status: Implementation in progress — Steps A through I complete (all on mock data; no RTDB wiring yet).
 > Shared date helpers (`src/util/schedulingDates.ts`) landed 2026-10-08; this document was
 > corrected the same day (see the review linked below for what changed and why).
+>
+> Design review 2026-10-12 — decisions folded into the sections below:
+> one weighted formula swept across its parameter replaces the three fixed strategies, with the
+> distinct schedules shown as cards; per-week backtracking replaces the greedy pass
+> ([solver options](2026_10_12-scheduling-solver-options.md)); `totalLessons` is authoritative
+> with a three-way distribution control; dragging moves a whole series via `seriesId`; a
+> conflicts panel reports rather than blocks; week overrides are authoritative in both
+> directions; scores display as plain numbers; the submission deadline is enforced in rules.
 >
 > Review (2026-10-08): see [2026_10_08-scheduling-feature-review.md](./2026_10_08-scheduling-feature-review.md)
 > for the full findings and the progress log. The corrections it identified have been applied to
@@ -43,6 +51,11 @@ A round is one cycle of: teacher requests availability → students submit → s
 ### Availability
 
 Both teachers and students express availability as **free-form time blocks** on a weekly template, each labeled with a score tier. Availability is set per semester; the previous semester's template pre-populates the next one.
+
+**Week overrides are authoritative.** An override replaces the weekly template for that week
+in both directions — it can remove availability *or* add it. "I am not working that week, but
+I will make an exception for this one lesson" is a thing a teacher needs to express, so the
+empty-blocks-means-unavailable convention is a default, not the only meaning.
 
 **Score tiers:**
 
@@ -87,25 +100,145 @@ A student submits:
 1. **Recurring preferences** — at least `MIN_STUDENT_PREFERENCES` (e.g., 3) time windows (day + time range + label), at least `MIN_PREFERRED_PREFERENCES` labeled Preferred. These repeat every week as the baseline.
 2. **Week overrides** — per-week modifications. E.g., "Week of March 10: fully unavailable" or "Week of April 7: available Monday instead of Wednesday."
 
+### Lesson Distribution
+
+`totalLessons` on the enrollment is authoritative — the teacher types a number, and the
+algorithm fits that many lessons into the semester. The enrollment dialog defaults it to one
+per week and **shows the week count**, so a teacher wanting a different cadence can work it
+out.
+
+How those lessons spread across the weeks is a per-student choice, because one student may be
+building towards a recital while another ticks along steadily:
+
+| Mode | 15 lessons / 10 weeks | When a teacher picks it |
+|---|---|---|
+| **Even spread** (default) | `2 1 2 1 2 1 2 1 2 1` | Steady routine |
+| **More at the start** | `2 2 2 2 2 1 1 1 1 1` | Intensive opening — a new student catching up |
+| **More at the end** | `1 1 1 1 1 2 2 2 2 2` | Building towards a recital or exam |
+
+```
+even  → lesson i goes in week floor(i × weeks / total)
+start → every week gets floor(total / weeks); the first (total mod weeks) weeks get one extra
+end   → the same, reversed
+```
+
+Two things to know about the control:
+
+- **It does nothing when the lessons divide evenly.** A student with 15 lessons across 15
+  weeks gets the same result from all three. Show a one-line preview of the resulting pattern
+  under the control so it is visibly inert rather than apparently broken. Hiding a control
+  that reappears based on arithmetic is its own confusion.
+- **With fewer lessons than weeks the modes mean spread-versus-cluster, not doubles.** A
+  bi-weekly student with 8 lessons over 15 weeks gets every other week under "even", but
+  eight consecutive weeks and then silence under "more at the start". That is coherent — a
+  student finishing early — but it is not bi-weekly, and the preview is what stops a teacher
+  choosing it by accident.
+
+This replaces the `targetSpacing = semesterDays / totalLessons` heuristic and its `0.8`
+fudge factor. The quota per week is precomputed per student, and the solver fills it — the
+same computation that draws the preview, so the two cannot disagree.
+
 ### Schedule Suggestion
 
-After all students submit (or the deadline passes), the system generates **3 candidate schedules simultaneously**, one per optimization strategy:
+> Revised 2026-10-12. The original design had three hard-coded strategies with differently
+> shaped sort keys, and one of them could not work: with `TEACHER_WEIGHT = 0.7` and label
+> scores {2, 6, 10}, the largest student-score swing (`0.3 × 8 = 2.4`) is smaller than the
+> smallest gap between two teacher scores (`0.7 × 4 = 2.8`), so the student term could never
+> overturn a teacher-score difference. "Balanced" was `teacher_best` with a tiebreak.
 
-| Strategy | Objective | Candidate sort key |
-|---|---|---|
-| Best for Teacher | Maximize sum of teacher scores across all placed slots | `teacherScore` |
-| Best for Students | Maximize students placed in their Preferred slots | `studentScore` |
-| Balanced | Weighted combination of teacher and student scores | `combinedScore` |
+There is **one scoring formula with one parameter**, the teacher's weight `T`:
 
-The three sort keys must stay distinct. `combinedScore` *is* `teacherScore × 0.7 + studentScore × 0.3`, so if "Best for Students" also sorted by `combinedScore` it would be identical to Balanced and the teacher would be shown the same schedule twice.
+```
+if teacher_score == 0 or student_score == 0: combined = 0   (hard block)
+else: combined = T × teacher_score + (1 − T) × student_score
+```
 
-All three strategies place every student before optimizing anything else, scheduling the most constrained students first. This is a **greedy pass with no backtracking**: a student can end up unplaced because earlier picks consumed the slots they could have used, not only because no feasible slot ever existed. For Phase 1 cohort sizes (≤ 20 students) that is an accepted trade-off — see Open Questions. Either way, unplaced students are surfaced to the teacher.
+`T = 1` is purely the teacher's preference, `T = 0` purely the students', `T = 0.5` an even
+trade. Scores stay on the 0–10 scale at every weight, so a combined score always reads the
+same way.
 
-The teacher sees all three side-by-side, picks one as a starting point, edits manually, then confirms.
+**Generating the options.** Sweep `T` from 0 to 1 in steps of 0.1, run the solver at each,
+and **deduplicate the resulting schedules**. The outcome is piecewise-constant in `T` — there
+are finitely many candidate assignments, so the result jumps at thresholds and is identical
+in between — which means a slider would have dead zones and three fixed samples would be
+arbitrary. Sweeping and deduplicating yields the schedules that genuinely exist.
+
+**Choosing which to show.** Order the distinct schedules by weight band, most
+teacher-favouring first, so the row reads as a spectrum. Show at most **10**: always the
+first and the last, then an even spread of the ones between (e.g. 30 distinct → #1, #30, and
+every ~4th). Scroll rather than shrink. If the sweep produces more than 10, say so — a
+cohort whose schedule changes that many times across the range is genuinely contested, and
+that is information the teacher wants.
+
+Label each card with the weight range that produces it ("favours you — 0.6 to 1.0"), which
+teaches where the real decision boundaries are.
+
+**What each card displays** (plain numbers, not percentages):
+- the total combined score for the schedule,
+- the teacher's average score and the students' average score, so the trade-off the cards
+  exist to show is legible without decoding a single blended figure.
+
+Because each card is optimized at a different weight, its *own* objective value is not
+comparable with another card's. The teacher and student averages are, so those carry the
+comparison.
+
+**Cost.** The sweep multiplies solver work by ~11/3 compared with the original three
+strategies. If that proves too slow, two fallbacks, in order: run cheap feasibility
+backtracking across all weights and the expensive bound only on distinct survivors; or stop
+sampling uniformly and **binary-search the thresholds**, which finds exact boundaries in a
+logarithmic number of runs and removes the risk of a 0.1 step skipping a narrow band.
+
+Every weight places every student before optimizing anything else. A student who cannot be
+placed is not dropped silently — see Conflicts below.
+
+### Recurring Series
+
+The algorithm assigns specific dates, not a weekly template — that is what lets two bi-weekly
+students genuinely share one slot on alternating weeks. But the lessons it places for one
+recurring assignment still belong together, and the teacher edits them as a unit.
+
+So the algorithm stamps a **`seriesId`** on every slot it generates for one assignment.
+
+Inferring the grouping instead — say, by `(studentId, dayOfWeek, startTime)` — breaks twice:
+a student with two lessons a week has two series whose grouping key changes the moment one is
+dragged, and two of a student's series can legitimately land on the same weekday and time in
+different weeks, which is the alternating-weeks case the date-based model exists for.
+
+`seriesId` carries through to the `LessonInstance` records, so a confirmed schedule still
+knows which lessons recur together.
 
 ### Lesson Instance
 
 Once confirmed, the system generates individual `LessonInstance` records for every occurrence in the semester (e.g., 16 Wednesdays). Each has its own status and can be independently canceled, rescheduled, or marked complete.
+
+### Conflicts
+
+**The teacher is never blocked; they are told.** The minimum break, availability and the rest
+are constraints for the *algorithm* to respect when it generates a schedule. A teacher
+dragging a lesson may have a reason the model does not know about, so the editor refuses only
+a true overlap — two lessons at once is impossible, not merely undesirable — and reports
+everything else.
+
+A standing **conflicts panel** lists every problem in the current schedule, with an action per
+row:
+
+| Conflict | Fixed by |
+|---|---|
+| Affects one week (teacher away, student away that week) | Add a week override for that week, then scroll to it and highlight |
+| Affects every week (the weekly template disagrees) | Scroll to the weekly template and highlight |
+| Two lessons collide | Move one of them in the schedule editor |
+
+The panel renders in both the Availability tab and the schedule editor, because the two kinds
+of conflict are fixed in different places; each row's action navigates to whichever calendar
+can resolve it.
+
+Conflicts are **recomputed by the panel** from the schedule plus the availability, not carried
+as a field on the algorithm's output. That keeps the algorithm pure and the panel correct
+after any drag.
+
+Consequently the algorithm **emits a conflicted lesson and flags it** rather than dropping the
+student. Dropping becomes rare, which also removes a distortion in the card scores, where a
+strategy that scheduled fewer lessons could look better than one that scheduled everybody.
 
 ### Cancellation
 
@@ -189,8 +322,9 @@ Student-initiated writes that need field-level validation (cancellation requests
 
 /studentEnrollments/teachers/{teacherId}/semesters/{semesterId}/students/{studentId}
   lessonDurationMinutes: number
-  totalLessons: number              // total for the semester; UI derives from frequency shorthand
-                                    // (Every week / Every 2 weeks / Twice a week) + semester length
+  totalLessons: number              // authoritative. The dialog defaults it to one per week and
+                                    // shows the week count so the teacher can choose another number
+  distribution: "even" | "start" | "end"   // how the lessons spread across the weeks; default "even"
   cancellationWindowHours: number (optional — falls back to semester default)
 
 /schedulingRounds/teachers/{teacherId}/semesters/{semesterId}/rounds/{roundId}
@@ -667,23 +801,57 @@ function generateAllCandidates(input: SchedulingInput): CandidateSlot[] {
 
 `computeSchedule` (called 3 times): 20 weeks × 20 students × ~10 candidates per student per week × conflict check against ~10 same-day assignments → ~120,000 comparisons total across all 3 calls → **under 10ms**.
 
-### Assignment (per strategy)
+### Assignment (per weight)
 
 ```typescript
 function computeSchedule(
   input: SchedulingInput,
-  candidates: CandidateSlot[],   // pre-generated; shared across all 3 strategies
-  strategy: SuggestionStrategy
+  candidates: CandidateSlot[],   // pre-generated once; shared across every weight
+  teacherWeight: number          // 0 … 1; combined = T × teacher + (1 − T) × student
 ): SchedulingResult
 
-function generateAllSuggestions(
-  input: SchedulingInput
-): Record<SuggestionStrategy, SchedulingResult>
+// Sweeps the weight, deduplicates the resulting schedules and returns the distinct ones,
+// each tagged with the weight range that produces it.
+function generateAllSuggestions(input: SchedulingInput): WeightedSuggestion[]
 ```
 
-Candidates are generated once and passed into all three `computeSchedule` calls.
+Candidates are generated once and reused at every weight.
 
-**`computeSchedule` — week-by-week greedy:**
+**Who is due in a given week** comes from the per-student quota array described under Lesson
+Distribution, not from `targetSpacing` and its `0.8` fudge factor: a student is due in a week
+when that week's quota is not yet filled. Deterministic, and the same computation that renders
+the teacher's preview.
+
+**Placement is per-week backtracking, not a greedy sweep.** The research behind this is in
+[2026_10_12-scheduling-solver-options.md](2026_10_12-scheduling-solver-options.md), Option B.
+Within a week, search over the students due that week:
+
+- **Feasibility backtracking first** — most constrained student first, and after each
+  placement drop the remaining candidates that now conflict. Finds a full placement whenever
+  one exists, in well under 100 ms for a whole semester.
+- **Branch and bound** for the optimal weekly score, bound = current score plus each remaining
+  student's best still-free candidate. The gap penalty only subtracts, so leaving it out of
+  the bound keeps the bound valid, merely looser.
+- **Cap each week** with a node or time budget (≈200k nodes or ≈200 ms), keep the best complete
+  placement found, and fall back to the greedy result. The output is then never worse than the
+  greedy pass. If the search finishes without a full placement, none exists — so "unplaced"
+  genuinely means unplaceable.
+- Scope: this resolves collisions **within** a week. Cross-week logic stays as it is; within-week
+  collisions are where the avoidable unplaced students come from.
+
+Two things matter for speed: precompute candidate lists **per student per week** rather than
+filtering the whole semester's candidates inside a sort comparator, and replace `hasConflict`'s
+scan of the whole `assigned` array with a per-date list of booked intervals, pushed on placement
+and popped on backtrack.
+
+Those runtimes are the solver document's estimates and have **not been benchmarked**. Measure
+before relying on them, especially since the weight sweep multiplies the work — see the cost
+note under Schedule Suggestion.
+
+**The greedy pass below is retained as the fallback** the cap falls back to, and as the
+reference the backtracking result is compared against.
+
+**`computeSchedule` — week-by-week greedy (fallback):**
 
 ```typescript
 function computeSchedule(
@@ -941,8 +1109,12 @@ Sort by most constrained:
 
 ## Open Questions / Deferred Decisions
 
-- **Algorithm sophistication**: the pass is greedy with no backtracking. Beyond producing suboptimal totals as the cohort grows, it means a student can land in `unscheduledStudentIds` because earlier picks took the slots they could have used — not because no feasible slot existed. Accepted for Phase 1 (≤ 20 students); the Step L tests should include a case that documents this rather than asserting it cannot happen. A constraint solver (e.g. or-tools) could replace the pass later without changing the data model.
-- **"Balanced" is not actually a third strategy.** With `TEACHER_WEIGHT = 0.7` and label scores {2, 6, 10}, the largest possible student-score swing is `0.3 × (10 − 2) = 2.4`, while the smallest gap between two distinct teacher scores is `0.7 × 4 = 2.8`. The student term can therefore never overturn a teacher-score difference, which makes `balanced` exactly `teacher_best` with a student-score tiebreak — verified exhaustively over the score set. So the three cards are really teacher-first (date tiebreak), teacher-first (student tiebreak), and student-first. Settle this before Step L: either lower `TEACHER_WEIGHT` below 0.5, widen the label scores, or drop to two strategies and be honest about it. Exposing the weights as a teacher-adjustable slider in Phase 2 would also make it moot.
+- ~~**Algorithm sophistication**~~ **Settled 2026-10-12:** per-week backtracking with a time
+  cap and a greedy fallback, per the solver options document. Original note kept for context:
+  the pass is greedy with no backtracking. Beyond producing suboptimal totals as the cohort grows, it means a student can land in `unscheduledStudentIds` because earlier picks took the slots they could have used — not because no feasible slot existed. Accepted for Phase 1 (≤ 20 students); the Step L tests should include a case that documents this rather than asserting it cannot happen. A constraint solver (e.g. or-tools) could replace the pass later without changing the data model.
+- ~~**"Balanced" is not actually a third strategy."**~~ **Settled 2026-10-12:** replaced by a
+  single weighted formula swept across its parameter, with the distinct schedules shown. See
+  Schedule Suggestion. Original finding kept for context: With `TEACHER_WEIGHT = 0.7` and label scores {2, 6, 10}, the largest possible student-score swing is `0.3 × (10 − 2) = 2.4`, while the smallest gap between two distinct teacher scores is `0.7 × 4 = 2.8`. The student term can therefore never overturn a teacher-score difference, which makes `balanced` exactly `teacher_best` with a student-score tiebreak — verified exhaustively over the score set. So the three cards are really teacher-first (date tiebreak), teacher-first (student tiebreak), and student-first. Settle this before Step L: either lower `TEACHER_WEIGHT` below 0.5, widen the label scores, or drop to two strategies and be honest about it. Exposing the weights as a teacher-adjustable slider in Phase 2 would also make it moot.
 - **Notification delivery timing**: reminder cadence (e.g., 48h before deadline, 24h before deadline) is a detail for the Cloud Function implementation phase.
 - **Student-to-teacher linking across locations**: currently handled by existing `/students` and `/teachers` RTDB paths; scheduling feature adds enrollment per semester without changing that mapping.
 
@@ -1016,7 +1188,7 @@ All phases follow the same incremental pattern:
 
 #### ~~Step E — SemesterPage: Students tab~~ ✅ DONE
 
-- `src/Components/scheduling/EnrollmentDialog.tsx` — new dialog: student dropdown (filtered to unenrolled), lesson duration (min), total lessons, optional cancellation window override (h). All controlled state; no form submit — `handleSave` reads state directly. Bilingual EN_US / RO_RO. `key={enrollDialogOpen ? 'open' : 'closed'}` on the call site forces a fresh mount each time the dialog opens, giving clean state.
+- `src/Components/scheduling/EnrollmentDialog.tsx` — new dialog: student dropdown (filtered to unenrolled), lesson duration (min), total lessons, optional cancellation window override (h). **Still to add (2026-10-12):** default `totalLessons` to one per week, show the semester's week count beside it, and add the three-way distribution control with a preview of the resulting per-week pattern. All controlled state; no form submit — `handleSave` reads state directly. Bilingual EN_US / RO_RO. `key={enrollDialogOpen ? 'open' : 'closed'}` on the call site forces a fresh mount each time the dialog opens, giving clean state.
 - `SemesterPage` Students tab (tab index 1): table with columns Student / Duration / Total Lessons / Cancellation Window + row-level remove button (`DeleteOutlineIcon`). Empty state shows `t.noStudents`. Cancellation window cell shows `"Default (Nh)"` when no per-student override is set. `tab > 1` keeps the "Coming soon" placeholder for Scheduling and Calendar tabs.
 - Enrollment state initialized from the correct mock set (`MOCK_ENROLLMENTS_SPRING` or `MOCK_ENROLLMENTS_FALL`) via a lazy `useState` initializer keyed on `semesterId`.
 - `handleAddStudent` appends to local state and closes dialog; `handleRemoveStudent` filters from local state (no RTDB write yet — deferred to Step N).
@@ -1060,7 +1232,15 @@ All phases follow the same incremental pattern:
 - **Fixture policy:** suggestion scores are looked up from `MOCK_TEACHER_AVAILABILITY` and the student's own submission, never written by hand — hand-written scores had already drifted away from the blocks they were supposed to come from. Beyond that, do **not** hand-simulate the algorithm in fixtures: picking a plausible slot per strategy is enough, and solving the placement properly is Step L's job.
 - The `unscheduledStudentIds` warning branch is implemented but not exercised by the current fixture, because every student in it can in fact be placed. An earlier fixture faked an unschedulable student and ended up contradicting the teacher's own availability.
 
-*Review: see all three strategy suggestions, compare scores and student placements.*
+**Revision needed (2026-10-12).** Built against three fixed strategies; the design has since
+moved to a weight sweep. The card must take a weight range rather than a strategy name, scores
+revert from percentages to **plain numbers**, and each card also shows the teacher's average and
+the students' average — those are comparable between cards, whereas each card's own objective
+value is not. `SchedulingRoundPage` shows the distinct schedules ordered most teacher-favouring
+first, at most 10 picked as first, last and an even spread between, scrolling rather than
+shrinking.
+
+*Review: compare the suggested schedules, their scores and their student placements.*
 
 ---
 
@@ -1098,11 +1278,33 @@ All phases follow the same incremental pattern:
 
 #### Step L — Algorithm
 
-- `src/util/schedulingAlgorithm.ts` — `getEffectiveBlocksForDate`, `getScoreAtTime`, `getScoreForSpan`, `generateAllCandidates`, `computeSchedule` (all 3 strategies), `generateAllSuggestions`
+- `src/util/schedulingAlgorithm.ts` — `getEffectiveBlocksForDate`, `getScoreAtTime`, `getScoreForSpan`, `generateAllCandidates`, `computeSchedule` (one weight), `generateAllSuggestions` (sweeps the weight and deduplicates)
+- Per-student **weekly quota** from `totalLessons` and `distribution`, replacing `targetSpacing` and its `0.8` factor. The same function renders the enrollment dialog's preview.
+- Per-week **backtracking** with a node/time cap and a greedy fallback, per the solver options document. Benchmark it — the quoted runtimes are estimates, and the weight sweep multiplies the work.
+- Stamp a **`seriesId`** on every slot belonging to one recurring assignment.
+- Emit **conflicted lessons flagged** rather than dropping a student.
 - All date and "HH:mm" math comes from `src/util/schedulingDates.ts` — see Helper functions above. Do not add date arithmetic here.
 - Unit tests: happy path, conflict resolution, bi-weekly slot sharing, unschedulable student, week override (spring break), gap penalty
 - Plus two tests that guard the mistakes this plan previously contained: (a) `student_best` and `balanced` return *different* schedules for an input where teacher and student preferences disagree; (b) a week override written by the UI (`weekStartDate`) is actually found by `getEffectiveBlocksForDate`
 - No UI changes — runs client-side in `SchedulingRoundPage` when teacher triggers suggestion generation
+
+---
+
+#### Step L2 — Conflicts panel
+
+- `src/Components/scheduling/ConflictsPanel.tsx` — lists every conflict in the current schedule, recomputed from the schedule plus the availability rather than read off the algorithm's output, so it stays correct after any drag.
+- Rendered in both the Availability tab and the schedule editor. Each row's action navigates to whichever calendar can resolve it and highlights the spot: a one-week conflict adds a week override and scrolls to it; a recurring one scrolls to the weekly template.
+- Once this exists, relax the editor's remaining refusals. Overlap stays refused; everything else is reported rather than blocked.
+
+---
+
+#### Step L3 — Cleanup before merge
+
+- Delete the `/scheduling/availability-test` route and `src/pages/scheduling/AvailabilityCalendarTest.tsx`.
+- Remove the commented-out `window._auth` line from `src/store/Firebase.ts`.
+- Delete `AvailabilityLabel.UNAVAILABLE` — unreachable, since the picker never offers it and an overlay can never contain one.
+- Delete `carriedForward` from `StudentSubmission` if Step P2 did not end up using it.
+- `React.lazy()` the scheduling routes in `App.tsx`, with a short comment explaining why: react-big-calendar, dayjs and the MUI date pickers add ~134 kB gzipped, and without the split every visitor to the public portfolio downloads the scheduling system to read a biography.
 
 ---
 
@@ -1217,9 +1419,28 @@ Patterns established in this repo that new scheduling code must follow:
 ### Phase 1 simplification: cancellation write path
 
 The full design uses a separate `/cancellationRequests/...` path processed by a Cloud Function so that field-level validation is enforced server-side. For Phase 1, Cloud Functions are not yet wired for this. Instead:
-- Students write cancellation records directly (simplified RTDB rules accept writes from the involved student)
+- Students write their own authoritative cancellation record directly (simplified RTDB rules accept writes from the involved student)
 - The teacher writes cancellation records for teacher-initiated cancellations
-- Cloud Function integration (and proper request path) is deferred to Phase 2
+- Cloud Function integration (and the proper request path) is deferred. **Leave a `TODO` at the write site** naming the function that should validate it, and recording what the shortcut allows: rules cannot check individual fields, so a student could write `withinWindow: false` on a late cancellation, or write against a lesson that is not theirs.
+**Why this is relaxed while the submission deadline is enforced.** The studio is small and the
+teacher knows every student. A cancellation record is *record-keeping*, not an authority: the
+teacher can see when the cancellation was made and applies the contract terms themselves,
+whatever the database says. So a student setting `withinWindow` wrongly changes nothing that
+matters. An unenforced submission deadline is different in kind — it silently corrupts a round
+the teacher has already acted on, and nobody is reviewing it by hand.
+
+That argument rests entirely on `canceledAt` being truthful, and a student writing the record
+directly could put anything there. Rules cannot validate most fields, but they can validate
+that one:
+
+```
+".validate": "newData.child('canceledAt').val() === now"
+```
+
+`now` is the server clock in rules, so the timestamp is unforgeable without a Cloud Function —
+which is exactly the fact the teacher's judgement depends on. The cancellation UI should show
+the cancellation time against the lesson time, rather than only the derived `withinWindow`
+flag, so the teacher is reading the fact rather than a student-writable summary of it.
 
 This does not affect the data model — the same `Cancellation` type and RTDB paths are used; only the write authorization is relaxed temporarily.
 
@@ -1539,10 +1760,10 @@ Teacher-only.
 **States (driven by round status):**
 
 - **`collecting`**: show submission status per student (submitted / pending), deadline countdown, "Close Round & Generate Suggestions" button (active once deadline passed or all submitted).
-- **`suggested`**: show 3 side-by-side `SuggestedScheduleCard` components. Teacher clicks "Use This" on one → loads it into an editable `AvailabilityCalendar`-style weekly view (DnD addon enabled, one event per enrolled student showing their assigned recurring slot). Teacher drags events to move them; the system validates no overlap + min-break constraint on each drop. "Confirm Schedule" button → writes `confirmedSchedule`, generates all `LessonInstance` records, sends notifications, advances round to `finalized`.
+- **`suggested`**: show the distinct schedules from the weight sweep as side-by-side `SuggestedScheduleCard` components (at most 10, scrolling). Teacher clicks "Use This" on one → loads it into an editable `AvailabilityCalendar`-style weekly view (DnD addon enabled, one event per enrolled student showing their assigned recurring slot). Teacher drags events to move them; the system validates no overlap + min-break constraint on each drop. "Confirm Schedule" button → writes `confirmedSchedule`, generates all `LessonInstance` records, sends notifications, advances round to `finalized`.
 - **`finalized`**: read-only view of the confirmed schedule; link back to semester calendar tab.
 
-**`src/Components/scheduling/SuggestedScheduleCard.tsx`** — displays one strategy's result: strategy label, total score, list of student → assigned slot, list of unscheduled students. "Use This" button.
+**`src/Components/scheduling/SuggestedScheduleCard.tsx`** — displays one suggested schedule: the weight range it covers, total score, the teacher's and students' averages, list of student → assigned slot, list of unscheduled students. "Use This" button.
 
 **Algorithm trigger:** when teacher clicks "Generate Suggestions", the client runs `generateAllSuggestions(input)` (Step 2), writes the 3 results to `schedulingPaths.scheduleSuggestions(tid, sid, rid)`, and updates round status to `suggested`. No Cloud Function needed.
 
@@ -1683,9 +1904,9 @@ Add rules for all new scheduling paths following the access table in the Schema 
               "students": {
                 "$studentId": {
                   ".read": "auth.uid === $teacherId || auth.uid === $studentId",
-                  ".write": "auth.uid === $studentId"
-                  // Phase 1: student writes directly (no round-status guard in rules;
-                  // UI enforces the deadline — tighten with Cloud Function in Phase 2)
+                  // The deadline is enforced here, not only in the UI. Starting strict and
+                  // relaxing later is far easier than the reverse (decided 2026-10-12).
+                  ".write": "auth.uid === $studentId && root.child('schedulingRounds').child('teachers').child($teacherId).child('semesters').child($semesterId).child('rounds').child($roundId).child('status').val() === 'collecting'"
                 }
               }
             }
