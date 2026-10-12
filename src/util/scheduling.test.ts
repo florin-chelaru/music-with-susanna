@@ -1,11 +1,15 @@
 import {
+  applyCancellation,
   AvailabilityBlock,
   AvailabilityLabel,
+  findConflict,
   LABEL_SCORES,
+  LessonInstance,
   computeCombinedScore,
   isWithinCancellationWindow,
   removeOverlaps,
-  SCHEDULING_CONFIG
+  SCHEDULING_CONFIG,
+  scoreForDayTime
 } from './scheduling'
 
 test('returns 0 when teacher score is 0 (hard block)', () => {
@@ -168,5 +172,154 @@ describe('isWithinCancellationWindow', () => {
   test('respects a per-student window override', () => {
     expect(isWithinCancellationWindow(hours(40), 48, NOW)).toBe(true)
     expect(isWithinCancellationWindow(hours(40), 24, NOW)).toBe(false)
+  })
+})
+
+// ─── findConflict ─────────────────────────────────────────────────────────────
+//
+// Two callers with deliberately different policies: the solver passes the default minimum
+// break, the drag editor passes 0 because that break is a constraint for the algorithm and
+// not a rule to impose on the teacher. Both paths are covered.
+
+const span = (date: string, startTime: string, endTime: string) => ({ date, startTime, endTime })
+
+describe('findConflict', () => {
+  const existing = [span('2026-10-19', '10:00', '11:00')]
+
+  test('a lesson clear of the break does not conflict', () => {
+    expect(findConflict(span('2026-10-19', '11:10', '12:00'), existing)).toBeNull()
+    expect(findConflict(span('2026-10-19', '09:00', '09:50'), existing)).toBeNull()
+  })
+
+  test('a lesson inside the break conflicts even without overlapping', () => {
+    expect(findConflict(span('2026-10-19', '11:05', '12:00'), existing)).not.toBeNull()
+    expect(findConflict(span('2026-10-19', '09:00', '09:55'), existing)).not.toBeNull()
+  })
+
+  test('exactly touching counts as a conflict at the default break', () => {
+    expect(findConflict(span('2026-10-19', '11:00', '12:00'), existing)).not.toBeNull()
+  })
+
+  // The editor passes 0 so the teacher can place lessons back to back on purpose.
+  test('with a zero break, touching is allowed but overlapping is not', () => {
+    expect(findConflict(span('2026-10-19', '11:00', '12:00'), existing, 0)).toBeNull()
+    expect(findConflict(span('2026-10-19', '09:00', '10:00'), existing, 0)).toBeNull()
+    expect(findConflict(span('2026-10-19', '10:59', '12:00'), existing, 0)).not.toBeNull()
+  })
+
+  test('overlap in any arrangement conflicts', () => {
+    expect(findConflict(span('2026-10-19', '10:15', '10:45'), existing)).not.toBeNull() // inside
+    expect(findConflict(span('2026-10-19', '09:00', '12:00'), existing)).not.toBeNull() // around
+    expect(findConflict(span('2026-10-19', '10:00', '11:00'), existing)).not.toBeNull() // identical
+  })
+
+  test('a different date never conflicts', () => {
+    expect(findConflict(span('2026-10-20', '10:00', '11:00'), existing)).toBeNull()
+  })
+
+  test('returns the offending lesson so the caller can name it', () => {
+    const blockers = [span('2026-10-19', '08:00', '09:00'), span('2026-10-19', '10:00', '11:00')]
+    expect(findConflict(span('2026-10-19', '10:30', '11:30'), blockers)).toBe(blockers[1])
+  })
+})
+
+// ─── applyCancellation ────────────────────────────────────────────────────────
+
+describe('applyCancellation', () => {
+  const lesson = (
+    id: string,
+    studentId: string,
+    start: number,
+    status: LessonInstance['status'] = 'scheduled'
+  ): LessonInstance => ({
+    id,
+    studentId,
+    locationId: 'loc',
+    scheduledStart: start,
+    scheduledEnd: start + 45 * 60000,
+    timezone: 'Europe/Bucharest',
+    status,
+    isAdHoc: false,
+    isMakeup: false,
+    calendarSequence: 0,
+    createdAt: 0
+  })
+
+  const DAY = 86400000
+  const lessons = [
+    lesson('a1', 'ana', 1 * DAY),
+    lesson('a2', 'ana', 2 * DAY),
+    lesson('a3', 'ana', 3 * DAY),
+    lesson('b1', 'bob', 2 * DAY),
+    lesson('b2', 'bob', 3 * DAY)
+  ]
+  const byId = (result: LessonInstance[], id: string) => result.find((l) => l.id === id)?.status
+
+  test('cancels only the target when not cancelling forward', () => {
+    const result = applyCancellation(lessons, lessons[1], false)
+    expect(byId(result, 'a2')).toBe('canceled')
+    expect(byId(result, 'a3')).toBe('scheduled')
+    expect(byId(result, 'a1')).toBe('scheduled')
+  })
+
+  test("cancelling forward also cancels that student's later lessons", () => {
+    const result = applyCancellation(lessons, lessons[1], true)
+    expect(byId(result, 'a2')).toBe('canceled')
+    expect(byId(result, 'a3')).toBe('canceled')
+  })
+
+  test('never touches earlier lessons', () => {
+    const result = applyCancellation(lessons, lessons[1], true)
+    expect(byId(result, 'a1')).toBe('scheduled')
+  })
+
+  // The teacher's calendar holds every student's lessons, so the scope matters there.
+  test('never touches another student', () => {
+    const result = applyCancellation(lessons, lessons[1], true)
+    expect(byId(result, 'b1')).toBe('scheduled')
+    expect(byId(result, 'b2')).toBe('scheduled')
+  })
+
+  test('leaves already completed lessons alone', () => {
+    const withCompleted = [...lessons, lesson('a4', 'ana', 4 * DAY, 'completed')]
+    const result = applyCancellation(withCompleted, withCompleted[1], true)
+    expect(byId(result, 'a4')).toBe('completed')
+  })
+
+  test('does not mutate the input', () => {
+    const before = lessons.map((l) => l.status)
+    applyCancellation(lessons, lessons[1], true)
+    expect(lessons.map((l) => l.status)).toEqual(before)
+  })
+})
+
+// ─── scoreForDayTime ──────────────────────────────────────────────────────────
+
+describe('scoreForDayTime', () => {
+  const blocks = [
+    block(MON, '09:00', '12:00', AvailabilityLabel.PREFERRED),
+    block(TUE, '14:00', '16:00', AvailabilityLabel.LAST_RESORT)
+  ]
+
+  test("returns the covering block's score", () => {
+    expect(scoreForDayTime(blocks, MON, '10:00')).toBe(LABEL_SCORES[AvailabilityLabel.PREFERRED])
+    expect(scoreForDayTime(blocks, TUE, '15:00')).toBe(LABEL_SCORES[AvailabilityLabel.LAST_RESORT])
+  })
+
+  // Half-open: a block covers its start but not its end, so two touching blocks never both
+  // claim the boundary minute.
+  test('the start is covered and the end is not', () => {
+    expect(scoreForDayTime(blocks, MON, '09:00')).toBe(LABEL_SCORES[AvailabilityLabel.PREFERRED])
+    expect(scoreForDayTime(blocks, MON, '12:00')).toBe(0)
+  })
+
+  test('uncovered times score 0, which is also the hard-block value', () => {
+    expect(scoreForDayTime(blocks, MON, '08:00')).toBe(0)
+    expect(scoreForDayTime(blocks, MON, '13:00')).toBe(0)
+  })
+
+  test('the day has to match', () => {
+    expect(scoreForDayTime(blocks, TUE, '10:00')).toBe(0)
+    expect(scoreForDayTime([], MON, '10:00')).toBe(0)
   })
 })
