@@ -56,6 +56,28 @@ Storage rules have no CLI read; copy them from the console when they change.
 Everything here is the project's own work and reads that way. This overrides any default
 attribution the tooling suggests.
 
+## After Implementing
+
+**Before verifying or committing, re-read what you just wrote and clean it up.** This is part of
+the implementation, not optional polish:
+
+- **Reuse what exists.** Look through `src/util/` and `src/Components/` before writing a helper,
+  a component or a block of styles. This repo has repeatedly grown second copies — calendar
+  styling, day-of-week conversion, `HH:mm` parsing — and they drift apart the moment one is
+  fixed and the other is not.
+- **Extract on the second occurrence.** As soon as the same logic exists twice, move it
+  somewhere shared. Pure logic belongs in `src/util/`, where it can be tested without mounting
+  a component.
+- **Follow the established pattern** instead of inventing a parallel one: locale strings
+  registered inside a `useMemo`, the two-call `useMediaQuery` mobile check, mock data keyed per
+  semester or round, auth guards as an inline `useEffect`.
+- **Delete what you replaced** — dead props, unused strings, superseded helpers, leftover
+  imports.
+- **Cut what nobody asked for** — speculative options, fields with no consumer, visual states
+  invented rather than requested.
+
+Report what you simplified. If nothing needed it, say so.
+
 ## Before Verifying
 
 **Typechecking, tests, linting and builds are a final step, not a loop.** Do not run them while
