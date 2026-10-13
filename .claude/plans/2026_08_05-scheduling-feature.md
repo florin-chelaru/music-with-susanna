@@ -1471,7 +1471,33 @@ submissions, enrollments and lesson records.
 
 ---
 
-#### Step N — Wire teacher pages to RTDB
+#### Step N — Wire teacher pages to RTDB (in progress)
+
+**`SchedulingPage` is done and verified against production** — locations and semesters are real,
+both dialogs write, and the two teachers see only their own. Two modules came out of it:
+
+- **`util/schedulingPaths.ts`** — every RTDB path in one place. Reads, writes and the security
+  rules all have to agree on the same strings, and a path typo is not a compile error: it is a
+  permission denial at best and a write into a node nothing reads at worst.
+- **`util/schedulingWrites.ts`** — writes, kept apart from the hooks because the two fail
+  differently. A denied read renders an empty page; a denied write loses what the teacher just
+  typed, so every write returns its promise and the page shows the error. It also strips
+  `undefined` before writing, which RTDB rejects outright rather than treating as absent — the
+  case every optional field hits.
+
+A created record now appears **because the subscription delivered it**, not from local state. A
+failed write therefore shows an error and no row, rather than a row that vanishes on reload.
+
+Remaining in this step:
+
+- `SemesterPage` Availability tab: `useTeacherAvailability`; the 3-second auto-save writes.
+- `SemesterPage` Students tab: `useStudentEnrollments`; `EnrollmentDialog` writes. Its student
+  list must come from `/teachers/{uid}/students`, not all 32 user accounts — otherwise one
+  teacher can enroll another's students, and thirteen accounts linked to no teacher clutter it.
+- **`SemesterPage` still looks semesters up in `MOCK_SEMESTERS`**, so a semester created for real
+  cannot be opened yet. That is the first thing to fix when this resumes.
+
+Original plan text follows.
 
 - `SchedulingPage`: `useLocations` + `useSemesters`; dialogs write to RTDB
 - `SemesterPage` Availability tab: `useTeacherAvailability`; auto-save writes to RTDB

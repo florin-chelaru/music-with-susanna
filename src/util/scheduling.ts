@@ -14,6 +14,14 @@ export const LABEL_SCORES: Record<AvailabilityLabel, number> = {
   [AvailabilityLabel.UNAVAILABLE]: 0
 }
 
+/**
+ * Where lessons are taught, for a studio that has one timezone.
+ *
+ * Stamped onto each semester rather than assumed at read time, so a semester created now keeps
+ * its own answer if the studio ever teaches somewhere else.
+ */
+export const DEFAULT_TIMEZONE = 'Europe/Bucharest'
+
 export const SCHEDULING_CONFIG = {
   SLOT_SNAP_MINUTES: 15,
   MIN_BREAK_MINUTES: 10,

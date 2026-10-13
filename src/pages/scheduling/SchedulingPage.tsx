@@ -1,4 +1,15 @@
-import { Box, Button, Chip, Container, Paper, Stack, Toolbar, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Container,
+  LinearProgress,
+  Paper,
+  Stack,
+  Toolbar,
+  Typography
+} from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -9,8 +20,9 @@ import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleP
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
-import { Location, Semester, SemesterStatus } from '../../util/scheduling'
-import { MOCK_LOCATIONS, MOCK_SEMESTERS } from '../../data/schedulingMocks'
+import { DEFAULT_TIMEZONE, Location, Semester, SemesterStatus } from '../../util/scheduling'
+import { useLocations, useSemesters } from '../../util/schedulingHooks'
+import { createLocation, createSemester } from '../../util/schedulingWrites'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
@@ -19,6 +31,8 @@ interface SchedulingPageTexts {
   addSemester: string
   open: string
   noSemesters: string
+  noLocations: string
+  saveFailed: string
   statusDraft: string
   statusScheduling: string
   statusActive: string
@@ -26,6 +40,8 @@ interface SchedulingPageTexts {
 }
 
 const EN_US: SchedulingPageTexts = {
+  noLocations: 'No locations yet. Add one to start a semester.',
+  saveFailed: 'Could not save:',
   addLocation: 'Add Location',
   addSemester: 'Add Semester',
   open: 'Open',
@@ -37,6 +53,8 @@ const EN_US: SchedulingPageTexts = {
 }
 
 const RO_RO: SchedulingPageTexts = {
+  noLocations: 'Nicio locație încă. Adaugă una ca să începi un semestru.',
+  saveFailed: 'Nu s-a putut salva:',
   addLocation: 'Adaugă locație',
   addSemester: 'Adaugă semestru',
   open: 'Deschide',
@@ -87,8 +105,12 @@ export default function SchedulingPage() {
   const navigate = useNavigate()
   const { user } = useUser()
 
-  const [locations, setLocations] = useState<Location[]>(MOCK_LOCATIONS)
-  const [semesters, setSemesters] = useState<Semester[]>(MOCK_SEMESTERS)
+  // Keyed on the signed-in teacher, never a constant: the studio has two teachers, and the
+  // rules refuse any path that is not the caller's own.
+  const { locations, loading: locationsLoading } = useLocations(user.uid)
+  const { semesters, loading: semestersLoading } = useSemesters(user.uid)
+  const loading = user.loading === true || locationsLoading || semestersLoading
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const [locationDialogOpen, setLocationDialogOpen] = useState(false)
   const [semesterDialogOpen, setSemesterDialogOpen] = useState<string | null>(null) // locationId
@@ -104,34 +126,25 @@ export default function SchedulingPage() {
     }
   }, [user.loading, user.uid, user.role])
 
+  // The subscription delivers the new record, so nothing is appended to local state here — the
+  // list updating is how the teacher learns the write actually landed.
   function handleAddLocation(data: Pick<Location, 'name' | 'address'>) {
-    const newLoc: Location = {
-      id: `loc-${Date.now()}`,
-      name: data.name,
-      address: data.address,
-      createdAt: Date.now()
-    }
-    setLocations((prev) => [...prev, newLoc])
+    if (!user.uid) return
     setLocationDialogOpen(false)
+    void createLocation(user.uid, data).catch((error) => {
+      setSaveError(String(error))
+    })
   }
 
   function handleAddSemester(
     locationId: string,
     data: Pick<Semester, 'name' | 'startDate' | 'endDate' | 'defaultCancellationWindowHours'>
   ) {
-    const newSem: Semester = {
-      id: `sem-${Date.now()}`,
-      locationId,
-      name: data.name,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      status: 'draft',
-      defaultCancellationWindowHours: data.defaultCancellationWindowHours,
-      timezone: 'Europe/Bucharest',
-      createdAt: Date.now()
-    }
-    setSemesters((prev) => [...prev, newSem])
+    if (!user.uid) return
     setSemesterDialogOpen(null)
+    void createSemester(user.uid, locationId, data, DEFAULT_TIMEZONE).catch((error) => {
+      setSaveError(String(error))
+    })
   }
 
   const statusLabel: Record<SemesterStatus, string> = {
@@ -165,6 +178,25 @@ export default function SchedulingPage() {
           {t.addLocation}
         </Button>
       </Box>
+
+      {saveError && (
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          onClose={() => {
+            setSaveError(null)
+          }}>
+          {t.saveFailed} {saveError}
+        </Alert>
+      )}
+
+      {loading && <LinearProgress sx={{ mb: 2 }} />}
+
+      {!loading && locations.length === 0 && (
+        <Typography color="text.secondary" sx={{ mb: 2 }}>
+          {t.noLocations}
+        </Typography>
+      )}
 
       <Stack spacing={3}>
         {locations.map((loc) => {

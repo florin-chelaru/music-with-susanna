@@ -2,6 +2,22 @@ import { onValue, ref } from 'firebase/database'
 import { useEffect, useState } from 'react'
 import { database } from '../store/Firebase'
 import {
+  cancellationsPath,
+  confirmedSchedulePath,
+  enrollmentsPath,
+  lessonsPath,
+  locationsPath,
+  notificationsPath,
+  roundsPath,
+  semesterPath,
+  semestersPath,
+  studentLessonsPath,
+  submissionPath,
+  submissionsPath,
+  suggestionsPath,
+  teacherAvailabilityPath
+} from './schedulingPaths'
+import {
   Cancellation,
   ConfirmedSchedule,
   LessonInstance,
@@ -23,8 +39,6 @@ import {
 //
 // Every hook returns `loading` so a caller can tell "no data yet" from "no data" — a distinction
 // that matters here, since an empty semester and an unloaded one look identical otherwise.
-
-const TEACHERS = 'teachers'
 
 /** Null ids are legitimate — a page renders before its route params resolve — and mean "wait". */
 type Id = string | null | undefined
@@ -71,58 +85,46 @@ function useCollection<T>(path: string | null): {
 // ─── Teacher-scoped ───────────────────────────────────────────────────────────
 
 export function useLocations(teacherId: Id) {
-  const { values, loading } = useCollection<Location>(
-    teacherId ? `locations/${TEACHERS}/${teacherId}` : null
-  )
+  const { values, loading } = useCollection<Location>(teacherId ? locationsPath(teacherId) : null)
   return { locations: values, loading }
 }
 
 export function useSemesters(teacherId: Id) {
-  const { values, loading } = useCollection<Semester>(
-    teacherId ? `semesters/${TEACHERS}/${teacherId}` : null
-  )
+  const { values, loading } = useCollection<Semester>(teacherId ? semestersPath(teacherId) : null)
   return { semesters: values, loading }
 }
 
 export function useSemester(teacherId: Id, semesterId: Id) {
   const { value, loading } = useNode<Semester>(
-    teacherId && semesterId ? `semesters/${TEACHERS}/${teacherId}/${semesterId}` : null
+    teacherId && semesterId ? semesterPath(teacherId, semesterId) : null
   )
   return { semester: value, loading }
 }
 
 export function useTeacherAvailability(teacherId: Id, semesterId: Id) {
   const { value, loading } = useNode<WeeklyAvailability>(
-    teacherId && semesterId
-      ? `teacherAvailability/${TEACHERS}/${teacherId}/semesters/${semesterId}`
-      : null
+    teacherId && semesterId ? teacherAvailabilityPath(teacherId, semesterId) : null
   )
   return { availability: value, loading }
 }
 
 export function useStudentEnrollments(teacherId: Id, semesterId: Id) {
   const { values, loading } = useCollection<StudentEnrollment>(
-    teacherId && semesterId
-      ? `studentEnrollments/${TEACHERS}/${teacherId}/semesters/${semesterId}/students`
-      : null
+    teacherId && semesterId ? enrollmentsPath(teacherId, semesterId) : null
   )
   return { enrollments: values, loading }
 }
 
 export function useSchedulingRounds(teacherId: Id, semesterId: Id) {
   const { values, loading } = useCollection<SchedulingRound>(
-    teacherId && semesterId
-      ? `schedulingRounds/${TEACHERS}/${teacherId}/semesters/${semesterId}/rounds`
-      : null
+    teacherId && semesterId ? roundsPath(teacherId, semesterId) : null
   )
   return { rounds: values, loading }
 }
 
 export function useStudentSubmissions(teacherId: Id, semesterId: Id, roundId: Id) {
   const { value, loading } = useNode<Record<string, StudentSubmission>>(
-    teacherId && semesterId && roundId
-      ? `studentSubmissions/${TEACHERS}/${teacherId}/semesters/${semesterId}/rounds/${roundId}/students`
-      : null
+    teacherId && semesterId && roundId ? submissionsPath(teacherId, semesterId, roundId) : null
   )
   return { submissions: value ?? {}, loading }
 }
@@ -135,36 +137,28 @@ export function useStudentSubmissions(teacherId: Id, semesterId: Id, roundId: Id
  */
 export function useScheduleSuggestions(teacherId: Id, semesterId: Id, roundId: Id) {
   const { value, loading } = useNode<Record<string, ScheduleSuggestion>>(
-    teacherId && semesterId && roundId
-      ? `scheduleSuggestions/${TEACHERS}/${teacherId}/semesters/${semesterId}/rounds/${roundId}`
-      : null
+    teacherId && semesterId && roundId ? suggestionsPath(teacherId, semesterId, roundId) : null
   )
   return { suggestions: value ?? {}, loading }
 }
 
 export function useConfirmedSchedule(teacherId: Id, semesterId: Id) {
   const { value, loading } = useNode<ConfirmedSchedule>(
-    teacherId && semesterId
-      ? `confirmedSchedules/${TEACHERS}/${teacherId}/semesters/${semesterId}`
-      : null
+    teacherId && semesterId ? confirmedSchedulePath(teacherId, semesterId) : null
   )
   return { schedule: value, loading }
 }
 
 export function useLessonInstances(teacherId: Id, semesterId: Id) {
   const { values, loading } = useCollection<LessonInstance>(
-    teacherId && semesterId
-      ? `lessonInstances/${TEACHERS}/${teacherId}/semesters/${semesterId}/lessons`
-      : null
+    teacherId && semesterId ? lessonsPath(teacherId, semesterId) : null
   )
   return { lessons: values, loading }
 }
 
 export function useCancellations(teacherId: Id, semesterId: Id) {
   const { values, loading } = useCollection<Cancellation>(
-    teacherId && semesterId
-      ? `cancellations/${TEACHERS}/${teacherId}/semesters/${semesterId}`
-      : null
+    teacherId && semesterId ? cancellationsPath(teacherId, semesterId) : null
   )
   return { cancellations: values, loading }
 }
@@ -174,7 +168,7 @@ export function useCancellations(teacherId: Id, semesterId: Id) {
 export function useMySubmission(teacherId: Id, semesterId: Id, roundId: Id, studentId: Id) {
   const { value, loading } = useNode<StudentSubmission>(
     teacherId && semesterId && roundId && studentId
-      ? `studentSubmissions/${TEACHERS}/${teacherId}/semesters/${semesterId}/rounds/${roundId}/students/${studentId}`
+      ? submissionPath(teacherId, semesterId, roundId, studentId)
       : null
   )
   return { submission: value, loading }
@@ -192,13 +186,13 @@ export function useMySubmission(teacherId: Id, semesterId: Id, roundId: Id, stud
 export function useMyLessons(studentId: Id) {
   const { values, loading } = useCollection<
     LessonInstance & { teacherId: string; semesterId: string }
-  >(studentId ? `studentLessons/${studentId}` : null)
+  >(studentId ? studentLessonsPath(studentId) : null)
   return { lessons: values, loading }
 }
 
 export function useMyNotifications(teacherId: Id, studentId: Id) {
   const { values, loading } = useCollection<SchedulingNotification>(
-    teacherId ? `notifications/${TEACHERS}/${teacherId}` : null
+    teacherId ? notificationsPath(teacherId) : null
   )
   return {
     // The rules allow a student to read only their own notification nodes, so a teacher's
