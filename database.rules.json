@@ -112,6 +112,187 @@
     "announcement": {
       ".read": true,
       ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'teacher'"
+    },
+    "locations": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid || root.child('teachers').child($tid).child('students').child(auth.uid).exists()",
+          ".write": "$tid === auth.uid"
+        }
+      }
+    },
+    "semesters": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid",
+          "$sid": {
+            ".read": "root.child('studentEnrollments').child('teachers').child($tid).child('semesters').child($sid).child('students').child(auth.uid).exists()"
+          }
+        }
+      }
+    },
+    "teacherAvailability": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid",
+          "semesters": {
+            "$sid": {
+              ".read": "root.child('studentEnrollments').child('teachers').child($tid).child('semesters').child($sid).child('students').child(auth.uid).exists()"
+            }
+          }
+        }
+      }
+    },
+    "studentEnrollments": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid",
+          "semesters": {
+            "$sid": {
+              "students": {
+                "$uid": {
+                  ".read": "$uid === auth.uid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schedulingRounds": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid",
+          "semesters": {
+            "$sid": {
+              ".read": "root.child('studentEnrollments').child('teachers').child($tid).child('semesters').child($sid).child('students').child(auth.uid).exists()"
+            }
+          }
+        }
+      }
+    },
+    "studentSubmissions": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid",
+          "semesters": {
+            "$sid": {
+              "rounds": {
+                "$rid": {
+                  "students": {
+                    "$uid": {
+                      ".read": "$uid === auth.uid",
+                      ".write": "$uid === auth.uid && root.child('schedulingRounds').child('teachers').child($tid).child('semesters').child($sid).child('rounds').child($rid).child('status').val() === 'collecting' && now <= root.child('schedulingRounds').child('teachers').child($tid).child('semesters').child($sid).child('rounds').child($rid).child('deadline').val()"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "scheduleSuggestions": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid"
+        }
+      }
+    },
+    "confirmedSchedules": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid",
+          "semesters": {
+            "$sid": {
+              ".read": "root.child('studentEnrollments').child('teachers').child($tid).child('semesters').child($sid).child('students').child(auth.uid).exists()"
+            }
+          }
+        }
+      }
+    },
+    "lessonInstances": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid",
+          "semesters": {
+            "$sid": {
+              "lessons": {
+                "$lid": {
+                  ".read": "data.child('studentId').val() === auth.uid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "cancellations": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid",
+          "semesters": {
+            "$sid": {
+              "$cid": {
+                ".read": "data.child('otherParty').val() === auth.uid || data.child('canceledBy').val() === auth.uid",
+                ".write": "!data.exists() && newData.child('canceledBy').val() === auth.uid",
+                ".validate": "$tid === auth.uid || newData.child('canceledAt').val() === now"
+              }
+            }
+          }
+        }
+      }
+    },
+    "cancellationBundles": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid",
+          "semesters": {
+            "$sid": {
+              "$bid": {
+                ".read": "data.child('studentId').val() === auth.uid"
+              }
+            }
+          }
+        }
+      }
+    },
+    "cancellationRequests": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid",
+          "semesters": {
+            "$sid": {
+              "$reqid": {
+                ".read": "data.child('studentId').val() === auth.uid",
+                ".write": "!data.exists() && newData.child('studentId').val() === auth.uid"
+              }
+            }
+          }
+        }
+      }
+    },
+    "notifications": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid",
+          "$nid": {
+            ".read": "data.child('recipientId').val() === auth.uid"
+          }
+        }
+      }
     }
   }
 }
