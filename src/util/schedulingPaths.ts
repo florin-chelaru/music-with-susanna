@@ -76,6 +76,9 @@ export const teacherStudentsPath = (tid: string): string => `${T}/${tid}/student
  */
 export const userPath = (uid: string): string => `users/${uid}`
 
+/** The teachers a student belongs to, from the mapping that predates this feature. */
+export const studentTeachersPath = (uid: string): string => `students/${uid}/teachers`
+
 /**
  * Where a deleted semester and everything it owned is archived.
  *

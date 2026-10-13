@@ -11,18 +11,23 @@ import {
   lessonsPath,
   locationPath,
   locationsPath,
+  roundPath,
   roundsPath,
   semesterPath,
   semestersPath,
   studentLessonsPath,
+  submissionPath,
   submissionsPath,
   suggestionsPath,
   teacherAvailabilityPath
 } from './schedulingPaths'
 import {
+  AvailabilityBlock,
   Location,
+  RoundStatus,
   Semester,
   StudentEnrollment,
+  StudentSubmission,
   toStoredAvailability,
   WeeklyAvailability
 } from './scheduling'
@@ -147,6 +152,79 @@ function stripUndefined<T extends object>(value: T): Partial<T> {
     if (item !== undefined) result[key] = item
   })
   return result as Partial<T>
+}
+
+// ─── Student submissions ──────────────────────────────────────────────────────
+
+/**
+ * A student's answer to a round.
+ *
+ * Written by the student themselves. The rules refuse it once the round stops collecting or the
+ * deadline passes, so a late submission fails here rather than quietly corrupting a round the
+ * teacher has already acted on — the UI disabling the button is a courtesy, not the guard.
+ *
+ * Week overrides get the same `savedAt` treatment as the teacher's: an override meaning "away
+ * all week" is an empty block list, and RTDB discards empty values outright.
+ */
+export async function saveSubmission(
+  teacherId: string,
+  semesterId: string,
+  roundId: string,
+  studentId: string,
+  submission: Pick<StudentSubmission, 'recurringPreferences' | 'weekOverrides'>
+): Promise<void> {
+  const weekOverrides: Record<string, { blocks: AvailabilityBlock[]; savedAt: number }> = {}
+  Object.entries(submission.weekOverrides).forEach(([weekStart, override]) => {
+    weekOverrides[weekStart] = { blocks: override.blocks, savedAt: Date.now() }
+  })
+  await set(ref(database, submissionPath(teacherId, semesterId, roundId, studentId)), {
+    studentId,
+    status: 'submitted',
+    submittedAt: Date.now(),
+    recurringPreferences: submission.recurringPreferences,
+    weekOverrides
+  })
+}
+
+// ─── Scheduling rounds ────────────────────────────────────────────────────────
+
+/**
+ * Opens a round for a semester.
+ *
+ * `roundNumber` is handed in rather than derived here: the caller already has the existing
+ * rounds on screen, and counting them at write time would need a read that could race with
+ * another tab doing the same.
+ */
+export async function createRound(
+  teacherId: string,
+  semesterId: string,
+  roundNumber: number,
+  deadline: number
+): Promise<string> {
+  const id = newKey(roundsPath(teacherId, semesterId))
+  await set(ref(database, roundPath(teacherId, semesterId, id)), {
+    id,
+    roundNumber,
+    status: 'collecting',
+    deadline,
+    createdAt: Date.now()
+  })
+  return id
+}
+
+/**
+ * Moves a round to its next state.
+ *
+ * Written as a merge rather than a whole record: the round's submissions live under it, and
+ * replacing the node would take them with it.
+ */
+export async function setRoundStatus(
+  teacherId: string,
+  semesterId: string,
+  roundId: string,
+  status: RoundStatus
+): Promise<void> {
+  await update(ref(database, roundPath(teacherId, semesterId, roundId)), { status })
 }
 
 // ─── Deleting a semester ──────────────────────────────────────────────────────

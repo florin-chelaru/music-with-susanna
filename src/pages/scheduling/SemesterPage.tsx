@@ -41,6 +41,7 @@ import {
   applyCancellation,
   AvailabilityBlock,
   dayWindow,
+  EMPTY_AVAILABILITY,
   LessonInstance,
   RoundStatus,
   SchedulingRound,
@@ -51,12 +52,14 @@ import {
 import { findScheduleConflicts, ScheduleConflict } from '../../util/schedulingConflicts'
 import {
   useLocations,
+  useSchedulingRounds,
   useStudentEnrollments,
   useTeacherStudents,
   useTeacherAvailability,
   useSemester
 } from '../../util/schedulingHooks'
 import {
+  createRound,
   removeEnrollment,
   saveEnrollment,
   saveTeacherAvailability
@@ -253,12 +256,6 @@ const TAB_KEYS = ['availability', 'students', 'scheduling', 'calendar']
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
-/** A semester nobody has set hours for yet. Distinct from "not loaded", which shows nothing. */
-const EMPTY_AVAILABILITY: WeeklyAvailability = {
-  weeklyTemplate: { blocks: [] },
-  weekOverrides: {}
-}
-
 export default function SemesterPage() {
   const { semesterId } = useParams<{ semesterId: string }>()
   const navigate = useNavigate()
@@ -434,12 +431,17 @@ export default function SemesterPage() {
 
   // ── Scheduling round state ───────────────────────────────────────────────────
 
-  const [rounds, setRounds] = useState<SchedulingRound[]>(() => {
+  const { rounds: remoteRounds } = useSchedulingRounds(
+    onMockData ? null : user.uid,
+    onMockData ? null : semesterId
+  )
+  const mockRounds = useMemo<SchedulingRound[]>(() => {
     if (semesterId === MOCK_SEMESTER_IDS.spring2026) return [...MOCK_ROUNDS_SPRING]
     if (semesterId === MOCK_SEMESTER_IDS.fall2026) return [...MOCK_ROUNDS_FALL]
     if (semesterId === MOCK_SEMESTER_IDS.spring2027) return [...MOCK_ROUNDS_SPRING2027]
     return []
-  })
+  }, [semesterId])
+  const rounds: SchedulingRound[] = onMockData ? mockRounds : remoteRounds
   const [newRoundOpen, setNewRoundOpen] = useState(false)
 
   // Only one round may collect at a time, otherwise students would have two open
@@ -447,18 +449,15 @@ export default function SemesterPage() {
   const hasOpenRound = rounds.some((r) => r.status === 'collecting')
 
   function handleCreateRound(deadline: number) {
-    // TODO (Step N): push the round to RTDB and notify every enrolled student.
-    setRounds((prev) => [
-      ...prev,
-      {
-        id: `round-local-${Date.now()}`,
-        roundNumber: prev.reduce((max, r) => Math.max(max, r.roundNumber), 0) + 1,
-        status: 'collecting',
-        deadline,
-        createdAt: Date.now()
-      }
-    ])
     setNewRoundOpen(false)
+    if (onMockData || !user.uid || !semesterId) return
+    // Numbered from what is on screen rather than from a fresh read: the teacher is looking at
+    // the list, and counting at write time would need a read that could race another tab.
+    const roundNumber = rounds.reduce((max, round) => Math.max(max, round.roundNumber), 0) + 1
+    // TODO (Step Q): notify every enrolled student that a round has opened.
+    void createRound(user.uid, semesterId, roundNumber, deadline).catch(() => {
+      setSaveStatus('error')
+    })
   }
 
   function handleConfirmCancel({ cancelAllForward }: CancelLessonOptions) {

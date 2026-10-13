@@ -9,7 +9,7 @@ import {
   Typography
 } from '@mui/material'
 import dayjs from 'dayjs'
-import { useContext, useEffect, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AvailabilityCalendar from '../../Components/scheduling/AvailabilityCalendar'
 import SchedulingNav from '../../Components/scheduling/SchedulingNav'
@@ -28,13 +28,12 @@ import {
 import { formatCountdown, formatMinutes, parseDate, parseMinutes } from '../../util/schedulingDates'
 import { useNow } from '../../util/useNow'
 import {
-  MOCK_SEMESTERS,
-  MOCK_SUBMISSIONS_BY_ROUND,
-  MOCK_TEACHER_AVAILABILITY,
-  MOCK_VIEWING_STUDENT_ID,
-  roundsForSemester
-} from '../../data/schedulingMocks'
-
+  useMySubmission,
+  useSchedulingRounds,
+  useSemester,
+  useTeacherAvailability
+} from '../../util/schedulingHooks'
+import { saveSubmission } from '../../util/schedulingWrites'
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
 interface StudentAvailabilityPageTexts {
@@ -145,7 +144,7 @@ function lowestTeacherScore(teacherBlocks: AvailabilityBlock[], block: Availabil
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function StudentAvailabilityPage() {
-  const { semesterId, roundId } = useParams<{
+  const { teacherId, semesterId, roundId } = useParams<{
     teacherId: string
     semesterId: string
     roundId: string
@@ -173,23 +172,29 @@ export default function StudentAvailabilityPage() {
     }
   }, [user.loading, user.uid, user.role])
 
-  const semester = MOCK_SEMESTERS.find((s) => s.id === semesterId)
-  const round = roundsForSemester(semesterId).find((r) => r.id === roundId)
+  const { semester } = useSemester(teacherId, semesterId)
+  const { rounds } = useSchedulingRounds(teacherId, semesterId)
+  const round = rounds.find((r) => r.id === roundId)
+  const { submission: existing } = useMySubmission(teacherId, semesterId, roundId, user.uid)
+  const { availability: teacherAvailability } = useTeacherAvailability(teacherId, semesterId)
 
-  // TODO (Step P): read and write the signed-in student's own submission.
-  const existing = roundId
-    ? MOCK_SUBMISSIONS_BY_ROUND[roundId]?.[MOCK_VIEWING_STUDENT_ID]
-    : undefined
+  const [preferences, setPreferences] = useState<AvailabilityBlock[]>([])
+  const [overrides, setOverrides] = useState<Record<string, { blocks: AvailabilityBlock[] }>>({})
+  const [submitted, setSubmitted] = useState(false)
+  const [saveError, setSaveError] = useState(false)
+  // Seeded once the stored answer arrives, and not again: the student is drawing on this
+  // calendar, and the echo of their own submission would wipe whatever they had started.
+  const seeded = useRef(false)
 
-  const [preferences, setPreferences] = useState<AvailabilityBlock[]>(
-    () => existing?.recurringPreferences ?? []
-  )
-  const [overrides, setOverrides] = useState<Record<string, { blocks: AvailabilityBlock[] }>>(
-    () => existing?.weekOverrides ?? {}
-  )
-  const [submitted, setSubmitted] = useState(existing?.status === 'submitted')
+  useEffect(() => {
+    if (seeded.current || !existing) return
+    seeded.current = true
+    setPreferences(existing.recurringPreferences ?? [])
+    setOverrides(existing.weekOverrides ?? {})
+    setSubmitted(existing.status === 'submitted')
+  }, [existing])
 
-  const teacherBlocks = MOCK_TEACHER_AVAILABILITY.weeklyTemplate.blocks
+  const teacherBlocks = teacherAvailability?.weeklyTemplate.blocks ?? []
 
   // ── Validation ───────────────────────────────────────────────────────────────
 
@@ -332,8 +337,19 @@ export default function StudentAvailabilityPage() {
                 variant="contained"
                 disabled={!valid || submitted}
                 onClick={() => {
-                  // TODO (Step P): write the submission and notify the teacher.
-                  setSubmitted(true)
+                  if (!teacherId || !semesterId || !roundId || !user.uid) return
+                  setSaveError(false)
+                  // TODO (Step Q): notify the teacher that an answer has arrived.
+                  void saveSubmission(teacherId, semesterId, roundId, user.uid, {
+                    recurringPreferences: preferences,
+                    weekOverrides: overrides
+                  })
+                    .then(() => {
+                      setSubmitted(true)
+                    })
+                    .catch(() => {
+                      setSaveError(true)
+                    })
                 }}>
                 {existing?.status === 'submitted' ? t.resubmit : t.submit}
               </Button>

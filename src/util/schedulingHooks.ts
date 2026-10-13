@@ -1,4 +1,4 @@
-import { get, onValue, ref } from 'firebase/database'
+import { get, onValue, ref, Unsubscribe } from 'firebase/database'
 import { useEffect, useMemo, useState } from 'react'
 import { database } from '../store/Firebase'
 import {
@@ -12,6 +12,7 @@ import {
   semesterPath,
   semestersPath,
   studentLessonsPath,
+  studentTeachersPath,
   submissionPath,
   teacherStudentsPath,
   submissionsPath,
@@ -67,6 +68,49 @@ function useNode<T>(path: string | null): { value: T | null; loading: boolean } 
   }, [path])
 
   return { value, loading }
+}
+
+/**
+ * Several nodes at once, when the count is not known until the data arrives.
+ *
+ * A student belongs to one or two teachers, each with some semesters, and nothing can be read
+ * until the previous read says what to ask for. Hooks cannot be called in a loop, so the
+ * subscriptions are managed by hand here and torn down together.
+ */
+function useNodes(paths: string[]): { values: Record<string, unknown>; loading: boolean } {
+  const [values, setValues] = useState<Record<string, unknown>>({})
+  const [loading, setLoading] = useState(true)
+
+  // Compared as a string: the array is rebuilt by the caller on every render, so depending on
+  // its identity would tear down and recreate every listener each time.
+  const key = paths.join('|')
+
+  useEffect(() => {
+    const list = key ? key.split('|') : []
+    if (list.length === 0) {
+      setValues({})
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    const seen = new Set<string>()
+    const unsubscribes: Unsubscribe[] = list.map((path) =>
+      onValue(ref(database, path), (snap) => {
+        setValues((previous) => ({ ...previous, [path]: snap.val() }))
+        seen.add(path)
+        // Loaded when every path has answered once, not when the first does — otherwise the
+        // page renders "nothing here" while half the reads are still outstanding.
+        if (seen.size === list.length) setLoading(false)
+      })
+    )
+    return () => {
+      unsubscribes.forEach((unsubscribe) => {
+        unsubscribe()
+      })
+    }
+  }, [key])
+
+  return { values, loading }
 }
 
 /**
@@ -272,4 +316,154 @@ export function useTeacherStudents(teacherId: Id) {
   }, [idList])
 
   return { students, loading: idsLoading || loading }
+}
+
+// ─── A student's own view ─────────────────────────────────────────────────────
+
+export interface EnrolledSemester {
+  teacherId: string
+  semester: Semester
+  rounds: SchedulingRound[]
+}
+
+/**
+ * Every semester a student is enrolled in, with that semester's rounds.
+ *
+ * Assembled in three waves, because each read says what to ask for next: the teachers a student
+ * belongs to, then each teacher's semesters, then each semester's rounds and this student's own
+ * enrollment in it.
+ *
+ * The enrollment read is what makes it *their* semesters rather than the teacher's. A student
+ * may list a teacher's terms, but being listed is not being enrolled — only an enrollment record
+ * naming them says they belong in one.
+ */
+export function useMyEnrolledSemesters(studentId: Id): {
+  semesters: EnrolledSemester[]
+  loading: boolean
+} {
+  const { value: teacherMap, loading: teachersLoading } = useNode<Record<string, unknown>>(
+    studentId ? studentTeachersPath(studentId) : null
+  )
+  const teacherIds = useMemo(() => Object.keys(teacherMap ?? {}).sort(), [teacherMap])
+
+  const { values: semesterLists, loading: semestersLoading } = useNodes(
+    teacherIds.map((tid) => semestersPath(tid))
+  )
+
+  // Flattened to (teacher, semester) pairs before anything else is asked for.
+  const pairs = useMemo(() => {
+    const found: Array<{ teacherId: string; semester: Semester }> = []
+    teacherIds.forEach((teacherId) => {
+      const list = (semesterLists[semestersPath(teacherId)] ?? {}) as Record<string, Semester>
+      Object.entries(list).forEach(([id, semester]) => {
+        found.push({ teacherId, semester: { ...semester, id } })
+      })
+    })
+    return found
+  }, [teacherIds, semesterLists])
+
+  const { values: extra, loading: extraLoading } = useNodes(
+    pairs.flatMap(({ teacherId, semester }) => [
+      roundsPath(teacherId, semester.id),
+      studentId ? `${enrollmentsPath(teacherId, semester.id)}/${studentId}` : ''
+    ])
+  )
+
+  const semesters = useMemo(
+    () =>
+      pairs
+        .filter(({ teacherId, semester }) =>
+          Boolean(extra[`${enrollmentsPath(teacherId, semester.id)}/${studentId ?? ''}`])
+        )
+        .map(({ teacherId, semester }) => {
+          const rounds = (extra[roundsPath(teacherId, semester.id)] ?? {}) as Record<
+            string,
+            SchedulingRound
+          >
+          return {
+            teacherId,
+            semester,
+            rounds: Object.entries(rounds).map(([id, round]) => ({ ...round, id }))
+          }
+        }),
+    [pairs, extra, studentId]
+  )
+
+  return {
+    semesters,
+    loading: teachersLoading || semestersLoading || extraLoading
+  }
+}
+
+/**
+ * The names and subjects of a student's teachers.
+ *
+ * Read one record at a time, like every other directory here: the grant on `users` is declared
+ * at `$uid`, so the collection cannot be listed.
+ */
+export function useMyTeachers(studentId: Id) {
+  const { value: teacherMap } = useNode<Record<string, unknown>>(
+    studentId ? studentTeachersPath(studentId) : null
+  )
+  const [teachers, setTeachers] = useState<Record<string, { name: string; subject: string }>>({})
+
+  const idList = Object.keys(teacherMap ?? {})
+    .sort()
+    .join(',')
+
+  useEffect(() => {
+    const ids = idList ? idList.split(',') : []
+    if (ids.length === 0) {
+      setTeachers({})
+      return
+    }
+    let cancelled = false
+    void Promise.all(
+      ids.map(async (uid) => [uid, (await get(ref(database, userPath(uid)))).val()] as const)
+    ).then((entries) => {
+      if (cancelled) return
+      const directory: Record<string, { name: string; subject: string }> = {}
+      entries.forEach(([uid, record]) => {
+        const user = record as { name?: string; subject?: string } | null
+        if (user) directory[uid] = { name: user.name ?? uid, subject: user.subject ?? '' }
+      })
+      setTeachers(directory)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [idList])
+
+  return { teachers }
+}
+
+/**
+ * Which of these rounds the student has already answered.
+ *
+ * Their own submission is the only one they may read, which is exactly what this needs — the
+ * question is "have I replied?", not "who else has".
+ */
+export function useMySubmittedRounds(
+  studentId: Id,
+  rounds: Array<{ teacherId: string; semesterId: string; roundId: string }>
+): string[] {
+  const { values } = useNodes(
+    studentId
+      ? rounds.map(({ teacherId, semesterId, roundId }) =>
+          submissionPath(teacherId, semesterId, roundId, studentId)
+        )
+      : []
+  )
+
+  return useMemo(() => {
+    if (!studentId) return []
+    return rounds
+      .filter(({ teacherId, semesterId, roundId }) => {
+        const submission = values[
+          submissionPath(teacherId, semesterId, roundId, studentId)
+        ] as StudentSubmission | null
+        return submission?.status === 'submitted'
+      })
+      .map(({ roundId }) => roundId)
+  }, [rounds, values, studentId])
 }

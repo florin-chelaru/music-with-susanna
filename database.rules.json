@@ -131,7 +131,7 @@
     "semesters": {
       "teachers": {
         "$tid": {
-          ".read": "$tid === auth.uid",
+          ".read": "$tid === auth.uid || root.child('teachers').child($tid).child('students').child(auth.uid).exists()",
           ".write": "$tid === auth.uid",
           "$sid": {
             ".read": "root.child('studentEnrollments').child('teachers').child($tid).child('semesters').child($sid).child('students').child(auth.uid).exists()"

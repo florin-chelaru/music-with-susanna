@@ -24,17 +24,11 @@ import { applyCancellation, LessonInstance, SchedulingRound, Semester } from '..
 import { formatCountdown } from '../../util/schedulingDates'
 import { useNow } from '../../util/useNow'
 import {
-  enrollmentsForSemester,
-  lessonsForSemester,
-  MOCK_SEMESTER_IDS,
-  MOCK_SEMESTERS,
-  MOCK_SUBMISSIONS_BY_ROUND,
-  MOCK_TEACHER_ID,
-  MOCK_TEACHER_NAME,
-  MOCK_TEACHER_SUBJECT,
-  MOCK_VIEWING_STUDENT_ID,
-  roundsForSemester
-} from '../../data/schedulingMocks'
+  useMyEnrolledSemesters,
+  useMyLessons,
+  useMySubmittedRounds,
+  useMyTeachers
+} from '../../util/schedulingHooks'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
@@ -101,52 +95,6 @@ interface OpenRequest {
   submitted: boolean
 }
 
-// A student may study with more than one teacher, so the real version walks
-// /students/{uid}/teachers and checks each teacher's semesters. The mocks have one teacher.
-function openRequestsFor(studentId: string): OpenRequest[] {
-  const bySemester: Array<{ semesterId: string; rounds: SchedulingRound[]; enrolled: boolean }> = [
-    {
-      semesterId: MOCK_SEMESTER_IDS.fall2026,
-      rounds: roundsForSemester(MOCK_SEMESTER_IDS.fall2026),
-      enrolled: enrollmentsForSemester(MOCK_SEMESTER_IDS.fall2026).some(
-        (e) => e.studentId === studentId
-      )
-    },
-    {
-      semesterId: MOCK_SEMESTER_IDS.spring2027,
-      rounds: roundsForSemester(MOCK_SEMESTER_IDS.spring2027),
-      enrolled: enrollmentsForSemester(MOCK_SEMESTER_IDS.spring2027).some(
-        (e) => e.studentId === studentId
-      )
-    }
-  ]
-
-  const requests: OpenRequest[] = []
-  bySemester.forEach(({ semesterId, rounds, enrolled }) => {
-    if (!enrolled) return
-    const semester = MOCK_SEMESTERS.find((s) => s.id === semesterId)
-    if (!semester) return
-    rounds
-      .filter((round) => round.status === 'collecting')
-      .forEach((round) => {
-        requests.push({
-          teacherId: MOCK_TEACHER_ID,
-          teacherName: MOCK_TEACHER_NAME,
-          semester,
-          round,
-          submitted: MOCK_SUBMISSIONS_BY_ROUND[round.id]?.[studentId]?.status === 'submitted'
-        })
-      })
-  })
-  return requests
-}
-
-function lessonsFor(studentId: string): LessonInstance[] {
-  return lessonsForSemester(MOCK_SEMESTER_IDS.fall2026).filter(
-    (lesson) => lesson.studentId === studentId
-  )
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function StudentSchedulePage() {
@@ -170,18 +118,62 @@ export default function StudentSchedulePage() {
     }
   }, [user.loading, user.uid, user.role])
 
-  // TODO (Step P): read the signed-in student's own requests and lessons from RTDB.
-  const studentId = MOCK_VIEWING_STUDENT_ID
-  const requests = openRequestsFor(studentId)
-  const [lessons, setLessons] = useState<LessonInstance[]>(() => lessonsFor(studentId))
+  const studentId = user.uid
+  const { semesters: enrolled, loading: enrolledLoading } = useMyEnrolledSemesters(studentId)
+  const { teachers } = useMyTeachers(studentId)
+  const { lessons: myLessons } = useMyLessons(studentId)
+
+  // Every round across every enrolled semester, so the next hook can ask whether this student
+  // has answered each one.
+  const allRounds = useMemo(
+    () =>
+      enrolled.flatMap(({ teacherId, semester, rounds }) =>
+        rounds.map((round) => ({ teacherId, semesterId: semester.id, roundId: round.id }))
+      ),
+    [enrolled]
+  )
+  const submittedRounds = useMySubmittedRounds(studentId, allRounds)
+
+  // Mirrored into local state so cancelling still updates the view before Step Q writes it.
+  const [lessons, setLessons] = useState<LessonInstance[]>([])
+  useEffect(() => {
+    setLessons(myLessons)
+  }, [myLessons])
+
+  // One entry per round still collecting, across every teacher the student studies with.
+  const requests: OpenRequest[] = useMemo(
+    () =>
+      enrolled.flatMap(({ teacherId, semester, rounds }) =>
+        rounds
+          .filter((round) => round.status === 'collecting')
+          .map((round) => ({
+            teacherId,
+            teacherName: teachers[teacherId]?.name ?? teacherId,
+            semester,
+            round,
+            // Whether this student has answered. Their own submission is the only one they can
+            // read, which is all this needs.
+            submitted: submittedRounds.includes(round.id)
+          }))
+      ),
+    [enrolled, teachers, submittedRounds]
+  )
+
   const [cancelTarget, setCancelTarget] = useState<LessonInstance | null>(null)
 
   const now = useNow()
 
-  const semesterOfCancelTarget = useMemo(
-    () => MOCK_SEMESTERS.find((s) => s.id === MOCK_SEMESTER_IDS.fall2026),
-    []
-  )
+  // The cancellation window comes from the semester the lesson belongs to, so a student with
+  // two teachers gets each one's policy rather than whichever was found first.
+  const semesterOfCancelTarget = useMemo(() => {
+    if (!cancelTarget) return undefined
+    const match = myLessons.find((lesson) => lesson.id === cancelTarget.id)
+    return enrolled.find(({ semester }) => semester.id === match?.semesterId)?.semester
+  }, [cancelTarget, myLessons, enrolled])
+
+  // One subject only makes sense with one teacher; with two, the calendar says "Lesson".
+  const teacherIds = Object.keys(teachers)
+  const subject = teacherIds.length === 1 ? teachers[teacherIds[0]].subject : undefined
 
   function handleConfirmCancel({ cancelAllForward }: CancelLessonOptions) {
     const target = cancelTarget
@@ -298,7 +290,7 @@ export default function StudentSchedulePage() {
               own on every event is noise. They see who the lesson is with instead. */}
           <LessonCalendar
             lessons={lessons}
-            subject={MOCK_TEACHER_SUBJECT}
+            subject={subject}
             defaultDate={calendarDefaultDate}
             onCancel={(lesson) => {
               setCancelTarget(lesson)

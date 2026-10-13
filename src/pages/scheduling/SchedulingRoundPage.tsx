@@ -26,6 +26,7 @@ import { UserRole } from '../../util/User'
 import {
   computeCombinedScore,
   dayWindow,
+  EMPTY_AVAILABILITY,
   RoundStatus,
   SchedulingRound,
   scoreForDayTime,
@@ -48,6 +49,14 @@ import EditableScheduleCalendar, {
 } from '../../Components/scheduling/EditableScheduleCalendar'
 import SuggestedScheduleCard from '../../Components/scheduling/SuggestedScheduleCard'
 import { findScheduleConflicts } from '../../util/schedulingConflicts'
+import {
+  useSchedulingRounds,
+  useSemester,
+  useStudentEnrollments,
+  useStudentSubmissions,
+  useTeacherAvailability,
+  useTeacherStudents
+} from '../../util/schedulingHooks'
 import {
   formatCountdown,
   formatMinutes,
@@ -248,9 +257,45 @@ export default function SchedulingRoundPage() {
     }
   }, [user.loading, user.uid, user.role])
 
-  const semester = MOCK_SEMESTERS.find((s) => s.id === semesterId)
-  const round = roundsForSemester(semesterId).find((r) => r.id === roundId)
-  const enrollments = enrollmentsForSemester(semesterId)
+  // Real rounds come from RTDB; the mock semesters are resolved alongside them so the earlier
+  // steps' surfaces stay reachable. All of this goes with schedulingMocks.ts after Step P.
+  const mockSemester = MOCK_SEMESTERS.find((s) => s.id === semesterId)
+  const onMockData = Boolean(mockSemester)
+
+  const { semester: remoteSemester } = useSemester(
+    onMockData ? null : user.uid,
+    onMockData ? null : semesterId
+  )
+  const { rounds: remoteRounds } = useSchedulingRounds(
+    onMockData ? null : user.uid,
+    onMockData ? null : semesterId
+  )
+  const { enrollments: remoteEnrollments } = useStudentEnrollments(
+    onMockData ? null : user.uid,
+    onMockData ? null : semesterId
+  )
+  const { submissions: remoteSubmissions } = useStudentSubmissions(
+    onMockData ? null : user.uid,
+    onMockData ? null : semesterId,
+    onMockData ? null : roundId
+  )
+  const { availability: remoteAvailability } = useTeacherAvailability(
+    onMockData ? null : user.uid,
+    onMockData ? null : semesterId
+  )
+  const { students: teacherStudents } = useTeacherStudents(onMockData ? null : user.uid)
+
+  const semester = remoteSemester ?? mockSemester
+  const round = onMockData
+    ? roundsForSemester(semesterId).find((r) => r.id === roundId)
+    : remoteRounds.find((r) => r.id === roundId)
+  const enrollments = onMockData ? enrollmentsForSemester(semesterId) : remoteEnrollments
+  const students = onMockData ? MOCK_STUDENTS : teacherStudents
+  const availability = onMockData
+    ? MOCK_TEACHER_AVAILABILITY
+    : remoteAvailability ?? EMPTY_AVAILABILITY
+  const mockSubmissions = round ? MOCK_SUBMISSIONS_BY_ROUND[round.id] ?? {} : {}
+  const submissions = onMockData ? mockSubmissions : remoteSubmissions
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
 
@@ -261,9 +306,9 @@ export default function SchedulingRoundPage() {
     const schedulingInput: SchedulingInput = {
       semesterStart: semester.startDate,
       semesterEnd: semester.endDate,
-      teacherAvailability: MOCK_TEACHER_AVAILABILITY,
-      enrollments: enrollmentsForSemester(semester.id),
-      submissions: MOCK_SUBMISSIONS_BY_ROUND[round.id] ?? {}
+      teacherAvailability: availability,
+      enrollments,
+      submissions
     }
     return pickSpread(generateAllSuggestions(schedulingInput))
   }, [semester, round])
@@ -324,18 +369,12 @@ export default function SchedulingRoundPage() {
     }
   })
 
-  const submissions = round ? MOCK_SUBMISSIONS_BY_ROUND[round.id] ?? {} : {}
-
   // The weight this schedule was built at, so a time the teacher picks is blended the same way
   // the solver blended the ones around it.
   const weight = selectedIndex !== null ? suggestions[selectedIndex].weightFrom : undefined
 
   const teacherBlocksOn = (date: string) =>
-    getEffectiveBlocksForDate(
-      MOCK_TEACHER_AVAILABILITY.weeklyTemplate.blocks,
-      MOCK_TEACHER_AVAILABILITY.weekOverrides,
-      date
-    )
+    getEffectiveBlocksForDate(availability.weeklyTemplate.blocks, availability.weekOverrides, date)
 
   const blocksOn = (studentId: string, date: string) => {
     const submission = submissions[studentId]
@@ -391,9 +430,8 @@ export default function SchedulingRoundPage() {
   // Recomputed from the slots rather than carried over from the solver, so it still describes
   // the schedule after the teacher has dragged half of it around.
   const conflicts = useMemo(
-    () =>
-      editedSlots ? findScheduleConflicts(editedSlots, MOCK_TEACHER_AVAILABILITY, submissions) : [],
-    [editedSlots, submissions]
+    () => (editedSlots ? findScheduleConflicts(editedSlots, availability, submissions) : []),
+    [editedSlots, submissions, availability]
   )
 
   // One entry per lesson the student is owed but has no time for.
@@ -428,10 +466,10 @@ export default function SchedulingRoundPage() {
   }
 
   const rows = enrollments.map((enrollment) => {
-    const submission = MOCK_SUBMISSIONS_BY_ROUND[round.id]?.[enrollment.studentId]
+    const submission = submissions[enrollment.studentId]
     return {
       studentId: enrollment.studentId,
-      name: MOCK_STUDENTS[enrollment.studentId]?.name ?? enrollment.studentId,
+      name: students[enrollment.studentId]?.name ?? enrollment.studentId,
       status: submission?.status ?? 'pending',
       submittedAt: submission?.submittedAt
     }
@@ -509,7 +547,7 @@ export default function SchedulingRoundPage() {
 
               <EditableScheduleCalendar
                 slots={editedSlots}
-                students={MOCK_STUDENTS}
+                students={students}
                 onChange={handleSlotsChange}
                 defaultDate={firstSlotDate(editedSlots)}
                 unscheduled={unscheduled}
@@ -570,7 +608,7 @@ export default function SchedulingRoundPage() {
                         weightFrom={card.suggestion.weightFrom}
                         weightTo={card.suggestion.weightTo}
                         suggestion={card.suggestion}
-                        students={MOCK_STUDENTS}
+                        students={students}
                         selected={selectedIndex === index}
                         edited={card.edited}
                         onUse={() => {

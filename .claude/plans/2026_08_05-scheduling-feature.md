@@ -1310,6 +1310,9 @@ landed beyond the original three bullets:
 
 #### ~~Step J — StudentSchedulePage~~ ✅ DONE
 
+*(Wired to RTDB 2026-10-13, ahead of the rest of Step P: Step O cannot be tested without real
+student submissions, so the student side had to come first. See Step P.)*
+
 - `src/pages/scheduling/StudentSchedulePage.tsx` — two sections:
   1. Pending availability requests (mock: one open round with deadline); "Submit Availability" navigates to `StudentAvailabilityPage`
   2. Upcoming lessons: `LessonCalendar` in student mode (no student names, cancel button visible)
@@ -1543,7 +1546,34 @@ Original plan text follows.
 
 ---
 
-#### Step P — Wire student pages to RTDB
+#### Step P — Wire student pages to RTDB (largely done)
+
+**Both student pages came off the mocks on 2026-10-13**, pulled ahead of Step O because closing a
+round computes suggestions from student submissions — without a way for students to submit, every
+real round has zero input and the solver returns everyone unschedulable.
+
+`StudentSchedulePage` assembles its view in three waves, because each read says what to ask for
+next: the student's teachers from `/students/{uid}/teachers`, then each teacher's semesters, then
+each semester's rounds **and this student's own enrollment**. That last read is what makes them
+*their* semesters — being able to list a teacher's terms is not being enrolled in one.
+
+A student with two teachers works throughout: requests are labelled by teacher, and the
+cancellation window comes from the semester the lesson belongs to rather than whichever was found
+first. The lesson calendar shows a subject only when there is exactly one teacher.
+
+**A fourth listing wall, and the one that decided the design.** A student cannot list semesters,
+enrollments, or anything else that would reveal which terms they are in. Rather than add a third
+denormalised index — `studentLessons` already has to be swept by `deleteSemester`, and mirrors
+have drifted twice — a student of a teacher may now list that teacher's semesters. Everything
+inside stays gated on enrollment. It grants the existence of a term, not anything about who is in
+it, and there is nothing to keep in sync.
+
+Still to do here: the student's lesson calendar has no lessons to show until Step O confirms a
+schedule, and cancelling still only updates the view (Step Q).
+
+Original plan text follows.
+
+#### Step P — Wire student pages to RTDB (original)
 
 - `StudentSchedulePage`: queries open rounds across the student's teachers; `useMyLessonInstances` per semester
 - `StudentAvailabilityPage`: `useTeacherAvailability` for overlay; `useMySubmission` to pre-populate; writes submission on submit + sends notification to teacher

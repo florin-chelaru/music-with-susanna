@@ -94,6 +94,12 @@ export interface WeekOverride {
   savedAt?: number
 }
 
+/** A semester nobody has set hours for yet. Distinct from "not loaded", which shows nothing. */
+export const EMPTY_AVAILABILITY: WeeklyAvailability = {
+  weeklyTemplate: { blocks: [] },
+  weekOverrides: {}
+}
+
 /**
  * Availability as RTDB will actually keep it.
  *
