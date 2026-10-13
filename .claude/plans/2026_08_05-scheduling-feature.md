@@ -1430,10 +1430,26 @@ no time axis for a wash to live on.
 
 ---
 
-#### Step M — RTDB hooks
+#### ~~Step M — RTDB hooks~~ ✅ DONE
 
-- `src/util/schedulingHooks.ts` — all `onValue` hooks listed in Step 4 of the detailed plan
-- Unit tests following the existing pattern (mock `onValue`, inject snapshots)
+- `src/util/schedulingHooks.ts` — one hook per subscription, over two shared helpers: `useNode`
+  for a single record and `useCollection` for an RTDB object folded into an array with the key
+  as `id`. A null id means "wait", not "read the parent" — subscribing without one would read
+  every teacher's data and be refused.
+- Unit tests assert the **paths**, which is the half the type system cannot check: a hook reading
+  a path the rules do not grant fails at runtime with a permission error and nowhere earlier.
+
+Two corrections to the list below, both found by writing it against the deployed rules:
+
+- **`useMyLessonInstances` could not work.** The rules grant a student read on a lesson whose
+  `studentId` matches them, and RTDB cannot turn a per-node condition into a listable query — the
+  student can read a lesson they already know the id of and cannot discover which ids those are,
+  so there was nothing to "filter client-side". Replaced by `useMyLessons(uid)`, reading a
+  `/studentLessons/{uid}` index the teacher mirrors each lesson into. `lessonInstances` stays the
+  teacher's source of truth; the index is the only lesson path a student reads. **Step O must
+  write both**, and a lesson that is moved or cancelled has to be updated in both.
+- **`useScheduleSuggestions` was keyed by strategy.** The three fixed strategies are gone; the
+  sweep yields however many distinct schedules exist, keyed by weight band.
 
 ---
 
@@ -1747,10 +1763,10 @@ useStudentEnrollments(teacherId, semesterId)      → { enrollments: StudentEnro
 useSchedulingRounds(teacherId, semesterId)        → { rounds: SchedulingRound[], loading }
 useStudentSubmissions(teacherId, semesterId, rid) → { submissions: Record<uid, StudentSubmission>, loading }
 useMySubmission(teacherId, semesterId, rid, uid)  → { submission: StudentSubmission | null, loading }
-useScheduleSuggestions(teacherId, semesterId, rid)→ { suggestions: Record<strategy, ScheduleSuggestion>, loading }
+useScheduleSuggestions(teacherId, semesterId, rid)→ { suggestions: Record<weightBand, ScheduleSuggestion>, loading }
 useConfirmedSchedule(teacherId, semesterId)       → { schedule: ConfirmedSchedule | null, loading }
 useLessonInstances(teacherId, semesterId)         → { lessons: LessonInstance[], loading }
-useMyLessonInstances(teacherId, semesterId, uid)  → { lessons: LessonInstance[], loading }  // filters client-side
+useMyLessons(uid)                                 → { lessons: LessonInstance[], loading }  // from the index
 useCancellations(teacherId, semesterId)           → { cancellations: Cancellation[], loading }
 useMyNotifications(teacherId, uid)                → { notifications: SchedulingNotification[], loading }
 ```

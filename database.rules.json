@@ -293,6 +293,15 @@
           }
         }
       }
+    },
+    "studentLessons": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        "$lid": {
+          ".read": "data.child('teacherId').val() === auth.uid",
+          ".write": "newData.child('teacherId').val() === auth.uid || (!newData.exists() && data.child('teacherId').val() === auth.uid)"
+        }
+      }
     }
   }
 }
