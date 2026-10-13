@@ -1,11 +1,12 @@
 import { Box, Button, Divider, IconButton, Stack, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import dayjs, { Dayjs } from 'dayjs'
-import { useContext, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import AvailabilityCalendar from './AvailabilityCalendar'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
@@ -51,6 +52,11 @@ export interface WeekOverridesSectionProps {
   semesterEnd: string
   /** Drawn behind the editable blocks — the teacher's availability, in the student's view. */
   overlayBlocks?: AvailabilityBlock[]
+  /**
+   * Monday of a week to scroll to and flash — how a conflict elsewhere on the page points at
+   * the week that would fix it. The caller clears it, so pointing at the same week twice works.
+   */
+  focusWeek?: string | null
   /** Receives the Monday of the chosen week; the caller decides what to seed it with. */
   onAdd: (weekStart: string) => void
   onChange: (weekStart: string, blocks: AvailabilityBlock[]) => void
@@ -68,6 +74,7 @@ export default function WeekOverridesSection({
   semesterStart,
   semesterEnd,
   overlayBlocks,
+  focusWeek,
   onAdd,
   onChange,
   onRemove
@@ -81,6 +88,19 @@ export default function WeekOverridesSection({
 
   const [showPicker, setShowPicker] = useState(false)
   const [pickedDate, setPickedDate] = useState<Dayjs | null>(null)
+  const weekRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  // A week named from elsewhere on the page is scrolled to and flashed. The effect runs after
+  // the week has been added, which is why it waits for the ref rather than scrolling inline.
+  useEffect(() => {
+    if (!focusWeek) return
+    const element = weekRefs.current[focusWeek]
+    if (!element) return
+    element.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'center'
+    })
+  }, [focusWeek, overrides])
 
   // A week is offerable when it overlaps the semester and has not already gone by.
   function shouldDisableDate(date: Dayjs): boolean {
@@ -162,7 +182,20 @@ export default function WeekOverridesSection({
       )}
 
       {sorted.map(([weekStart, { blocks }]) => (
-        <Box key={weekStart} sx={{ mb: 3 }}>
+        <Box
+          key={weekStart}
+          ref={(element: HTMLDivElement | null) => {
+            weekRefs.current[weekStart] = element
+          }}
+          sx={{
+            mb: 3,
+            borderRadius: 2,
+            transition: 'background-color 600ms ease-out',
+            backgroundColor:
+              focusWeek === weekStart
+                ? (theme) => alpha(theme.palette.primary.main, 0.08)
+                : 'transparent'
+          }}>
           <Divider sx={{ mb: 2 }} />
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
             <Typography variant="body2" fontWeight={500}>

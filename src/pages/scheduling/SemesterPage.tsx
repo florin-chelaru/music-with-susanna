@@ -28,6 +28,7 @@ import WeekOverridesSection from '../../Components/scheduling/WeekOverridesSecti
 import CancelLessonDialog, {
   CancelLessonOptions
 } from '../../Components/scheduling/CancelLessonDialog'
+import ConflictsPanel from '../../Components/scheduling/ConflictsPanel'
 import EnrollmentDialog from '../../Components/scheduling/EnrollmentDialog'
 import LessonCalendar from '../../Components/scheduling/LessonCalendar'
 import NewRoundDialog from '../../Components/scheduling/NewRoundDialog'
@@ -46,7 +47,8 @@ import {
   StudentEnrollment,
   WeeklyAvailability
 } from '../../util/scheduling'
-import { parseDate } from '../../util/schedulingDates'
+import { findScheduleConflicts, ScheduleConflict } from '../../util/schedulingConflicts'
+import { eachWeekStartInRange, formatDate, parseDate } from '../../util/schedulingDates'
 import {
   MOCK_ENROLLMENTS_FALL,
   MOCK_ENROLLMENTS_SPRING,
@@ -266,6 +268,11 @@ export default function SemesterPage() {
   // ── Mock data lookup ─────────────────────────────────────────────────────────
 
   const semester = MOCK_SEMESTERS.find((s) => s.id === semesterId)
+  // How many weeks a new enrollment has to fill. The enrollment dialog defaults to one lesson
+  // a week from this, and draws its spread preview against it.
+  const semesterWeeks = semester
+    ? eachWeekStartInRange(semester.startDate, semester.endDate).length
+    : 0
   const location = semester ? MOCK_LOCATIONS.find((l) => l.id === semester.locationId) : null
 
   // ── Tabs ─────────────────────────────────────────────────────────────────────
@@ -291,6 +298,10 @@ export default function SemesterPage() {
 
   const [availability, setAvailability] = useState<WeeklyAvailability>(MOCK_TEACHER_AVAILABILITY)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  // The week a conflict row pointed at, and the weekly template it points at instead when the
+  // problem recurs. Both exist so the panel can send the teacher to the thing that fixes it.
+  const [focusWeek, setFocusWeek] = useState<string | null>(null)
+  const templateRef = useRef<HTMLDivElement>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function triggerAutoSave() {
@@ -412,6 +423,39 @@ export default function SemesterPage() {
 
   // A new override starts from the weekly template, so the teacher edits from what they
   // normally do rather than from an empty week.
+  // Where the teacher's own availability disagrees with the schedule already in the calendar.
+  //
+  // No student submissions are passed: this tab is about the teacher's hours, the round that
+  // collected the students' preferences is over, and a student's availability is not something
+  // the teacher can edit here anyway.
+  const availabilityConflicts = useMemo(() => {
+    const scheduled = lessons
+      .filter((lesson) => lesson.status === 'scheduled')
+      .map((lesson) => ({
+        studentId: lesson.studentId,
+        date: formatDate(new Date(lesson.scheduledStart)),
+        startTime: dayjs(lesson.scheduledStart).format('HH:mm'),
+        endTime: dayjs(lesson.scheduledEnd).format('HH:mm')
+      }))
+    return findScheduleConflicts(scheduled, availability, {})
+  }, [lessons, availability])
+
+  // A conflict confined to one week is mended with an override for that week, so the row makes
+  // one if it does not exist and then points at it. Anything recurring is the weekly template's
+  // doing, and no per-week fix would hold.
+  function handleConflictSelect(conflict: ScheduleConflict) {
+    if (conflict.kind === 'teacher_week') {
+      handleAddOverride(conflict.weekStart)
+      setFocusWeek(conflict.weekStart)
+      return
+    }
+    setFocusWeek(null)
+    templateRef.current?.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'start'
+    })
+  }
+
   function handleAddOverride(weekStart: string) {
     if (weekStart in availability.weekOverrides) return
     handleOverrideChange(weekStart, [...availability.weeklyTemplate.blocks])
@@ -465,6 +509,12 @@ export default function SemesterPage() {
       {/* ── Availability tab ───────────────────────────────────────────────── */}
       {tab === 0 && (
         <Box>
+          <ConflictsPanel
+            conflicts={availabilityConflicts}
+            students={MOCK_STUDENTS}
+            onSelect={handleConflictSelect}
+          />
+
           {/* Weekly template */}
           <Stack direction="row" alignItems="baseline" spacing={1} sx={{ mb: 1.5 }}>
             <Typography variant="subtitle1" fontWeight={600}>
@@ -481,15 +531,18 @@ export default function SemesterPage() {
               </Typography>
             )}
           </Stack>
-          <AvailabilityCalendar
-            blocks={availability.weeklyTemplate.blocks}
-            onChange={handleTemplateChange}
-          />
+          <Box ref={templateRef} sx={{ scrollMarginTop: 16 }}>
+            <AvailabilityCalendar
+              blocks={availability.weeklyTemplate.blocks}
+              onChange={handleTemplateChange}
+            />
+          </Box>
 
           <WeekOverridesSection
             overrides={availability.weekOverrides}
             semesterStart={semester.startDate}
             semesterEnd={semester.endDate}
+            focusWeek={focusWeek}
             onAdd={handleAddOverride}
             onChange={handleOverrideChange}
             onRemove={handleRemoveOverride}
@@ -607,6 +660,8 @@ export default function SemesterPage() {
             open={enrollDialogOpen}
             students={MOCK_STUDENTS}
             alreadyEnrolledIds={enrollments.map((e) => e.studentId)}
+            weeks={semesterWeeks}
+            defaultCancellationWindowHours={semester.defaultCancellationWindowHours}
             onClose={() => {
               setEnrollDialogOpen(false)
             }}

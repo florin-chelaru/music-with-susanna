@@ -1214,6 +1214,12 @@ All phases follow the same incremental pattern:
 
 #### ~~Step E — SemesterPage: Students tab~~ ✅ DONE
 
+*(Completed 2026-10-13: the enrollment dialog now defaults `totalLessons` to one a week, shows
+the semester's week count, and carries the three-way distribution control with a per-week
+preview drawn by `weeklyQuota` — the same function the solver fills, so the two cannot disagree.
+The cancellation window shows the semester default rather than an empty box, but a value equal
+to it is still stored as absent, so an untouched field keeps inheriting.)*
+
 - `src/Components/scheduling/EnrollmentDialog.tsx` — new dialog: student dropdown (filtered to unenrolled), lesson duration (min), total lessons, optional cancellation window override (h). **Still to add (2026-10-12):** default `totalLessons` to one per week, show the semester's week count beside it, and add the three-way distribution control with a preview of the resulting per-week pattern. All controlled state; no form submit — `handleSave` reads state directly. Bilingual EN_US / RO_RO. `key={enrollDialogOpen ? 'open' : 'closed'}` on the call site forces a fresh mount each time the dialog opens, giving clean state.
 - `SemesterPage` Students tab (tab index 1): table with columns Student / Duration / Total Lessons / Cancellation Window + row-level remove button (`DeleteOutlineIcon`). Empty state shows `t.noStudents`. Cancellation window cell shows `"Default (Nh)"` when no per-student override is set. `tab > 1` keeps the "Coming soon" placeholder for Scheduling and Calendar tabs.
 - Enrollment state initialized from the correct mock set (`MOCK_ENROLLMENTS_SPRING` or `MOCK_ENROLLMENTS_FALL`) via a lazy `useState` initializer keyed on `semesterId`.
@@ -1353,7 +1359,26 @@ Original plan text follows.
 
 ---
 
-#### Step L2 — Conflicts panel
+#### ~~Step L2 — Conflicts panel~~ ✅ DONE
+
+`findScheduleConflicts` in `util/schedulingConflicts.ts`, recomputed from the schedule rather
+than carried on the solver's output, and `ConflictsPanel` rendered in both places the plan called
+for. It separates a week that disagrees from a weekly template that does, because the two are
+mended differently: in the schedule editor a row takes the grid to the lesson, and in the
+Availability tab a one-week conflict creates the override if it is missing and scrolls to it
+while a recurring one goes to the weekly template.
+
+Two things the plan did not anticipate:
+
+- **A student who has not submitted produces nothing.** Silence cannot be contradicted, and
+  flagging their every lesson would bury the conflicts that are real.
+- **The Availability tab passes no submissions at all**, so it reports only the teacher's own
+  conflicts. The round is over by then and a student's availability is not editable there;
+  student-side problems surface in the round editor, where they can be acted on.
+
+Original plan text follows.
+
+#### Step L2 — Conflicts panel (original)
 
 - `src/Components/scheduling/ConflictsPanel.tsx` — lists every conflict in the current schedule, recomputed from the schedule plus the availability rather than read off the algorithm's output, so it stays correct after any drag.
 - Rendered in both the Availability tab and the schedule editor. Each row's action navigates to whichever calendar can resolve it and highlights the spot: a one-week conflict adds a week override and scrolls to it; a recurring one scrolls to the weekly template.
