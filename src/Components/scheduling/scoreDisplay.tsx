@@ -40,6 +40,53 @@ export function ScoreChip({ label, value }: { label: string; value: number }) {
   )
 }
 
+export interface ScoreLegendProps {
+  /** One entry per colour band, each carrying a score that lands in it. */
+  items: Array<{ score: number; label: string }>
+  caption?: string
+}
+
+/**
+ * What the colours on a calendar mean.
+ *
+ * Each swatch takes its colour from a real score rather than a hand-picked hex, so the legend
+ * cannot drift away from the thing it explains: change a threshold in `scoreColor` and the
+ * legend moves with it.
+ */
+export function ScoreLegend({ items, caption }: ScoreLegendProps) {
+  const theme = useTheme()
+
+  return (
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
+      {caption && (
+        <Typography variant="caption" color="text.secondary">
+          {caption}
+        </Typography>
+      )}
+      {items.map((item) => {
+        const color = scoreColor(theme, item.score)
+        return (
+          <Stack key={item.label} direction="row" spacing={0.5} alignItems="center">
+            {/* Shaped like the events themselves: translucent fill behind a 3px accent bar. */}
+            <Box
+              sx={{
+                width: 14,
+                height: 10,
+                borderRadius: '3px',
+                backgroundColor: alpha(color, 0.18),
+                borderLeft: `3px solid ${color}`
+              }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {item.label}
+            </Typography>
+          </Stack>
+        )
+      })}
+    </Box>
+  )
+}
+
 export interface SatisfactionSummaryProps {
   slots: Array<Pick<SuggestedSlot, 'teacherScore' | 'studentScore'>>
   teacherLabel: string

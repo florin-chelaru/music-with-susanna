@@ -9,8 +9,10 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { localizer } from '../../util/calendarLocalizer'
-import { calendarShellSx, monthAgendaSx, timeGridSx, toolbarSx } from './calendarStyles'
+import CalendarToolbar from './CalendarToolbar'
+import { calendarShellSx, monthAgendaSx, timeGridSx } from './calendarStyles'
 import { LessonInstance, LessonStatus } from '../../util/scheduling'
+import { subjectLabel } from '../../util/User'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
@@ -166,10 +168,14 @@ export default function LessonCalendar({
   // `subject` is free text the teacher typed, and the stored values are inconsistently cased
   // ("violin" but "Computer Science"), so only the first letter is forced — title-casing every
   // word would mangle subjects that are already written properly.
+  //
+  // Translated first: the teacher types it once, in one language, and a Romanian student should
+  // not be told their lesson is "violin".
   const titleFor = (lesson: LessonInstance): string => {
     if (students) return students[lesson.studentId]?.name ?? lesson.studentId
     if (!subject) return t.lesson
-    return subject.charAt(0).toUpperCase() + subject.slice(1)
+    const label = subjectLabel(subject, localeManager.locale)
+    return label.charAt(0).toUpperCase() + label.slice(1)
   }
 
   // ── Events ───────────────────────────────────────────────────────────────────
@@ -224,8 +230,7 @@ export default function LessonCalendar({
     () => ({
       ...calendarShellSx(theme, { minHeight: 520 }),
       ...timeGridSx(theme),
-      ...monthAgendaSx(theme),
-      ...toolbarSx(theme)
+      ...monthAgendaSx(theme)
     }),
     [theme]
   )
@@ -252,6 +257,7 @@ export default function LessonCalendar({
           key={dayjsLocale}
           events={events}
           messages={messages}
+          components={{ toolbar: CalendarToolbar }}
           views={[Views.MONTH, Views.WEEK, Views.AGENDA]}
           view={view}
           onView={(v) => {

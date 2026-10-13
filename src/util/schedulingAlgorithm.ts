@@ -149,6 +149,63 @@ export function getScoreForSpan(
  * teacher is available, so that is the tightest outer bound. If student-only windows ever
  * become meaningful this is the assumption that breaks.
  */
+/** A start time both sides can do, with what it is worth to each. */
+export interface TimeOption {
+  startTime: string
+  endTime: string
+  teacherScore: number
+  studentScore: number
+}
+
+/**
+ * Every start time on one date that suits both sides, on the snap grid.
+ *
+ * Shared by the solver and by the pickers that show a teacher where a lesson could go, so the
+ * times offered in the UI are by construction the same ones the solver would have considered —
+ * a picker that disagreed with the solver about what is possible would be worse than no picker.
+ *
+ * Both block lists must already be narrowed to the date in question, which is what
+ * `getEffectiveBlocksForDate` is for: nothing below re-checks `dayOfWeek`, so passing a whole
+ * weekly template would score a Monday lesson against a Wednesday block.
+ */
+/** A TimeOption with the blend at the weight currently in play, for display. */
+export interface ScoredTimeOption extends TimeOption {
+  combinedScore: number
+}
+
+export function candidatesForDate(
+  teacherBlocks: AvailabilityBlock[],
+  studentBlocks: AvailabilityBlock[],
+  durationMinutes: number
+): TimeOption[] {
+  const options: TimeOption[] = []
+  if (teacherBlocks.length === 0 || studentBlocks.length === 0) return options
+
+  for (const teacherBlock of teacherBlocks) {
+    const blockEnd = parseMinutes(teacherBlock.endTime)
+    let minute = snapUpMinutes(
+      parseMinutes(teacherBlock.startTime),
+      SCHEDULING_CONFIG.SLOT_SNAP_MINUTES
+    )
+
+    while (minute + durationMinutes <= blockEnd) {
+      const startTime = formatMinutes(minute)
+      const studentScore = getScoreForSpan(studentBlocks, startTime, durationMinutes)
+      const teacherScore = getScoreForSpan(teacherBlocks, startTime, durationMinutes)
+      if (studentScore > 0 && teacherScore > 0) {
+        options.push({
+          startTime,
+          endTime: formatMinutes(minute + durationMinutes),
+          teacherScore,
+          studentScore
+        })
+      }
+      minute += SCHEDULING_CONFIG.SLOT_SNAP_MINUTES
+    }
+  }
+  return options
+}
+
 export function generateAllCandidates(input: SchedulingInput): Candidate[] {
   const candidates: Candidate[] = []
   const dates = eachDateInRange(input.semesterStart, input.semesterEnd)
@@ -172,37 +229,12 @@ export function generateAllCandidates(input: SchedulingInput): Candidate[] {
       )
       if (studentBlocks.length === 0) continue
 
-      for (const teacherBlock of teacherBlocks) {
-        const blockEnd = parseMinutes(teacherBlock.endTime)
-        let minute = snapUpMinutes(
-          parseMinutes(teacherBlock.startTime),
-          SCHEDULING_CONFIG.SLOT_SNAP_MINUTES
-        )
-
-        while (minute + enrollment.lessonDurationMinutes <= blockEnd) {
-          const startTime = formatMinutes(minute)
-          const studentScore = getScoreForSpan(
-            studentBlocks,
-            startTime,
-            enrollment.lessonDurationMinutes
-          )
-          const teacherScore = getScoreForSpan(
-            teacherBlocks,
-            startTime,
-            enrollment.lessonDurationMinutes
-          )
-          if (studentScore > 0 && teacherScore > 0) {
-            candidates.push({
-              studentId: enrollment.studentId,
-              date,
-              startTime,
-              endTime: formatMinutes(minute + enrollment.lessonDurationMinutes),
-              teacherScore,
-              studentScore
-            })
-          }
-          minute += SCHEDULING_CONFIG.SLOT_SNAP_MINUTES
-        }
+      for (const option of candidatesForDate(
+        teacherBlocks,
+        studentBlocks,
+        enrollment.lessonDurationMinutes
+      )) {
+        candidates.push({ studentId: enrollment.studentId, date, ...option })
       }
     }
   }

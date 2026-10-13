@@ -1371,30 +1371,37 @@ Original plan text follows.
 
 ---
 
-#### Step L4 — Show the candidate times (next)
+#### ~~Step L4 — Show the candidate times~~ ✅ DONE
 
-**The problem.** Picking a time is blind. The Schedule and Move dialogs rate a time only *after*
-it has been chosen, so finding a slot that suits a student means guessing and checking one time
-at a time — and the teacher cannot see the hours that student actually offered. The score preview
-makes a bad guess visible; it does not make a good one findable.
+Picking a time was blind: the dialogs rated a time only *after* it was chosen, so finding a slot
+that suited a student meant guessing and checking, and the hours the student had actually offered
+were nowhere on screen.
 
-What the teacher needs is the **overlap** of their own availability with that student's, for the
-week in question, with the times already taken by other lessons removed. All three pieces exist:
-`getEffectiveBlocksForDate` resolves either side's blocks for a date, `generateAllCandidates`
-already enumerates exactly this set for the solver, and `findConflict` removes what is taken.
+Built as a combination of the three sketched approaches:
 
-Three approaches, to be decided before building:
+- **The dialog lists the real times.** Its hour column is a scored list of the start times that
+  suit both sides on the chosen day, lessons already placed removed, each row carrying `you N`
+  and `student N`. MUI's clock could not be annotated per hour — its item slot is shared between
+  the hours and minutes columns and receives only a label string, so an item rendering `15` cannot
+  tell 15:00 from :15 — and a list is better anyway, since 10:00 and 10:45 can score differently.
+- **The calendar shows which days are worth opening**, one dot per day coloured by the best
+  combined score reachable that day. One dot, not one per party: separate markers would put a
+  bright "I am free" on a day the student cannot do at all.
+- **An `Any time` switch** keeps the full 15-minute grid reachable for an ad-hoc lesson outside
+  anyone's stated hours, with a zero on either side naming which side it breaks.
+- **The week view washes the teacher's own availability behind the grid**, which answers "whose
+  preference is this lesson sitting on?" and shows where else a lesson could go.
 
-1. **Overlay on the calendar** — while a lesson is selected, shade the student's available hours
-   behind the grid, the way `AvailabilityCalendar` already does in overlay mode. Shows the shape
-   of the week at a glance; only works in the time-grid views, not month or agenda.
-2. **A ranked list in the dialog** — offer the free slots for that student, best score first, as
-   choosable rows. Works in every view and from the unscheduled list, where there is no lesson on
-   the calendar to select; less good at conveying the week's shape.
-3. **Both** — the overlay for orientation, the list for picking.
+`candidatesForDate` was extracted from `generateAllCandidates`'s inner loop and is now called by
+both, so the times the picker offers are by construction the ones the solver would have
+considered. It carries a precondition worth remembering: both block lists must already be
+narrowed to one date, because nothing in it re-checks `dayOfWeek`.
 
-The list alone is probably the smaller, more useful first move, since the unscheduled-lesson flow
-starts from a panel rather than from the calendar. Decide before building.
+**Two preferences, two channels.** A lesson's fill is the student's score and its left edge is the
+teacher's. A single blended colour could not tell "the student is delighted and I am not" from
+the reverse — both average to the same middling colour, and that difference is the whole point of
+comparing schedules. The wash covers the week view; the edge covers month and agenda, which have
+no time axis for a wash to live on.
 
 ---
 

@@ -27,6 +27,9 @@ interface SuggestedScheduleCardTexts {
   missing: string
   useThis: string
   selected: string
+  edited: string
+  editedHint: string
+  discardEdits: string
   scoreYou: string
   scoreStudent: string
 }
@@ -48,6 +51,9 @@ const EN_US: SuggestedScheduleCardTexts = {
   missing: 'missing {n}',
   useThis: 'Use this',
   selected: 'Selected',
+  edited: 'Edited',
+  editedHint: 'Your version, not the original suggestion.',
+  discardEdits: 'Discard my changes',
   scoreYou: 'you',
   scoreStudent: 'student'
 }
@@ -69,6 +75,9 @@ const RO_RO: SuggestedScheduleCardTexts = {
   missing: 'lipsesc {n}',
   useThis: 'Alege varianta',
   selected: 'Selectată',
+  edited: 'Modificat',
+  editedHint: 'Varianta ta, nu propunerea inițială.',
+  discardEdits: 'Renunță la modificări',
   scoreYou: 'tu',
   scoreStudent: 'elev'
 }
@@ -87,7 +96,11 @@ export interface SuggestedScheduleCardProps {
   suggestion: ScheduleSuggestion
   students: Record<string, { name: string }>
   selected?: boolean
+  /** The teacher has changed this schedule; the figures below describe their version. */
+  edited?: boolean
   onUse: () => void
+  /** Omitted when there is nothing to discard. */
+  onDiscardEdits?: () => void
 }
 
 interface StudentLine {
@@ -110,7 +123,9 @@ export default function SuggestedScheduleCard({
   suggestion,
   students,
   selected = false,
-  onUse
+  edited = false,
+  onUse,
+  onDiscardEdits
 }: SuggestedScheduleCardProps) {
   const theme = useTheme()
   const localeManager = useContext<LocaleHandler>(LocaleContext)
@@ -193,9 +208,10 @@ export default function SuggestedScheduleCard({
             {title}
           </Typography>
           {selected && <Chip size="small" color="primary" label={t.selected} />}
+          {edited && <Chip size="small" color="warning" variant="outlined" label={t.edited} />}
         </Stack>
         <Typography variant="caption" color="text.secondary" display="block">
-          {hint}
+          {edited ? t.editedHint : hint}
         </Typography>
         <Typography variant="caption" color="text.disabled">
           {weightLabel}
@@ -243,9 +259,16 @@ export default function SuggestedScheduleCard({
         </Alert>
       )}
 
-      <Button variant={selected ? 'contained' : 'outlined'} size="small" onClick={onUse}>
-        {t.useThis}
-      </Button>
+      <Stack spacing={0.5}>
+        <Button variant={selected ? 'contained' : 'outlined'} size="small" onClick={onUse}>
+          {t.useThis}
+        </Button>
+        {onDiscardEdits && (
+          <Button size="small" color="inherit" onClick={onDiscardEdits}>
+            {t.discardEdits}
+          </Button>
+        )}
+      </Stack>
     </Box>
   )
 }

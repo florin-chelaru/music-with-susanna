@@ -32,10 +32,13 @@ import {
   SlotTime
 } from '../../util/scheduling'
 import {
+  candidatesForDate,
   generateAllSuggestions,
   getEffectiveBlocksForDate,
+  getScoreForSpan,
   pickSpread,
   SchedulingInput,
+  ScoredTimeOption,
   WeightedSuggestion
 } from '../../util/schedulingAlgorithm'
 import EditableScheduleCalendar, {
@@ -183,6 +186,31 @@ export function roundStatusLabel(status: RoundStatus, t: SchedulingRoundPageText
 
 // Open the editor on the week the schedule starts, not on today — the suggestion may begin
 // after the round's deadline, so today's week can be empty.
+/** A schedule's identity for the purpose of remembering edits: the weight band that produced it. */
+function bandKey(suggestion: WeightedSuggestion): string {
+  return `${suggestion.weightFrom}-${suggestion.weightTo}`
+}
+
+/**
+ * What a schedule still owes each student, once the teacher has placed some of it by hand.
+ *
+ * The card's warning and the editor's to-do list both ask this, and answering it two ways is how
+ * a lesson ends up scheduled and still listed as missing.
+ */
+function remainingMissed(
+  missed: Record<string, number>,
+  slots: EditableSlot[]
+): Record<string, number> {
+  const remaining: Record<string, number> = {}
+  Object.entries(missed).forEach(([studentId, count]) => {
+    const placedByHand = slots.filter(
+      (slot) => slot.studentId === studentId && slot.added === true
+    ).length
+    if (count - placedByHand > 0) remaining[studentId] = count - placedByHand
+  })
+  return remaining
+}
+
 function firstSlotDate(slots: EditableSlot[]): Date | undefined {
   if (slots.length === 0) return undefined
   const earliest = slots.map((slot) => slot.date).sort((a, b) => a.localeCompare(b))[0]
@@ -237,44 +265,105 @@ export default function SchedulingRoundPage() {
     }
     return pickSpread(generateAllSuggestions(schedulingInput))
   }, [semester, round])
-  // Set once a suggestion is chosen. The teacher edits this copy, never the suggestion itself,
-  // so backing out and picking a different strategy starts clean.
-  const [editedSlots, setEditedSlots] = useState<EditableSlot[] | null>(null)
+  // Edits are kept per schedule and outlive stepping back to the cards. Losing an afternoon of
+  // hand-placing because the teacher went back to compare against another option is not a
+  // trade-off worth making. Keyed by weight band rather than position: the band is what the card
+  // is, and it survives the list being recomputed.
+  const [editsByBand, setEditsByBand] = useState<Record<string, EditableSlot[]>>({})
   const [confirmed, setConfirmed] = useState(false)
 
+  const selected = selectedIndex !== null ? suggestions[selectedIndex] : null
+  const selectedBand = selected ? bandKey(selected) : null
+
+  const editedSlots: EditableSlot[] | null = useMemo(() => {
+    if (!selected || !selectedBand) return null
+    return editsByBand[selectedBand] ?? selected.slots.map((slot) => ({ ...slot }))
+  }, [selected, selectedBand, editsByBand])
+
+  function handleSlotsChange(slots: EditableSlot[]) {
+    if (!selectedBand) return
+    setEditsByBand((previous) => ({ ...previous, [selectedBand]: slots }))
+  }
+
+  function discardEdits(band: string) {
+    setEditsByBand((previous) => {
+      const next = { ...previous }
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete next[band]
+      return next
+    })
+  }
+
+  // Selecting no longer copies anything: `editedSlots` resolves to the teacher's saved version
+  // of this schedule when there is one, and to the solver's otherwise.
   function handleUseSuggestion(index: number) {
     setSelectedIndex(index)
-    setEditedSlots(suggestions[index].slots.map((slot) => ({ ...slot })))
   }
 
   function clearSelection() {
-    setEditedSlots(null)
     setSelectedIndex(null)
   }
 
+  // Each card stands for its own schedule: the solver's, or the teacher's version of it once
+  // they have touched it. Showing the original's figures next to an "edited" badge would put a
+  // number on the card that no longer describes anything.
+  const cards = suggestions.map((suggestion) => {
+    const band = bandKey(suggestion)
+    const edits = editsByBand[band]
+    if (!edits) return { band, suggestion, edited: false }
+    return {
+      band,
+      edited: true,
+      suggestion: {
+        ...suggestion,
+        slots: edits,
+        missedLessonsByStudent: remainingMissed(suggestion.missedLessonsByStudent, edits)
+      }
+    }
+  })
+
   const submissions = round ? MOCK_SUBMISSIONS_BY_ROUND[round.id] ?? {} : {}
+
+  // The weight this schedule was built at, so a time the teacher picks is blended the same way
+  // the solver blended the ones around it.
+  const weight = selectedIndex !== null ? suggestions[selectedIndex].weightFrom : undefined
+
+  const teacherBlocksOn = (date: string) =>
+    getEffectiveBlocksForDate(
+      MOCK_TEACHER_AVAILABILITY.weeklyTemplate.blocks,
+      MOCK_TEACHER_AVAILABILITY.weekOverrides,
+      date
+    )
+
+  const blocksOn = (studentId: string, date: string) => {
+    const submission = submissions[studentId]
+    return {
+      teacher: teacherBlocksOn(date),
+      student: submission
+        ? getEffectiveBlocksForDate(submission.recurringPreferences, submission.weekOverrides, date)
+        : []
+    }
+  }
+
+  // The teacher's own rating of one point in the grid, for the shading behind the week view.
+  // A point lookup rather than a span: this answers "what did I say about this moment?", not
+  // "could a whole lesson sit here?".
+  const teacherScoreAt = (date: string, startTime: string): number =>
+    scoreForDayTime(teacherBlocksOn(date), toDayOfWeek(date), startTime)
 
   // What a time is worth to each side, for a lesson the teacher places or moves by hand. The
   // solver scores its own output; anything the teacher does afterwards has to be scored here,
   // because the calendar holds no availability data.
+  //
+  // Scored over the whole lesson, not at its starting minute. A 45-minute lesson beginning at
+  // 12:45 against availability that ends at 13:00 starts inside the block and finishes outside
+  // it: scoring the start alone calls that a perfect 10, which is how the figure a dialog row
+  // showed could differ from the one the lesson arrived on the calendar wearing.
   const scoreAt = (studentId: string, time: SlotTime): SlotScores => {
-    const dayOfWeek = toDayOfWeek(time.date)
-    const teacherBlocks = getEffectiveBlocksForDate(
-      MOCK_TEACHER_AVAILABILITY.weeklyTemplate.blocks,
-      MOCK_TEACHER_AVAILABILITY.weekOverrides,
-      time.date
-    )
-    const submission = submissions[studentId]
-    const studentBlocks = submission
-      ? getEffectiveBlocksForDate(
-          submission.recurringPreferences,
-          submission.weekOverrides,
-          time.date
-        )
-      : []
-    const teacherScore = scoreForDayTime(teacherBlocks, dayOfWeek, time.startTime)
-    const studentScore = scoreForDayTime(studentBlocks, dayOfWeek, time.startTime)
-    const weight = selectedIndex !== null ? suggestions[selectedIndex].weightFrom : undefined
+    const blocks = blocksOn(studentId, time.date)
+    const minutes = parseMinutes(time.endTime) - parseMinutes(time.startTime)
+    const teacherScore = getScoreForSpan(blocks.teacher, time.startTime, minutes)
+    const studentScore = getScoreForSpan(blocks.student, time.startTime, minutes)
     return {
       teacherScore,
       studentScore,
@@ -282,15 +371,26 @@ export default function SchedulingRoundPage() {
     }
   }
 
-  // One entry per lesson the student is owed but has no time for: what the solver could not
-  // place, less whatever the teacher has already placed by hand.
+  // Every start time on a date that suits both sides, straight from the solver's own candidate
+  // generator — so the times the picker offers are by construction the ones the solver would
+  // have considered. Lessons already placed are removed by the calendar, which owns them.
+  const overlappingTimes = (
+    studentId: string,
+    date: string,
+    durationMinutes: number
+  ): ScoredTimeOption[] => {
+    const blocks = blocksOn(studentId, date)
+    return candidatesForDate(blocks.teacher, blocks.student, durationMinutes).map((option) => ({
+      ...option,
+      combinedScore: computeCombinedScore(option.teacherScore, option.studentScore, weight)
+    }))
+  }
+
+  // One entry per lesson the student is owed but has no time for.
   const unscheduled: UnscheduledLesson[] = useMemo(() => {
-    if (selectedIndex === null || !editedSlots || !semester) return []
-    const missed = suggestions[selectedIndex].missedLessonsByStudent
+    if (!selected || !editedSlots || !semester) return []
+    const missed = remainingMissed(selected.missedLessonsByStudent, editedSlots)
     return Object.entries(missed).flatMap(([studentId, count]) => {
-      const placedByHand = editedSlots.filter(
-        (slot) => slot.studentId === studentId && slot.added === true
-      ).length
       const enrollment = enrollments.find((e) => e.studentId === studentId)
       const minutes = enrollment?.lessonDurationMinutes ?? 45
       // The picker opens on the student's existing lessons where there are any, so the teacher
@@ -301,9 +401,9 @@ export default function SchedulingRoundPage() {
         startTime: existing?.startTime ?? '09:00',
         endTime: existing?.endTime ?? formatMinutes(parseMinutes('09:00') + minutes)
       }
-      return Array.from({ length: Math.max(0, count - placedByHand) }, () => ({ studentId, seed }))
+      return Array.from({ length: count }, () => ({ studentId, seed }))
     })
-  }, [selectedIndex, editedSlots, suggestions, semester, enrollments])
+  }, [selected, editedSlots, semester, enrollments])
 
   const now = useNow()
 
@@ -407,10 +507,12 @@ export default function SchedulingRoundPage() {
               <EditableScheduleCalendar
                 slots={editedSlots}
                 students={MOCK_STUDENTS}
-                onChange={setEditedSlots}
+                onChange={handleSlotsChange}
                 defaultDate={firstSlotDate(editedSlots)}
                 unscheduled={unscheduled}
                 scoreAt={scoreAt}
+                overlappingTimes={overlappingTimes}
+                teacherScoreAt={teacherScoreAt}
               />
 
               <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
@@ -446,19 +548,25 @@ export default function SchedulingRoundPage() {
                   spacing={2}
                   alignItems="stretch"
                   sx={{ width: 'max-content' }}>
-                  {suggestions.map((suggestion, index) => (
-                    <Box
-                      key={`${suggestion.weightFrom}-${suggestion.weightTo}`}
-                      sx={{ width: 300, flexShrink: 0 }}>
+                  {cards.map((card, index) => (
+                    <Box key={card.band} sx={{ width: 300, flexShrink: 0 }}>
                       <SuggestedScheduleCard
-                        weightFrom={suggestion.weightFrom}
-                        weightTo={suggestion.weightTo}
-                        suggestion={suggestion}
+                        weightFrom={card.suggestion.weightFrom}
+                        weightTo={card.suggestion.weightTo}
+                        suggestion={card.suggestion}
                         students={MOCK_STUDENTS}
                         selected={selectedIndex === index}
+                        edited={card.edited}
                         onUse={() => {
                           handleUseSuggestion(index)
                         }}
+                        onDiscardEdits={
+                          card.edited
+                            ? () => {
+                                discardEdits(card.band)
+                              }
+                            : undefined
+                        }
                       />
                     </Box>
                   ))}

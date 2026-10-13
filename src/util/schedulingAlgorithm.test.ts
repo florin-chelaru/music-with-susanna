@@ -1,4 +1,5 @@
 import {
+  candidatesForDate,
   computeSchedule,
   generateAllCandidates,
   generateAllSuggestions,
@@ -135,6 +136,42 @@ describe('getScoreForSpan', () => {
   test('returns 0 when any part of the span is uncovered', () => {
     expect(getScoreForSpan(blocks, '10:30', 60)).toBe(0) // runs past the end
     expect(getScoreForSpan(blocks, '08:30', 60)).toBe(0) // starts before the beginning
+  })
+})
+
+// ─── candidatesForDate ────────────────────────────────────────────────────────
+//
+// Shared by the solver and by the dialog that offers the teacher a time, so a disagreement here
+// shows up as a picker offering times the solver would never have chosen.
+
+describe('candidatesForDate', () => {
+  const teacher = [block(MON, '09:00', '11:00', AvailabilityLabel.PREFERRED)]
+  const student = [block(MON, '09:00', '11:00', AvailabilityLabel.AVAILABLE)]
+
+  test('offers every snapped start where both sides are free, scored for each', () => {
+    const options = candidatesForDate(teacher, student, 60)
+    // 09:00 through 10:00 inclusive, every 15 minutes.
+    expect(options.map((o) => o.startTime)).toEqual(['09:00', '09:15', '09:30', '09:45', '10:00'])
+    expect(options[0].endTime).toBe('10:00')
+    expect(options[0].teacherScore).toBe(LABEL_SCORES[AvailabilityLabel.PREFERRED])
+    expect(options[0].studentScore).toBe(LABEL_SCORES[AvailabilityLabel.AVAILABLE])
+  })
+
+  // The bug this guards: scoring the starting minute alone calls 10:30 a perfect fit for a
+  // 60-minute lesson against availability ending at 11:00, because the start is inside the
+  // block. The whole lesson has to fit.
+  test('refuses a lesson that would run past the end of the availability', () => {
+    expect(candidatesForDate(teacher, student, 60).map((o) => o.startTime)).not.toContain('10:30')
+    expect(candidatesForDate(teacher, student, 150)).toEqual([])
+  })
+
+  test('offers nothing when the two sides do not overlap', () => {
+    // Both lists are already narrowed to one date by the caller, so a mismatch is a difference
+    // in hours, never in weekday.
+    const afternoon = [block(MON, '14:00', '16:00', AvailabilityLabel.PREFERRED)]
+    expect(candidatesForDate(teacher, afternoon, 60)).toEqual([])
+    expect(candidatesForDate(teacher, [], 60)).toEqual([])
+    expect(candidatesForDate([], student, 60)).toEqual([])
   })
 })
 

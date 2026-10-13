@@ -1,6 +1,25 @@
+import { SupportedLocale } from './SupportedLocale'
+
 export enum UserRole {
   STUDENT = 'student',
   TEACHER = 'teacher'
+}
+
+/**
+ * Translations for the teaching subjects that actually occur.
+ *
+ * `subject` is free text on the teacher's user record, so no map can be complete. Only the
+ * translations away from the stored wording are listed; anything unlisted falls through and is
+ * shown exactly as the teacher typed it, which is the one answer that is never wrong.
+ */
+const SUBJECT_LABELS: Record<string, Record<string, string>> = {
+  violin: { [SupportedLocale.RO_RO]: 'vioară' },
+  'computer science': { [SupportedLocale.RO_RO]: 'informatică' }
+}
+
+/** The subject in the reader's language, or the teacher's own wording when it is not known. */
+export function subjectLabel(subject: string, locale: string): string {
+  return SUBJECT_LABELS[subject.trim().toLowerCase()]?.[locale] ?? subject
 }
 
 export class User {

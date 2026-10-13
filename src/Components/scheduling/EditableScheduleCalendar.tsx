@@ -26,17 +26,21 @@ import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { localizer } from '../../util/calendarLocalizer'
-import { calendarShellSx, monthAgendaSx, timeGridSx, toolbarSx } from './calendarStyles'
+import { calendarShellSx, monthAgendaSx, timeGridSx } from './calendarStyles'
 import {
+  AvailabilityLabel,
+  LABEL_SCORES,
   SCHEDULING_CONFIG,
   SlotScores,
   SlotTime,
   SuggestedSlot,
   findConflict
 } from '../../util/scheduling'
-import { formatDate, parseDate } from '../../util/schedulingDates'
+import { formatDate, parseDate, parseMinutes } from '../../util/schedulingDates'
+import CalendarToolbar from './CalendarToolbar'
 import MoveLessonDialog from './MoveLessonDialog'
-import { SatisfactionSummary, scoreColor } from './scoreDisplay'
+import { ScoredTimeOption } from '../../util/schedulingAlgorithm'
+import { SatisfactionSummary, scoreColor, ScoreLegend } from './scoreDisplay'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
@@ -64,6 +68,11 @@ interface EditableScheduleCalendarTexts {
   averages: string
   satisfactionYou: string
   satisfactionStudents: string
+  legend: string
+  legendChannels: string
+  legendPreferred: string
+  legendAvailable: string
+  legendLastResort: string
 }
 
 const EN_US: EditableScheduleCalendarTexts = {
@@ -89,7 +98,13 @@ const EN_US: EditableScheduleCalendarTexts = {
   scheduleIt: 'Schedule',
   averages: 'Average satisfaction, as edited',
   satisfactionYou: 'You',
-  satisfactionStudents: 'Your students'
+  satisfactionStudents: 'Your students',
+  legend: 'Colour scale:',
+  legendChannels:
+    "A lesson is filled with the student's rating. Its left edge, and the shading behind the week, are yours.",
+  legendPreferred: 'Preferred',
+  legendAvailable: 'Available',
+  legendLastResort: 'Last Resort'
 }
 
 const RO_RO: EditableScheduleCalendarTexts = {
@@ -115,7 +130,13 @@ const RO_RO: EditableScheduleCalendarTexts = {
   scheduleIt: 'Programează',
   averages: 'Satisfacție medie, după modificări',
   satisfactionYou: 'Tu',
-  satisfactionStudents: 'Elevii tăi'
+  satisfactionStudents: 'Elevii tăi',
+  legend: 'Scara de culori:',
+  legendChannels:
+    'Lecția este colorată după preferința elevului. Marginea din stânga și fundalul săptămânii arată preferința ta.',
+  legendPreferred: 'Preferat',
+  legendAvailable: 'Disponibil',
+  legendLastResort: 'Doar la nevoie'
 }
 
 const TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -188,6 +209,20 @@ export interface EditableScheduleCalendarProps {
    * lesson would wear a score nobody computed.
    */
   scoreAt?: (studentId: string, time: SlotTime) => SlotScores
+  /**
+   * Every start time on a date where this student and the teacher overlap, before accounting
+   * for lessons already placed — this component owns those and filters them out itself.
+   */
+  overlappingTimes?: (
+    studentId: string,
+    date: string,
+    durationMinutes: number
+  ) => ScoredTimeOption[]
+  /**
+   * The teacher's own rating of a point in the grid, for the shading behind the week view.
+   * Without it the week view simply has no wash; the lessons still carry both scores.
+   */
+  teacherScoreAt?: (date: string, startTime: string) => number
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -204,7 +239,9 @@ export default function EditableScheduleCalendar({
   onChange,
   defaultDate,
   unscheduled = [],
-  scoreAt
+  scoreAt,
+  overlappingTimes,
+  teacherScoreAt
 }: EditableScheduleCalendarProps) {
   const theme = useTheme()
   const localeManager = useContext<LocaleHandler>(LocaleContext)
@@ -269,18 +306,41 @@ export default function EditableScheduleCalendar({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const eventPropGetter = (raw: any) => {
     const event = raw as SlotEvent
-    const color = scoreColor(theme, event.slot.combinedScore)
-    // The colour is accurate — a move rescores the lesson against its new time. The fade is
+    // Two preferences, two channels. A single blended colour could not tell "the student is
+    // delighted and I am not" from "I am delighted and the student is not" — both average out
+    // to the same middling colour, and that difference is the whole point of the schedule.
+    const fill = scoreColor(theme, event.slot.studentScore)
+    const accent = scoreColor(theme, event.slot.teacherScore)
+    // The colours are accurate — a move rescores the lesson against its new time. The fade is
     // purely "you changed this", so the teacher can pick their own edits out of the grid.
     const moved = event.slot.moved === true
     return {
       style: {
-        backgroundColor: alpha(color, moved ? 0.1 : 0.18),
-        borderLeft: `3px solid ${moved ? alpha(color, 0.5) : color}`,
+        // Opaque, with the tint laid on as a flat gradient. A translucent fill would let the
+        // availability wash behind the grid show through and shift the lesson's own colour —
+        // the same trap the availability calendar's two stacked layers fell into.
+        backgroundColor: theme.palette.background.paper,
+        backgroundImage: `linear-gradient(${alpha(fill, moved ? 0.1 : 0.2)}, ${alpha(
+          fill,
+          moved ? 0.1 : 0.2
+        )})`,
+        borderLeft: `3px solid ${moved ? alpha(accent, 0.5) : accent}`,
         color: theme.palette.text.primary,
         opacity: moved ? 0.65 : 1
       }
     }
+  }
+
+  // The teacher's own availability, washed faintly behind the time grid. It shows whose
+  // preference a lesson is sitting on, and — just as useful — which free hours are worth
+  // dragging something into.
+  //
+  // react-big-calendar calls this per slot of the time grid; month and agenda have no time
+  // axis and never reach it, which is why the lessons carry the teacher's score as well.
+  const slotPropGetter = (slotDate: Date) => {
+    const score = teacherScoreAt?.(formatDate(slotDate), timeOf(slotDate)) ?? 0
+    if (score <= 0) return {}
+    return { style: { backgroundColor: alpha(scoreColor(theme, score), 0.1) } }
   }
 
   // Applies a move or resize, or refuses it and says what it hit.
@@ -388,6 +448,21 @@ export default function EditableScheduleCalendar({
   const movingEvent = moving !== null ? events[moving] : null
   const schedulingEntry = scheduling !== null ? unscheduled[scheduling] : null
 
+  /**
+   * The overlap for one lesson, less the times another lesson already occupies.
+   *
+   * `exceptIndex` is the lesson being moved: a lesson must not be treated as blocking its own
+   * move, or the time it currently sits at would be missing from the list of times it can take.
+   */
+  function freeTimesFor(studentId: string, seed: SlotTime, exceptIndex: number | null) {
+    const durationMinutes = parseMinutes(seed.endTime) - parseMinutes(seed.startTime)
+    const others = slots.filter((_, i) => i !== exceptIndex)
+    return (date: string): ScoredTimeOption[] =>
+      (overlappingTimes?.(studentId, date, durationMinutes) ?? []).filter(
+        (option) => !findConflict({ date, ...option }, others, 0)
+      )
+  }
+
   // Drag and resize deliver the same shape. react-big-calendar types the argument against its
   // own Event, so the concrete type is recovered by a cast, and start/end are normalised since
   // the drag-and-drop addon can hand back either Dates or date strings.
@@ -420,8 +495,7 @@ export default function EditableScheduleCalendar({
     () => ({
       ...calendarShellSx(theme, { minHeight: 520 }),
       ...timeGridSx(theme),
-      ...monthAgendaSx(theme),
-      ...toolbarSx(theme)
+      ...monthAgendaSx(theme)
     }),
     [theme]
   )
@@ -496,7 +570,23 @@ export default function EditableScheduleCalendar({
         </Collapse>
       </Stack>
 
-      <Box sx={calendarSx}>
+      {/* Right above the grid it explains. The scores are the label scores themselves, so a
+          swatch is literally the colour a lesson at that score would wear. One scale serves both
+          channels — the two sides are rated on the same words, so a second set of swatches would
+          only invite the reader to look for a difference that is not there. */}
+      <ScoreLegend
+        caption={t.legend}
+        items={[
+          { score: LABEL_SCORES[AvailabilityLabel.PREFERRED], label: t.legendPreferred },
+          { score: LABEL_SCORES[AvailabilityLabel.AVAILABLE], label: t.legendAvailable },
+          { score: LABEL_SCORES[AvailabilityLabel.LAST_RESORT], label: t.legendLastResort }
+        ]}
+      />
+      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+        {t.legendChannels}
+      </Typography>
+
+      <Box sx={{ ...calendarSx, mt: 1 }}>
         <DnDCalendar
           localizer={localizer}
           culture={dayjsLocale}
@@ -512,6 +602,7 @@ export default function EditableScheduleCalendar({
             setDate(d)
           }}
           messages={messages}
+          components={{ toolbar: CalendarToolbar }}
           popup
           step={SCHEDULING_CONFIG.SLOT_SNAP_MINUTES}
           timeslots={1}
@@ -519,6 +610,7 @@ export default function EditableScheduleCalendar({
           max={dayjs(date).hour(20).minute(0).second(0).toDate()}
           selectable={false}
           resizable
+          slotPropGetter={slotPropGetter}
           onEventDrop={handleInteraction}
           onEventResize={handleInteraction}
           // Typed against react-big-calendar's own Event, so the concrete type is recovered by
@@ -594,6 +686,11 @@ export default function EditableScheduleCalendar({
         studentName={movingEvent?.title ?? ''}
         slot={movingEvent?.slot ?? null}
         scoreAt={movingEvent ? (time) => scoreAt?.(movingEvent.slot.studentId, time) : undefined}
+        availableTimes={
+          movingEvent
+            ? freeTimesFor(movingEvent.slot.studentId, movingEvent.slot, moving)
+            : undefined
+        }
         error={moveError}
         onClose={() => {
           setMoving(null)
@@ -608,6 +705,11 @@ export default function EditableScheduleCalendar({
         studentName={schedulingEntry ? nameOf(schedulingEntry.studentId) : ''}
         slot={schedulingEntry?.seed ?? null}
         scoreAt={schedulingEntry ? (time) => scoreAt?.(schedulingEntry.studentId, time) : undefined}
+        availableTimes={
+          schedulingEntry
+            ? freeTimesFor(schedulingEntry.studentId, schedulingEntry.seed, null)
+            : undefined
+        }
         error={moveError}
         onClose={() => {
           setScheduling(null)

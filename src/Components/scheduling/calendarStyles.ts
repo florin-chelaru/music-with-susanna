@@ -6,8 +6,8 @@ import { Theme } from '@mui/material'
 // schedule — and each had grown its own copy of these rules, so they drifted apart visually.
 // The blocks below are composed with object spread, so their keys are kept disjoint: the
 // shell owns the container and the event chrome, the time grid owns everything inside a
-// week view, the month/agenda block owns those two views, and the toolbar owns the
-// navigation bar.
+// week view, and the month/agenda block owns those two views. The navigation bar is not here:
+// it is a real component, CalendarToolbar, rather than library markup dressed up with CSS.
 
 /**
  * Container chrome, base typography, headers and events. Every calendar uses this.
@@ -141,32 +141,13 @@ export function monthAgendaSx(theme: Theme) {
     '& .rbc-day-bg + .rbc-day-bg': { borderLeft: `1px solid ${d}` },
     '& .rbc-off-range-bg': { backgroundColor: theme.palette.action.hover },
     '& .rbc-show-more': { color: theme.palette.primary.main, fontSize: '0.6875rem' },
-    '& .rbc-agenda-view table': { borderColor: d },
-    '& .rbc-agenda-view table tbody > tr > td': { borderColor: d }
-  }
-}
-
-/** react-big-calendar's built-in navigation toolbar. */
-export function toolbarSx(theme: Theme) {
-  const d = theme.palette.divider
-
-  return {
-    '& .rbc-toolbar': {
-      marginBottom: theme.spacing(1.5),
-      flexWrap: 'wrap',
-      gap: theme.spacing(1)
-    },
-    '& .rbc-toolbar button': {
-      color: theme.palette.text.primary,
-      borderColor: d,
-      borderRadius: '6px'
-    },
-    '& .rbc-toolbar button:hover': { backgroundColor: theme.palette.action.hover },
-    '& .rbc-toolbar button.rbc-active': {
-      backgroundColor: theme.palette.action.selected,
-      borderColor: d,
-      boxShadow: 'none'
-    },
-    '& .rbc-toolbar-label': { fontWeight: 600 }
+    // The agenda table's borders are hardcoded to #ddd by the library, on selectors carrying a
+    // class as well as the element (`table.rbc-agenda-table`). A rule written against `table`
+    // alone loses on specificity and the light grey survives into dark mode, where it glares.
+    // These match the library's own selectors so the theme divider actually wins.
+    '& .rbc-agenda-view table.rbc-agenda-table': { borderColor: d },
+    '& .rbc-agenda-view table.rbc-agenda-table tbody > tr > td + td': { borderLeftColor: d },
+    '& .rbc-agenda-view table.rbc-agenda-table tbody > tr + tr': { borderTopColor: d },
+    '& .rbc-agenda-view table.rbc-agenda-table thead > tr > th': { borderBottomColor: d }
   }
 }

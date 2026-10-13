@@ -125,3 +125,10 @@ dist
 # DB snapshots contain student personal data and live in the private repo
 # florin-chelaru/music-with-susanna-db-snapshots (cloned at ../music-with-susanna-db-snapshots)
 db-snapshots/
+
+# Local API scratch files. REST Client requests carry access tokens and API keys in the URL,
+# and saved API responses carry whatever the endpoint returned — names, ids, tokens. This repo
+# is public, so none of it can be allowed in by an absent-minded `git add -A`.
+*.rest
+*.http
+facebook-feed-example.json

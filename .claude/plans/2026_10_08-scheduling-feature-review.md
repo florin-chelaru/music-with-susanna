@@ -486,3 +486,40 @@ student means guessing and checking. The teacher should be able to see the candi
 overlap of their own availability with that student's — rather than probe for them one at a time.
 Options worth weighing: overlaying the student's availability on the calendar while a lesson is
 selected, offering a ranked list of free slots in the dialog, or both.
+
+### 2026-10-13 — The editor becomes usable
+
+Everything this session came out of using the round editor rather than reading it.
+
+**Edits survived nothing.** Stepping back to the cards threw away every hand-placed lesson. They
+are now kept per schedule, keyed by **weight band** rather than list position — the band is what
+a card *is*, and an index would reattach an afternoon of work to a different schedule if the list
+were ever recomputed. An edited card wears an `Edited` badge and shows **its own** figures: the
+original's averages beside an "edited" badge would be a number describing nothing that exists.
+
+**Two scoring paths had grown apart.** The dialog scored a whole lesson (`getScoreForSpan`) while
+the lesson actually stored scored only its starting minute (`scoreForDayTime`). A 45-minute lesson
+at 12:45 against availability ending at 13:00 is a `0` by the first rule and a `10` by the second,
+so a row could promise one thing and the calendar record another. `scoreAt` now spans the lesson.
+
+**The legend could not have worked.** A combined score of 6 is `teacher 10 / student 2`, or the
+reverse, or `6/6`, and one colour cannot carry two variables however it is labelled. Fill is now
+the student's rating and the left edge the teacher's, with the teacher's availability washed
+behind the week view at 10% — 9% was invisible, 20% fought the lessons.
+
+**A specificity bug, not a missing rule**: the agenda table's borders are hardcoded `#ddd` on
+`.rbc-agenda-view table.rbc-agenda-table`, which beat a rule written against `table` alone, so
+dark mode kept the light-theme grey and glared. Three more of its selectors were never overridden
+at all, which is why only some edges looked wrong.
+
+Also: arrows instead of "Back"/"Next" (a real `CalendarToolbar`, so the buttons take the theme
+instead of CSS imitating it, and `toolbarSx` is gone); breadcrumbs that show the editor as a
+sub-view, since the trail ended at the round and the nearest link overshot to the semester; the
+suggestions on one scrollable strip, because a three-column grid wrapped the spectrum onto a
+second row; `subjectLabel`, so a Romanian student is not told their lesson is "violin"; and
+`*.rest` / `*.http` gitignored — they hold live tokens and this repo is public.
+
+Running totals: **147 tests**, lint clean, typecheck clean.
+
+Next: **Step L2 — the conflicts panel**, the last feature before the pre-merge cleanup (L3) and
+the RTDB wiring. Still owed from Step E: the enrollment dialog's distribution control.
