@@ -9,6 +9,11 @@ export interface SchedulingCrumb {
   label: string
   /** Where this crumb navigates. Omit on the last one — the current page is not a link. */
   to?: string
+  /**
+   * Returns to a previous state of the same page, for a page whose sub-views are not routes.
+   * Without it, the only way back from such a sub-view is the crumb above it, which overshoots.
+   */
+  onClick?: () => void
 }
 
 export interface SchedulingNavProps {
@@ -52,16 +57,22 @@ export default function SchedulingNav({ items = [], section = 'teacher' }: Sched
     ...items
   ]
 
+  const follow = (crumb: SchedulingCrumb) => {
+    if (crumb.onClick) crumb.onClick()
+    else if (crumb.to) navigate(crumb.to)
+  }
+
   if (isMobile) {
-    // Nearest ancestor that is actually a link; undefined on the section root, which has no parent.
-    const parent = [...crumbs].reverse().find((crumb) => crumb.to)
+    // Nearest ancestor that actually goes somewhere; undefined on the section root, which has
+    // no parent.
+    const parent = [...crumbs].reverse().find((crumb) => crumb.to ?? crumb.onClick)
     if (!parent) return null
     return (
       <Button
         size="small"
         startIcon={<ArrowBackIcon />}
         onClick={() => {
-          navigate(parent.to as string)
+          follow(parent)
         }}
         sx={{ mb: 1.5, ml: -1 }}>
         {parent.label}
@@ -76,7 +87,7 @@ export default function SchedulingNav({ items = [], section = 'teacher' }: Sched
       sx={{ mb: 2, '& .MuiBreadcrumbs-separator': { mx: 0.5, color: 'text.disabled' } }}>
       {crumbs.map((crumb, i) => {
         const isLast = i === crumbs.length - 1
-        if (isLast || !crumb.to) {
+        if (isLast || !(crumb.to ?? crumb.onClick)) {
           return (
             <Typography key={crumb.label} variant="body2" color="text.primary" fontWeight={500}>
               {crumb.label}
@@ -91,7 +102,7 @@ export default function SchedulingNav({ items = [], section = 'teacher' }: Sched
             underline="hover"
             color="text.secondary"
             onClick={() => {
-              navigate(crumb.to as string)
+              follow(crumb)
             }}>
             {crumb.label}
           </Link>

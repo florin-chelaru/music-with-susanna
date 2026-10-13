@@ -247,6 +247,11 @@ export default function SchedulingRoundPage() {
     setEditedSlots(suggestions[index].slots.map((slot) => ({ ...slot })))
   }
 
+  function clearSelection() {
+    setEditedSlots(null)
+    setSelectedIndex(null)
+  }
+
   const submissions = round ? MOCK_SUBMISSIONS_BY_ROUND[round.id] ?? {} : {}
 
   // What a time is worth to each side, for a lesson the teacher places or moves by hand. The
@@ -330,10 +335,17 @@ export default function SchedulingRoundPage() {
     <Container maxWidth="md" sx={{ pt: 3, pb: 6 }}>
       <Toolbar />
 
+      {/* Adjusting a chosen suggestion is a sub-view of the round, not a route of its own, so
+          the round crumb clears the selection rather than navigating. Without this the only way
+          out of the editor was the semester crumb, which overshoots to the list of all rounds. */}
       <SchedulingNav
         items={[
           { label: semester.name, to: `/scheduling/semesters/${semester.id}?tab=scheduling` },
-          { label: `${t.round} ${round.roundNumber}` }
+          {
+            label: `${t.round} ${round.roundNumber}`,
+            onClick: editedSlots ? clearSelection : undefined
+          },
+          ...(editedSlots ? [{ label: t.adjustTitle }] : [])
         ]}
       />
 
@@ -384,12 +396,7 @@ export default function SchedulingRoundPage() {
                 <Typography variant="subtitle2" fontWeight={600}>
                   {t.adjustTitle}
                 </Typography>
-                <Button
-                  size="small"
-                  onClick={() => {
-                    setEditedSlots(null)
-                    setSelectedIndex(null)
-                  }}>
+                <Button size="small" onClick={clearSelection}>
                   {t.chooseDifferent}
                 </Button>
               </Stack>
@@ -421,26 +428,41 @@ export default function SchedulingRoundPage() {
             </Box>
           ) : (
             <>
+              {/* One strip, scrolled rather than wrapped. The cards are ordered as a spectrum
+                  from teacher-favouring to student-favouring, and a three-column grid broke that
+                  reading as soon as there were more than three — the fourth restarted on a new
+                  row. The negative margin lets the strip use the full window width while the
+                  padding keeps the first card aligned with the rest of the page. */}
               <Box
                 sx={{
-                  display: 'grid',
-                  gap: 2,
-                  gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+                  mx: 'calc(50% - 50vw)',
+                  px: 'calc(50vw - 50%)',
+                  overflowX: 'auto',
+                  pb: 1.5,
                   mb: 3
                 }}>
-                {suggestions.map((suggestion, index) => (
-                  <SuggestedScheduleCard
-                    key={`${suggestion.weightFrom}-${suggestion.weightTo}`}
-                    weightFrom={suggestion.weightFrom}
-                    weightTo={suggestion.weightTo}
-                    suggestion={suggestion}
-                    students={MOCK_STUDENTS}
-                    selected={selectedIndex === index}
-                    onUse={() => {
-                      handleUseSuggestion(index)
-                    }}
-                  />
-                ))}
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  alignItems="stretch"
+                  sx={{ width: 'max-content' }}>
+                  {suggestions.map((suggestion, index) => (
+                    <Box
+                      key={`${suggestion.weightFrom}-${suggestion.weightTo}`}
+                      sx={{ width: 300, flexShrink: 0 }}>
+                      <SuggestedScheduleCard
+                        weightFrom={suggestion.weightFrom}
+                        weightTo={suggestion.weightTo}
+                        suggestion={suggestion}
+                        students={MOCK_STUDENTS}
+                        selected={selectedIndex === index}
+                        onUse={() => {
+                          handleUseSuggestion(index)
+                        }}
+                      />
+                    </Box>
+                  ))}
+                </Stack>
               </Box>
               <Alert severity="info">{t.pickOne}</Alert>
             </>
