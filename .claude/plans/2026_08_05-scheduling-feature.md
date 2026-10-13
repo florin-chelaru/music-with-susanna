@@ -1,8 +1,23 @@
 # Scheduling Feature
 
-> Status: Implementation in progress — Steps A through L complete (all on mock data; no RTDB
-> wiring yet). Shared date helpers (`src/util/schedulingDates.ts`) landed 2026-10-08; this
-> document was corrected the same day (see the review linked below for what changed and why).
+> Status: Implementation in progress. Steps A–N and most of P are done and running against the
+> live database; Step O is next, and L3's cleanup is deliberately last. Shared date helpers
+> (`src/util/schedulingDates.ts`) landed 2026-10-08; this document was corrected the same day
+> (see the review linked below for what changed and why).
+>
+> **Wired to RTDB 2026-10-13.** Security rules deployed in four additive passes, verified each
+> time against the morning's snapshot: none of the ten blocks predating this feature were
+> modified. The teacher pages and both student pages read and write for real; `SemesterPage` and
+> the round page still resolve the mock semesters alongside real ones, behind an `onMockData`
+> flag, so the surfaces built in Steps F–L2 stay reachable until the mocks are deleted.
+>
+> **The recurring lesson of that day, worth reading before writing any more RTDB code:**
+> *RTDB cannot filter a list, and a grant on a child does not grant listing its parent.* That one
+> fact produced four separate bugs — an enrollment dropdown that silently read nothing, a student
+> unable to discover their own lessons, a delete that would have been refused partway, and a
+> student unable to find which terms they were in. Three were answered with an index or a
+> narrower read; the fourth with a listing grant. *Empty values are discarded* caused the fifth:
+> an override meaning "away all week" collapsed to nothing and vanished.
 >
 > Built 2026-10-12 — the solver is wired into the round page and the editor is complete.
 > Corrections this produced, folded into the sections below: the weight sweep is clamped to
@@ -1214,6 +1229,16 @@ All phases follow the same incremental pattern:
 
 #### ~~Step E — SemesterPage: Students tab~~ ✅ DONE
 
+*(2026-10-13: enrolling exposed a gap in the pre-existing students page. A teacher could not add
+a student another teacher had already created — the flow creates an auth account, so the email
+was in use and there was no other route — and could not discover such a student either, because
+`/users` grants read at `$uid`, which permits reading a record you can name but not enumerating
+them. The Add student dialog gained an **Import existing** tab, and teachers may now list
+`/users`. The write side needed no rules change. Imports write
+`students/{uid}/teachers/{myUid}` directly rather than reusing the `set` on `students/{uid}` that
+creating a student does: that `set` replaces the node, which is harmless for a new account but
+would drop the other teacher's link in exactly the case being imported.)*
+
 *(Completed 2026-10-13: the enrollment dialog now defaults `totalLessons` to one a week, shows
 the semester's week count, and carries the three-way distribution control with a per-week
 preview drawn by `weeklyQuota` — the same function the solver fills, so the two cannot disagree.
@@ -1537,12 +1562,41 @@ Original plan text follows.
 
 ---
 
-#### Step O — Wire SchedulingRoundPage to RTDB + integrate algorithm
+#### Step O — Wire SchedulingRoundPage to RTDB + integrate algorithm (next)
 
-- `useStudentSubmissions` for collecting state
-- "Generate Suggestions" button: runs `generateAllSuggestions` client-side, writes results to `scheduleSuggestions` path, updates round status to `suggested`
-- `useScheduleSuggestions` for suggested state
-- "Confirm Schedule" button: writes `confirmedSchedule`, converts `LessonSlot[]` directly to `LessonInstance` records (batch `update`), updates round status to `finalized`, sends confirmation notifications
+The page already reads its round, enrollments, submissions and availability from RTDB, and runs
+the solver over them. What remains is making the result durable.
+
+**Closing a round writes the suggestions down.** They are currently recomputed on every render
+from whatever is in the database at that moment, which is fine for looking and wrong to decide
+on: the cards would shift under the teacher if a student submitted late or the teacher edited
+their own availability between opening the page and choosing. Closing computes once, writes to
+`scheduleSuggestions/…/rounds/{rid}`, and moves the round to `suggested`. From then on the cards
+are a stored artefact, read by `useScheduleSuggestions`.
+
+**Confirming writes `confirmedSchedules/…` and generates the term's lessons**, then moves the
+round to `finalized` and the semester to `active`.
+
+Two constraints already fixed by earlier steps:
+
+- **Every lesson is written twice** — to `lessonInstances/…/lessons/{id}` and to
+  `/studentLessons/{studentId}/{id}`, keyed by the lesson's own id. `deleteSemester` depends on
+  that key to clear the index without reading it, and the index is the only path by which a
+  student can discover their own lessons.
+- **One root-level update**, as the delete is, so a crash cannot leave half a term behind.
+
+**Decisions settled 2026-10-13:**
+
+- **Closing is manual.** Nothing runs while the app is shut, so closing at the deadline would
+  need a Cloud Function. The button stays, and a round sits open until the teacher presses it.
+  Students cannot submit in the meantime — the rules refuse a write past the deadline — so the
+  only cost is that the teacher must come back.
+- **Confirming happens once per round.** Changing a confirmed schedule means opening a new round,
+  rather than regenerating and reconciling against lessons that may already have been cancelled
+  or moved. That reconciliation is a great deal of machinery for a case that may never arise.
+- **It is one large write, not a trickle.** Seven students at roughly fifteen lessons each is
+  about a hundred records, each written twice: two hundred entries in a single update. Well
+  within RTDB's limits, but worth knowing it is one atomic burst.
 
 ---
 

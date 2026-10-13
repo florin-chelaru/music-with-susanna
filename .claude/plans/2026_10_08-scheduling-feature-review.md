@@ -523,3 +523,50 @@ Running totals: **147 tests**, lint clean, typecheck clean.
 
 Next: **Step L2 — the conflicts panel**, the last feature before the pre-merge cleanup (L3) and
 the RTDB wiring. Still owed from Step E: the enrollment dialog's distribution control.
+
+### 2026-10-13 (afternoon) — against the live database
+
+Steps M2, M and N, plus most of P. Four additive rules deploys, each verified against the
+morning's snapshot rather than against the previous deploy: none of the ten blocks predating this
+feature were modified at any point.
+
+**One fact caused most of the day's bugs**, and none of them could have appeared against mocks:
+*RTDB cannot filter a list, and a grant declared on a child does not grant listing its parent.*
+
+1. **The enrollment dropdown read nothing** and reported "all students are already enrolled". It
+   subscribed to `/users`, where the grant sits on `$uid`. Fixed by reading one record at a time —
+   which is what the pre-existing students page had always done.
+2. **A student could not discover their own lessons.** `lessonInstances` grants read per lesson on
+   `studentId`, which cannot become a query. Answered with the `/studentLessons/{uid}` index, and
+   the plan's `useMyLessonInstances` — specified as "filters client-side" — could never have
+   worked.
+3. **`deleteSemester` would have been refused partway**, because it listed `/studentLessons/{uid}`
+   to find what to clear. It derives those entries from the lessons instead, which needs no extra
+   privilege. Caught while re-reading the rules for an unrelated reason.
+4. **A student could not find which terms they were in.** Rather than a third mirror, a student of
+   a teacher may now list that teacher's semesters; everything inside stays gated on enrollment.
+5. **A teacher could not discover a student another teacher had created** — and adding one was a
+   dead end, since the account already existed. Teachers may now list `/users`, and the Add
+   student dialog gained an Import existing tab.
+
+**The other RTDB fact: empty values are discarded.** `weekOverrides: {}` was stored as nothing and
+the read crashed on `Object.entries(undefined)`. Silently worse, an override meaning "away all
+week" is an empty block list, which collapses to an empty node and vanishes — "I am away" became
+"I never said anything", and the solver would have scheduled into it. Overrides now carry a
+`savedAt` so the node cannot collapse.
+
+**And one React fact:** hooks must return stable references. Normalising on read built a new
+object every render, so the effect syncing it re-fired forever. `useCollection` and
+`useTeacherStudents` had the same latent fault.
+
+Three things shipped beyond the plan: semesters carry their own teaching hours; semesters can be
+deleted, soft and cascading, as one atomic update; and the student pages were pulled ahead of
+Step O, because closing a round computes suggestions from submissions and there was no way for a
+student to make one.
+
+Running totals: **166 tests**, lint clean, typecheck clean.
+
+Next: **Step O** — closing a round writes its suggestions down, and confirming generates the
+term's lessons into both the teacher's path and the per-student index. Closing stays manual,
+confirming happens once per round, and the generation is one atomic write of roughly two hundred
+entries.
