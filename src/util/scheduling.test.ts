@@ -8,6 +8,7 @@ import {
   computeCombinedScore,
   isWithinCancellationWindow,
   removeOverlaps,
+  reverted,
   SCHEDULING_CONFIG,
   scoreForDayTime
 } from './scheduling'
@@ -321,5 +322,50 @@ describe('scoreForDayTime', () => {
   test('the day has to match', () => {
     expect(scoreForDayTime(blocks, TUE, '10:00')).toBe(0)
     expect(scoreForDayTime([], MON, '10:00')).toBe(0)
+  })
+})
+
+// ─── reverted ─────────────────────────────────────────────────────────────────
+
+describe('reverted', () => {
+  const moved = {
+    studentId: 'ana',
+    date: '2026-01-07',
+    startTime: '14:00',
+    endTime: '14:45',
+    teacherScore: 2,
+    studentScore: 6,
+    combinedScore: 3.2,
+    moved: true,
+    original: {
+      date: '2026-01-05',
+      startTime: '09:00',
+      endTime: '09:45',
+      teacherScore: 10,
+      studentScore: 10,
+      combinedScore: 10
+    }
+  }
+
+  // The bug this guards: restoring the times alone left the lesson wearing the score of a time
+  // it no longer occupied, so undoing every edit changed the calendar and not the averages.
+  test('restores what the lesson was worth, not only when it was', () => {
+    const back = reverted(moved)
+    expect(back.date).toBe('2026-01-05')
+    expect(back.startTime).toBe('09:00')
+    expect(back.teacherScore).toBe(10)
+    expect(back.studentScore).toBe(10)
+    expect(back.combinedScore).toBe(10)
+  })
+
+  test('marks the slot untouched again', () => {
+    const back = reverted(moved)
+    expect(back.moved).toBe(false)
+    expect(back.original).toBeUndefined()
+  })
+
+  test('leaves a slot nobody moved exactly as it was', () => {
+    const untouched = { ...moved, moved: undefined, original: undefined }
+    expect(reverted(untouched)).toBe(untouched)
   })
 })

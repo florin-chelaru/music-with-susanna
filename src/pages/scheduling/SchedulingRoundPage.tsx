@@ -46,6 +46,7 @@ import EditableScheduleCalendar, {
   UnscheduledLesson
 } from '../../Components/scheduling/EditableScheduleCalendar'
 import SuggestedScheduleCard from '../../Components/scheduling/SuggestedScheduleCard'
+import { findScheduleConflicts } from '../../util/schedulingConflicts'
 import {
   formatCountdown,
   formatMinutes,
@@ -117,14 +118,14 @@ const EN_US: SchedulingRoundPageTexts = {
   notFound: 'Round not found.',
   suggestionsTitle: 'Suggested schedules',
   suggestionsHint:
-    'Three ways to fit everyone in. Pick the one closest to what you want — you can adjust it before confirming.',
+    'Each strikes a different balance between your preferences and your students’, ordered from the ones that favour you to the ones that favour them. Pick the closest — you can adjust it before confirming.',
   confirmSchedule: 'Confirm schedule',
   pickOne: 'Pick a suggestion to continue.',
   selectedHint:
     'Confirming generates every lesson for the rest of the semester and notifies the students.',
   adjustTitle: 'Adjust the schedule',
   adjustHint:
-    'Drag a lesson to move it, or drag its edge to change the length. A move that clashes with another lesson is refused.',
+    'Drag a lesson to move it, drag its edge to change the length, or click it to pick a time or put it back. Two lessons at once are refused; anything else is flagged above rather than blocked.',
   chooseDifferent: 'Choose a different suggestion',
   confirmedBanner:
     'Schedule confirmed. Every lesson for the rest of the semester would now be created and the students notified.'
@@ -152,13 +153,13 @@ const RO_RO: SchedulingRoundPageTexts = {
   notFound: 'Runda nu a fost găsită.',
   suggestionsTitle: 'Orare sugerate',
   suggestionsHint:
-    'Trei moduri de a încadra pe toată lumea. Alege-l pe cel mai apropiat de ce vrei — îl poți ajusta înainte de confirmare.',
+    'Fiecare echilibrează diferit preferințele tale cu ale elevilor, de la cele care te favorizează pe tine la cele care îi favorizează pe ei. Alege-l pe cel mai apropiat — îl poți ajusta înainte de confirmare.',
   confirmSchedule: 'Confirmă orarul',
   pickOne: 'Alege o sugestie pentru a continua.',
   selectedHint: 'Confirmarea generează toate lecțiile din restul semestrului și notifică elevii.',
   adjustTitle: 'Ajustează orarul',
   adjustHint:
-    'Trage o lecție pentru a o muta sau trage de margine pentru a-i schimba durata. O mutare care se suprapune cu altă lecție este refuzată.',
+    'Trage o lecție pentru a o muta, trage de margine pentru a-i schimba durata sau dă clic pe ea ca să alegi o oră ori s-o readuci. Două lecții în același timp sunt refuzate; restul este semnalat mai sus, nu blocat.',
   chooseDifferent: 'Alege altă sugestie',
   confirmedBanner:
     'Orar confirmat. Toate lecțiile din restul semestrului ar fi create acum, iar elevii notificați.'
@@ -386,6 +387,14 @@ export default function SchedulingRoundPage() {
     }))
   }
 
+  // Recomputed from the slots rather than carried over from the solver, so it still describes
+  // the schedule after the teacher has dragged half of it around.
+  const conflicts = useMemo(
+    () =>
+      editedSlots ? findScheduleConflicts(editedSlots, MOCK_TEACHER_AVAILABILITY, submissions) : [],
+    [editedSlots, submissions]
+  )
+
   // One entry per lesson the student is owed but has no time for.
   const unscheduled: UnscheduledLesson[] = useMemo(() => {
     if (!selected || !editedSlots || !semester) return []
@@ -476,13 +485,6 @@ export default function SchedulingRoundPage() {
 
       {round.status === 'suggested' ? (
         <Box>
-          <Typography variant="subtitle1" fontWeight={600}>
-            {t.suggestionsTitle}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {t.suggestionsHint}
-          </Typography>
-
           {confirmed ? (
             <Alert severity="success">{t.confirmedBanner}</Alert>
           ) : editedSlots ? (
@@ -513,6 +515,7 @@ export default function SchedulingRoundPage() {
                 scoreAt={scoreAt}
                 overlappingTimes={overlappingTimes}
                 teacherScoreAt={teacherScoreAt}
+                conflicts={conflicts}
               />
 
               <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
@@ -530,6 +533,16 @@ export default function SchedulingRoundPage() {
             </Box>
           ) : (
             <>
+              {/* The heading belongs to the choosing step. Once a schedule is open for editing
+                  it has its own heading, and "pick the closest" describes a decision already
+                  made. */}
+              <Typography variant="subtitle1" fontWeight={600}>
+                {t.suggestionsTitle}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                {t.suggestionsHint}
+              </Typography>
+
               {/* One strip, scrolled rather than wrapped. The cards are ordered as a spectrum
                   from teacher-favouring to student-favouring, and a three-column grid broke that
                   reading as soon as there were more than three — the fourth restarted on a new

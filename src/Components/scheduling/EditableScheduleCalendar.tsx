@@ -18,7 +18,7 @@ import ScheduleIcon from '@mui/icons-material/Schedule'
 import UndoIcon from '@mui/icons-material/Undo'
 import { alpha } from '@mui/material/styles'
 import dayjs from 'dayjs'
-import { SyntheticEvent, useContext, useMemo, useState } from 'react'
+import { SyntheticEvent, useContext, useMemo, useRef, useState } from 'react'
 import { Calendar, View, Views } from 'react-big-calendar'
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
@@ -29,18 +29,27 @@ import { localizer } from '../../util/calendarLocalizer'
 import { calendarShellSx, monthAgendaSx, timeGridSx } from './calendarStyles'
 import {
   AvailabilityLabel,
+  EditableSlot,
   LABEL_SCORES,
+  OriginalPlacement,
+  reverted,
+  sameTime,
   SCHEDULING_CONFIG,
   SlotScores,
   SlotTime,
-  SuggestedSlot,
   findConflict
 } from '../../util/scheduling'
 import { formatDate, parseDate, parseMinutes } from '../../util/schedulingDates'
 import CalendarToolbar from './CalendarToolbar'
+import ConflictsPanel from './ConflictsPanel'
 import MoveLessonDialog from './MoveLessonDialog'
 import { ScoredTimeOption } from '../../util/schedulingAlgorithm'
+import { ScheduleConflict } from '../../util/schedulingConflicts'
 import { SatisfactionSummary, scoreColor, ScoreLegend } from './scoreDisplay'
+
+// Re-exported so the pages that render this calendar keep importing the slot shape from the
+// component they hand it to, rather than reaching past it into the domain module.
+export type { EditableSlot } from '../../util/scheduling'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
@@ -146,23 +155,13 @@ const TEXTS = new Map<SupportedLocale, LocalizedData>([
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-/**
- * A suggestion slot, possibly moved by the teacher.
- *
- * `moved` records the override so Step O can tell a hand-placed lesson from a generated one.
- * The score still describes the slot's ORIGINAL time — moving a lesson does not currently
- * recompute it against the teacher's and student's availability at the new time.
- *
- * `original` keeps where the solver put it, captured on the FIRST move and never overwritten,
- * so three drags in a row still revert to the suggestion rather than to the second drag.
- *
- * `added` marks a lesson the teacher placed by hand, which the solver never proposed. It has no
- * suggestion to revert to, so it is removed rather than reverted.
- */
-export interface EditableSlot extends SuggestedSlot {
-  moved?: boolean
-  original?: SlotTime
-  added?: boolean
+/** One lesson as react-big-calendar sees it, with the slot it came from carried along. */
+interface SlotEvent {
+  index: number
+  title: string
+  start: Date
+  end: Date
+  slot: EditableSlot
 }
 
 /** A lesson the student is owed that has no time yet. */
@@ -170,30 +169,6 @@ export interface UnscheduledLesson {
   studentId: string
   /** Where the picker opens, and the length the lesson will have. */
   seed: SlotTime
-}
-
-/**
- * Puts a slot back where the solver placed it.
- *
- * Dropping `original` matters as much as restoring the times: its absence is what marks the
- * slot as untouched again, for the counter and for the faded styling.
- */
-function reverted(slot: EditableSlot): EditableSlot {
-  if (!slot.original) return slot
-  const { original, ...rest } = slot
-  return { ...rest, ...original, moved: false }
-}
-
-function sameTime(a: SlotTime, b: SlotTime): boolean {
-  return a.date === b.date && a.startTime === b.startTime && a.endTime === b.endTime
-}
-
-interface SlotEvent {
-  index: number
-  title: string
-  start: Date
-  end: Date
-  slot: EditableSlot
 }
 
 export interface EditableScheduleCalendarProps {
@@ -223,6 +198,11 @@ export interface EditableScheduleCalendarProps {
    * Without it the week view simply has no wash; the lessons still carry both scores.
    */
   teacherScoreAt?: (date: string, startTime: string) => number
+  /**
+   * Everything wrong with `slots` as they stand, recomputed by the caller after every edit.
+   * Reported, never enforced — only a true overlap is refused, and that happens on the drag.
+   */
+  conflicts?: ScheduleConflict[]
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -241,7 +221,8 @@ export default function EditableScheduleCalendar({
   unscheduled = [],
   scoreAt,
   overlappingTimes,
-  teacherScoreAt
+  teacherScoreAt,
+  conflicts = []
 }: EditableScheduleCalendarProps) {
   const theme = useTheme()
   const localeManager = useContext<LocaleHandler>(LocaleContext)
@@ -260,6 +241,7 @@ export default function EditableScheduleCalendar({
   const [date, setDate] = useState<Date>(defaultDate ?? new Date())
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<{ index: number; anchor: HTMLElement } | null>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
   // The lesson the Move dialog is editing, kept apart from `selected` so closing the menu does
   // not close the dialog it opened.
   const [moving, setMoving] = useState<number | null>(null)
@@ -366,10 +348,13 @@ export default function EditableScheduleCalendar({
     setError(null)
 
     const slot = slots[index]
-    const original = slot.original ?? {
+    const original: OriginalPlacement = slot.original ?? {
       date: slot.date,
       startTime: slot.startTime,
-      endTime: slot.endTime
+      endTime: slot.endTime,
+      teacherScore: slot.teacherScore,
+      studentScore: slot.studentScore,
+      combinedScore: slot.combinedScore
     }
     // A moved lesson is worth what its NEW time is worth. Carrying the old score over meant the
     // colour described where the lesson used to be, which is why moved lessons were faded out
@@ -380,9 +365,7 @@ export default function EditableScheduleCalendar({
         if (i !== index) return current
         // Dragging a lesson back onto its suggested time is an undo, not a third edit, so it
         // clears the marker rather than recording a move to where it already belonged.
-        if (sameTime(original, candidate)) {
-          return reverted({ ...current, original, ...scoreAt?.(current.studentId, original) })
-        }
+        if (sameTime(original, candidate)) return reverted({ ...current, original })
         return { ...current, ...candidate, ...scores, moved: true, original }
       })
     )
@@ -513,6 +496,26 @@ export default function EditableScheduleCalendar({
         </Alert>
       </Collapse>
 
+      {/* Clicking a row takes the grid to that lesson, which is most of the value: the
+          conflict is usually in a week the teacher is not currently looking at. Changing the
+          date alone is not enough — with a long list of conflicts the grid can be well below
+          the fold, so the week silently changes somewhere the teacher cannot see. */}
+      <ConflictsPanel
+        conflicts={conflicts}
+        students={students}
+        onSelect={(conflict) => {
+          setDate(parseDate(conflict.date).toDate())
+          setSelected(null)
+          gridRef.current?.scrollIntoView({
+            // Someone who has asked for less motion gets the jump without the journey.
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+              ? 'auto'
+              : 'smooth',
+            block: 'start'
+          })
+        }}
+      />
+
       {unscheduled.length > 0 && (
         <Alert severity="warning" sx={{ mb: 1.5 }}>
           <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
@@ -586,7 +589,7 @@ export default function EditableScheduleCalendar({
         {t.legendChannels}
       </Typography>
 
-      <Box sx={{ ...calendarSx, mt: 1 }}>
+      <Box ref={gridRef} sx={{ ...calendarSx, mt: 1, scrollMarginTop: 16 }}>
         <DnDCalendar
           localizer={localizer}
           culture={dayjsLocale}

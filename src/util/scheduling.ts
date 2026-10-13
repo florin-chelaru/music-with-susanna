@@ -125,6 +125,47 @@ export function averageScore(values: number[]): number {
   return values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length)
 }
 
+/** Where a lesson was placed, and what it was worth there. */
+export type OriginalPlacement = SlotTime & SlotScores
+
+/**
+ * A suggested slot, possibly moved or hand-placed by the teacher.
+ *
+ * `moved` records the override so Step O can tell a hand-placed lesson from a generated one.
+ *
+ * `original` keeps where the solver put it AND what it was worth there, captured on the FIRST
+ * move and never overwritten, so three drags in a row still revert to the suggestion rather than
+ * to the second drag.
+ *
+ * `added` marks a lesson the teacher placed that the solver never proposed. It has no suggestion
+ * to revert to, so it is removed rather than reverted.
+ */
+export interface EditableSlot extends SuggestedSlot {
+  moved?: boolean
+  original?: OriginalPlacement
+  added?: boolean
+}
+
+/**
+ * Puts a slot back where the solver placed it.
+ *
+ * Restores the scores along with the times. A move rescores the lesson against where it landed,
+ * so putting only the times back leaves it wearing the score of a time it no longer occupies —
+ * which is how undoing every edit left the satisfaction averages unchanged.
+ *
+ * Dropping `original` matters as much: its absence is what marks the slot untouched again, for
+ * the edit counter and for the faded styling.
+ */
+export function reverted(slot: EditableSlot): EditableSlot {
+  if (!slot.original) return slot
+  const { original, ...rest } = slot
+  return { ...rest, ...original, moved: false }
+}
+
+export function sameTime(a: SlotTime, b: SlotTime): boolean {
+  return a.date === b.date && a.startTime === b.startTime && a.endTime === b.endTime
+}
+
 export type SuggestionStrategy = 'teacher_best' | 'student_best' | 'balanced'
 
 export interface ScheduleSuggestion {
