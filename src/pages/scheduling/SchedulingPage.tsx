@@ -4,6 +4,7 @@ import {
   Button,
   Chip,
   Container,
+  IconButton,
   LinearProgress,
   Paper,
   Stack,
@@ -11,18 +12,25 @@ import {
   Typography
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SchedulingNav from '../../Components/scheduling/SchedulingNav'
 import LocationDialog from '../../Components/scheduling/LocationDialog'
 import SemesterDialog from '../../Components/scheduling/SemesterDialog'
+import DeleteSemesterDialog from '../../Components/scheduling/DeleteSemesterDialog'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
 import { DEFAULT_TIMEZONE, Location, Semester, SemesterStatus } from '../../util/scheduling'
 import { useLocations, useSemesters } from '../../util/schedulingHooks'
-import { createLocation, createSemester } from '../../util/schedulingWrites'
+import {
+  createLocation,
+  createSemester,
+  deleteSemester,
+  NewSemester
+} from '../../util/schedulingWrites'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +41,7 @@ interface SchedulingPageTexts {
   noSemesters: string
   noLocations: string
   saveFailed: string
+  deleteSemester: string
   statusDraft: string
   statusScheduling: string
   statusActive: string
@@ -40,6 +49,7 @@ interface SchedulingPageTexts {
 }
 
 const EN_US: SchedulingPageTexts = {
+  deleteSemester: 'Delete',
   noLocations: 'No locations yet. Add one to start a semester.',
   saveFailed: 'Could not save:',
   addLocation: 'Add Location',
@@ -53,6 +63,7 @@ const EN_US: SchedulingPageTexts = {
 }
 
 const RO_RO: SchedulingPageTexts = {
+  deleteSemester: 'Șterge',
   noLocations: 'Nicio locație încă. Adaugă una ca să începi un semestru.',
   saveFailed: 'Nu s-a putut salva:',
   addLocation: 'Adaugă locație',
@@ -114,6 +125,7 @@ export default function SchedulingPage() {
 
   const [locationDialogOpen, setLocationDialogOpen] = useState(false)
   const [semesterDialogOpen, setSemesterDialogOpen] = useState<string | null>(null) // locationId
+  const [deleteTarget, setDeleteTarget] = useState<Semester | null>(null)
 
   useEffect(() => {
     if (user.loading) return
@@ -136,13 +148,19 @@ export default function SchedulingPage() {
     })
   }
 
-  function handleAddSemester(
-    locationId: string,
-    data: Pick<Semester, 'name' | 'startDate' | 'endDate' | 'defaultCancellationWindowHours'>
-  ) {
+  function handleAddSemester(locationId: string, data: NewSemester) {
     if (!user.uid) return
     setSemesterDialogOpen(null)
     void createSemester(user.uid, locationId, data, DEFAULT_TIMEZONE).catch((error) => {
+      setSaveError(String(error))
+    })
+  }
+
+  function handleDeleteSemester() {
+    const target = deleteTarget
+    setDeleteTarget(null)
+    if (!target || !user.uid) return
+    void deleteSemester(user.uid, target.id).catch((error) => {
       setSaveError(String(error))
     })
   }
@@ -250,6 +268,14 @@ export default function SchedulingPage() {
                       }}>
                       {t.open}
                     </Button>
+                    <IconButton
+                      size="small"
+                      aria-label={`${t.deleteSemester} ${sem.name}`}
+                      onClick={() => {
+                        setDeleteTarget(sem)
+                      }}>
+                      <DeleteOutlineIcon fontSize="small" />
+                    </IconButton>
                   </Stack>
                 ))}
               </Stack>
@@ -257,6 +283,18 @@ export default function SchedulingPage() {
           )
         })}
       </Stack>
+
+      <DeleteSemesterDialog
+        open={deleteTarget !== null}
+        teacherId={user.uid ?? ''}
+        semester={deleteTarget}
+        onClose={() => {
+          setDeleteTarget(null)
+        }}
+        onConfirm={() => {
+          handleDeleteSemester()
+        }}
+      />
 
       <LocationDialog
         open={locationDialogOpen}

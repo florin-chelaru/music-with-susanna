@@ -7,10 +7,12 @@ import {
   LessonInstance,
   computeCombinedScore,
   isWithinCancellationWindow,
+  fromStoredAvailability,
   removeOverlaps,
   reverted,
   SCHEDULING_CONFIG,
-  scoreForDayTime
+  scoreForDayTime,
+  toStoredAvailability
 } from './scheduling'
 
 test('returns 0 when teacher score is 0 (hard block)', () => {
@@ -367,5 +369,47 @@ describe('reverted', () => {
   test('leaves a slot nobody moved exactly as it was', () => {
     const untouched = { ...moved, moved: undefined, original: undefined }
     expect(reverted(untouched)).toBe(untouched)
+  })
+})
+
+// ─── Availability storage round-trip ──────────────────────────────────────────
+//
+// RTDB discards empty objects and arrays. Everything here is about what that destroys.
+
+describe('availability storage', () => {
+  test('reads back a record that lost its empty keys', () => {
+    // What a teacher with hours but no overrides actually comes back as: `weekOverrides: {}`
+    // was written and stored as nothing at all.
+    const stored = { weeklyTemplate: { blocks: [] } }
+    expect(fromStoredAvailability(stored)).toEqual({
+      weeklyTemplate: { blocks: [] },
+      weekOverrides: {}
+    })
+    // And a semester nobody has touched reads back as nothing whatsoever.
+    expect(fromStoredAvailability(null)).toEqual({
+      weeklyTemplate: { blocks: [] },
+      weekOverrides: {}
+    })
+  })
+
+  // The bug this guards is silent rather than loud: "away all week" is an override with no
+  // blocks, which collapses to an empty node and disappears, turning "I am away" into "I never
+  // said anything" — and the lessons get scheduled.
+  test('keeps an away-all-week override from collapsing to nothing', () => {
+    const stored = toStoredAvailability({
+      weeklyTemplate: { blocks: [] },
+      weekOverrides: { '2026-11-09': { blocks: [] } }
+    })
+    const node = stored.weekOverrides['2026-11-09']
+    expect(Object.keys(node).length).toBeGreaterThan(0)
+    expect(fromStoredAvailability(stored).weekOverrides['2026-11-09'].blocks).toEqual([])
+  })
+
+  test('an override that lost its blocks still means away, not missing', () => {
+    const roundTripped = fromStoredAvailability({ weekOverrides: { '2026-11-09': {} } })
+    expect(roundTripped.weekOverrides['2026-11-09']).toEqual({
+      blocks: [],
+      savedAt: undefined
+    })
   })
 })

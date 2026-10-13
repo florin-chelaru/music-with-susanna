@@ -83,6 +83,13 @@
             ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'teacher'"
           }
         }
+      },
+      "scheduling": {
+        "teachers": {
+          "$tid": {
+            ".write": "$tid === auth.uid"
+          }
+        }
       }
     },
     "videos": {

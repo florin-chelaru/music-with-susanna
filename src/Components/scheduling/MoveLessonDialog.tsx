@@ -19,7 +19,13 @@ import { useContext, useEffect, useMemo, useState } from 'react'
 import MultiActionDialog from '../MultiActionDialog'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
-import { SCHEDULING_CONFIG, SlotScores, SlotTime } from '../../util/scheduling'
+import {
+  DEFAULT_DAY_END_HOUR,
+  DEFAULT_DAY_START_HOUR,
+  SCHEDULING_CONFIG,
+  SlotScores,
+  SlotTime
+} from '../../util/scheduling'
 import { ScoredTimeOption } from '../../util/schedulingAlgorithm'
 import { formatDate, formatMinutes, parseDate, parseMinutes } from '../../util/schedulingDates'
 import { ScoreChip, scoreColor } from './scoreDisplay'
@@ -79,10 +85,10 @@ const TEXTS = new Map<SupportedLocale, LocalizedData>([
   [SupportedLocale.RO_RO, RO_RO]
 ])
 
-// The span the "any time" list covers. Wide enough for an early or late ad-hoc lesson without
-// listing the small hours, which nobody teaches in.
-const ANY_TIME_FROM = '07:00'
-const ANY_TIME_TO = '21:00'
+// How far beyond the semester's teaching hours the "any time" list reaches. The point of that
+// switch is to place a lesson somewhere nobody said they were free, so bounding it by the same
+// window the grid draws would defeat it — but the small hours are still not worth listing.
+const ANY_TIME_MARGIN_HOURS = 1
 
 // ─── Day cell ─────────────────────────────────────────────────────────────────
 
@@ -140,6 +146,9 @@ export interface MoveLessonDialogProps {
   availableTimes?: (date: string) => ScoredTimeOption[]
   /** Rates any time at all, for the unrestricted list and the warnings under it. */
   scoreAt?: (time: SlotTime) => SlotScores | undefined
+  /** The semester's teaching hours; the unrestricted list reaches an hour either side. */
+  dayStartHour?: number
+  dayEndHour?: number
   /** Set by the caller when the chosen time clashes, so the dialog can stay open. */
   error?: string | null
   onClose: () => void
@@ -155,6 +164,8 @@ export default function MoveLessonDialog({
   mode = 'move',
   availableTimes,
   scoreAt,
+  dayStartHour = DEFAULT_DAY_START_HOUR,
+  dayEndHour = DEFAULT_DAY_END_HOUR,
   error,
   onClose,
   onConfirm
@@ -207,9 +218,11 @@ export default function MoveLessonDialog({
     if (!anyTime) return availableTimes?.(key) ?? []
 
     const options: ScoredTimeOption[] = []
+    const from = Math.max(0, dayStartHour - ANY_TIME_MARGIN_HOURS) * 60
+    const to = Math.min(24, dayEndHour + ANY_TIME_MARGIN_HOURS) * 60
     for (
-      let minute = parseMinutes(ANY_TIME_FROM);
-      minute + durationMinutes <= parseMinutes(ANY_TIME_TO);
+      let minute = from;
+      minute + durationMinutes <= to;
       minute += SCHEDULING_CONFIG.SLOT_SNAP_MINUTES
     ) {
       const start = formatMinutes(minute)

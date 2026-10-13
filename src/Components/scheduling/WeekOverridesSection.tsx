@@ -52,6 +52,9 @@ export interface WeekOverridesSectionProps {
   semesterEnd: string
   /** Drawn behind the editable blocks — the teacher's availability, in the student's view. */
   overlayBlocks?: AvailabilityBlock[]
+  /** The semester's teaching hours, so every week's grid draws the same window. */
+  displayStartHour?: number
+  displayEndHour?: number
   /**
    * Monday of a week to scroll to and flash — how a conflict elsewhere on the page points at
    * the week that would fix it. The caller clears it, so pointing at the same week twice works.
@@ -74,6 +77,8 @@ export default function WeekOverridesSection({
   semesterStart,
   semesterEnd,
   overlayBlocks,
+  displayStartHour,
+  displayEndHour,
   focusWeek,
   onAdd,
   onChange,
@@ -214,6 +219,8 @@ export default function WeekOverridesSection({
             blocks={blocks}
             weekStart={weekStart}
             overlayBlocks={overlayBlocks}
+            displayStartHour={displayStartHour}
+            displayEndHour={displayEndHour}
             onChange={(newBlocks) => {
               onChange(weekStart, newBlocks)
             }}

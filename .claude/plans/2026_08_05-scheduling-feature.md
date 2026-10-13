@@ -1471,9 +1471,36 @@ submissions, enrollments and lesson records.
 
 ---
 
-#### Step N — Wire teacher pages to RTDB (in progress)
+#### ~~Step N — Wire teacher pages to RTDB~~ ✅ DONE
 
-**`SchedulingPage` is done and verified against production** — locations and semesters are real,
+All three teacher surfaces read and write RTDB, verified against production. Beyond the plan:
+
+- **Semesters carry their own teaching hours** (`dayStartHour`/`dayEndHour`). The grids were
+  hardcoded to 8–20 in two places while `AvailabilityCalendar` had props for it that nobody
+  passed. Optional fields with `dayWindow()` filling the default, so older records still render.
+  The Move dialog's "any time" list deliberately reaches an hour beyond the window — its whole
+  purpose is placing a lesson where nobody said they were free.
+- **Semesters can be deleted**, soft and cascading, as one root-level update so the archive and
+  the removal cannot half-happen.
+
+**Three bugs this step found, all of the same family — RTDB does not behave like a document
+store, and none of them could have shown up against mocks:**
+
+1. **Empty values are discarded.** `weekOverrides: {}` was written and stored as nothing, so the
+   read crashed on `Object.entries(undefined)`. Worse and silent: an override meaning "away all
+   week" is `{ blocks: [] }`, which collapses to an empty node and vanishes — "I am away" became
+   "I never said anything". Each override now carries a `savedAt` so the node cannot collapse,
+   and `fromStoredAvailability` restores what was dropped.
+2. **A grant on a child does not grant listing its parent.** `.read` on `users/$uid` does not
+   make `/users` listable, so the enrollment dropdown read nothing and reported "all students are
+   already enrolled". Fixed by reading one record at a time, which is what the students page has
+   always done. The same mistake was about to ship in `deleteSemester`, which tried to list
+   `/studentLessons/{uid}` — it derives the entries from the lessons instead.
+3. **Hooks must return stable references.** Normalising on read built a new object every render,
+   so the effect syncing it re-fired forever. `useCollection` and `useTeacherStudents` had the
+   same latent fault. All memoised, with a test asserting referential stability.
+
+**`SchedulingPage` notes** — locations and semesters are real,
 both dialogs write, and the two teachers see only their own. Two modules came out of it:
 
 - **`util/schedulingPaths.ts`** — every RTDB path in one place. Reads, writes and the security

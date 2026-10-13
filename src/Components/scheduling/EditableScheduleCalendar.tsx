@@ -29,6 +29,8 @@ import { localizer } from '../../util/calendarLocalizer'
 import { calendarShellSx, monthAgendaSx, timeGridSx } from './calendarStyles'
 import {
   AvailabilityLabel,
+  DEFAULT_DAY_END_HOUR,
+  DEFAULT_DAY_START_HOUR,
   EditableSlot,
   LABEL_SCORES,
   OriginalPlacement,
@@ -203,6 +205,9 @@ export interface EditableScheduleCalendarProps {
    * Reported, never enforced — only a true overlap is refused, and that happens on the drag.
    */
   conflicts?: ScheduleConflict[]
+  /** The semester's teaching hours. Defaults exist so a caller without a semester still renders. */
+  dayStartHour?: number
+  dayEndHour?: number
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -222,7 +227,9 @@ export default function EditableScheduleCalendar({
   scoreAt,
   overlappingTimes,
   teacherScoreAt,
-  conflicts = []
+  conflicts = [],
+  dayStartHour = DEFAULT_DAY_START_HOUR,
+  dayEndHour = DEFAULT_DAY_END_HOUR
 }: EditableScheduleCalendarProps) {
   const theme = useTheme()
   const localeManager = useContext<LocaleHandler>(LocaleContext)
@@ -609,8 +616,8 @@ export default function EditableScheduleCalendar({
           popup
           step={SCHEDULING_CONFIG.SLOT_SNAP_MINUTES}
           timeslots={1}
-          min={dayjs(date).hour(8).minute(0).second(0).toDate()}
-          max={dayjs(date).hour(20).minute(0).second(0).toDate()}
+          min={dayjs(date).hour(dayStartHour).minute(0).second(0).toDate()}
+          max={dayjs(date).hour(dayEndHour).minute(0).second(0).toDate()}
           selectable={false}
           resizable
           slotPropGetter={slotPropGetter}
@@ -688,6 +695,8 @@ export default function EditableScheduleCalendar({
         open={moving !== null}
         studentName={movingEvent?.title ?? ''}
         slot={movingEvent?.slot ?? null}
+        dayStartHour={dayStartHour}
+        dayEndHour={dayEndHour}
         scoreAt={movingEvent ? (time) => scoreAt?.(movingEvent.slot.studentId, time) : undefined}
         availableTimes={
           movingEvent
@@ -707,6 +716,8 @@ export default function EditableScheduleCalendar({
         mode="schedule"
         studentName={schedulingEntry ? nameOf(schedulingEntry.studentId) : ''}
         slot={schedulingEntry?.seed ?? null}
+        dayStartHour={dayStartHour}
+        dayEndHour={dayEndHour}
         scoreAt={schedulingEntry ? (time) => scoreAt?.(schedulingEntry.studentId, time) : undefined}
         availableTimes={
           schedulingEntry

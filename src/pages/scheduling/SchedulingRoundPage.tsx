@@ -25,6 +25,7 @@ import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
 import {
   computeCombinedScore,
+  dayWindow,
   RoundStatus,
   SchedulingRound,
   scoreForDayTime,
@@ -516,6 +517,8 @@ export default function SchedulingRoundPage() {
                 overlappingTimes={overlappingTimes}
                 teacherScoreAt={teacherScoreAt}
                 conflicts={conflicts}
+                dayStartHour={dayWindow(semester ?? null).startHour}
+                dayEndHour={dayWindow(semester ?? null).endHour}
               />
 
               <Alert severity="info" sx={{ mt: 2, mb: 2 }}>

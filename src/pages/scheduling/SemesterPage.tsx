@@ -40,6 +40,7 @@ import { UserRole } from '../../util/User'
 import {
   applyCancellation,
   AvailabilityBlock,
+  dayWindow,
   LessonInstance,
   RoundStatus,
   SchedulingRound,
@@ -48,6 +49,18 @@ import {
   WeeklyAvailability
 } from '../../util/scheduling'
 import { findScheduleConflicts, ScheduleConflict } from '../../util/schedulingConflicts'
+import {
+  useLocations,
+  useStudentEnrollments,
+  useTeacherStudents,
+  useTeacherAvailability,
+  useSemester
+} from '../../util/schedulingHooks'
+import {
+  removeEnrollment,
+  saveEnrollment,
+  saveTeacherAvailability
+} from '../../util/schedulingWrites'
 import { eachWeekStartInRange, formatDate, parseDate } from '../../util/schedulingDates'
 import {
   MOCK_ENROLLMENTS_FALL,
@@ -79,6 +92,7 @@ interface SemesterPageTexts {
   weekOf: string
   saving: string
   saved: string
+  saveFailed: string
   statusDraft: string
   statusScheduling: string
   statusActive: string
@@ -116,6 +130,7 @@ const EN_US: SemesterPageTexts = {
   weekOf: 'Week of',
   saving: 'Saving…',
   saved: 'Saved',
+  saveFailed: 'Not saved — your changes are still here, and the next edit will try again.',
   statusDraft: 'Draft',
   statusScheduling: 'Scheduling',
   statusActive: 'Active',
@@ -153,6 +168,8 @@ const RO_RO: SemesterPageTexts = {
   weekOf: 'Săptămâna din',
   saving: 'Se salvează…',
   saved: 'Salvat',
+  saveFailed:
+    'Nu s-a salvat — modificările tale sunt încă aici și se reîncearcă la următoarea editare.',
   statusDraft: 'Draft',
   statusScheduling: 'În planificare',
   statusActive: 'Activ',
@@ -234,7 +251,13 @@ function statusLabel(status: SemesterStatus, t: SemesterPageTexts): string {
 // Tab order, and the values accepted in the ?tab= query parameter.
 const TAB_KEYS = ['availability', 'students', 'scheduling', 'calendar']
 
-type SaveStatus = 'idle' | 'saving' | 'saved'
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+
+/** A semester nobody has set hours for yet. Distinct from "not loaded", which shows nothing. */
+const EMPTY_AVAILABILITY: WeeklyAvailability = {
+  weeklyTemplate: { blocks: [] },
+  weekOverrides: {}
+}
 
 export default function SemesterPage() {
   const { semesterId } = useParams<{ semesterId: string }>()
@@ -265,15 +288,33 @@ export default function SemesterPage() {
     }
   }, [user.loading, user.uid, user.role])
 
-  // ── Mock data lookup ─────────────────────────────────────────────────────────
+  // ── Semester ─────────────────────────────────────────────────────────────────
+  //
+  // Real semesters come from RTDB; the mock ones are still resolved alongside them so the
+  // rounds, suggestions and lesson calendar built in earlier steps stay reachable while the
+  // rest of the wiring lands. `onMockData` is the switch, and everything it guards disappears
+  // with schedulingMocks.ts once Step P is done.
 
-  const semester = MOCK_SEMESTERS.find((s) => s.id === semesterId)
+  const { semester: remoteSemester, loading: semesterLoading } = useSemester(user.uid, semesterId)
+  const mockSemester = MOCK_SEMESTERS.find((s) => s.id === semesterId)
+  const onMockData = Boolean(mockSemester)
+  const semester = remoteSemester ?? mockSemester
   // How many weeks a new enrollment has to fill. The enrollment dialog defaults to one lesson
   // a week from this, and draws its spread preview against it.
   const semesterWeeks = semester
     ? eachWeekStartInRange(semester.startDate, semester.endDate).length
     : 0
-  const location = semester ? MOCK_LOCATIONS.find((l) => l.id === semester.locationId) : null
+  const { locations } = useLocations(user.uid)
+  // How much of the day every grid on this page draws. A teacher who only works afternoons
+  // should not be looking at eight empty morning rows.
+  const { startHour: dayStartHour, endHour: dayEndHour } = dayWindow(semester ?? null)
+  // The teacher's own students, for every place this page names one. Falls back to the mock
+  // directory only while a mock semester is open, since those students do not exist in RTDB.
+  const { students: teacherStudents } = useTeacherStudents(user.uid)
+  const students = onMockData ? MOCK_STUDENTS : teacherStudents
+  const location = semester
+    ? [...locations, ...MOCK_LOCATIONS].find((l) => l.id === semester.locationId) ?? null
+    : null
 
   // ── Tabs ─────────────────────────────────────────────────────────────────────
   //
@@ -296,53 +337,90 @@ export default function SemesterPage() {
 
   // ── Availability state ───────────────────────────────────────────────────────
 
-  const [availability, setAvailability] = useState<WeeklyAvailability>(MOCK_TEACHER_AVAILABILITY)
+  // Edited locally and pushed on a debounce, rather than driven straight from the subscription:
+  // the calendar is a continuous drag-and-draw surface, and a remote echo arriving mid-gesture
+  // would fight the teacher's hand.
+  const { availability: remoteAvailability } = useTeacherAvailability(
+    onMockData ? null : user.uid,
+    onMockData ? null : semesterId
+  )
+  const [availability, setAvailability] = useState<WeeklyAvailability>(
+    onMockData ? MOCK_TEACHER_AVAILABILITY : EMPTY_AVAILABILITY
+  )
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  // True from the first edit until its write lands. Without it the echo of our own save, or a
+  // slow first read, would overwrite what the teacher has just drawn.
+  const dirty = useRef(false)
+
+  useEffect(() => {
+    if (onMockData || dirty.current || !remoteAvailability) return
+    setAvailability(remoteAvailability)
+  }, [remoteAvailability, onMockData])
   // The week a conflict row pointed at, and the weekly template it points at instead when the
   // problem recurs. Both exist so the panel can send the teacher to the thing that fixes it.
   const [focusWeek, setFocusWeek] = useState<string | null>(null)
   const templateRef = useRef<HTMLDivElement>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  function triggerAutoSave() {
+  function triggerAutoSave(next: WeeklyAvailability) {
     if (saveTimer.current) clearTimeout(saveTimer.current)
+    dirty.current = true
     setSaveStatus('saving')
     saveTimer.current = setTimeout(() => {
-      // TODO (Step N): write availability to RTDB
-      setSaveStatus('saved')
       saveTimer.current = null
+      if (onMockData || !user.uid || !semesterId) {
+        setSaveStatus('saved')
+        dirty.current = false
+        return
+      }
+      void saveTeacherAvailability(user.uid, semesterId, next)
+        .then(() => {
+          setSaveStatus('saved')
+          dirty.current = false
+        })
+        .catch(() => {
+          // Left dirty on purpose: the local copy is the only one that has the teacher's work,
+          // so the next edit must still win over whatever the subscription is holding.
+          setSaveStatus('error')
+        })
     }, 1000)
   }
 
   function handleTemplateChange(newBlocks: AvailabilityBlock[]) {
-    setAvailability((prev) => ({ ...prev, weeklyTemplate: { blocks: newBlocks } }))
-    triggerAutoSave()
+    const next = { ...availability, weeklyTemplate: { blocks: newBlocks } }
+    setAvailability(next)
+    triggerAutoSave(next)
   }
 
   function handleOverrideChange(weekStart: string, newBlocks: AvailabilityBlock[]) {
-    setAvailability((prev) => ({
-      ...prev,
-      weekOverrides: { ...prev.weekOverrides, [weekStart]: { blocks: newBlocks } }
-    }))
-    triggerAutoSave()
+    const next = {
+      ...availability,
+      weekOverrides: { ...availability.weekOverrides, [weekStart]: { blocks: newBlocks } }
+    }
+    setAvailability(next)
+    triggerAutoSave(next)
   }
 
   function handleRemoveOverride(weekStart: string) {
-    setAvailability((prev) => {
-      const { [weekStart]: _removed, ...rest } = prev.weekOverrides
-      return { ...prev, weekOverrides: rest }
-    })
-    triggerAutoSave()
+    const { [weekStart]: _removed, ...rest } = availability.weekOverrides
+    const next = { ...availability, weekOverrides: rest }
+    setAvailability(next)
+    triggerAutoSave(next)
   }
 
   // ── Enrollment state ─────────────────────────────────────────────────────────
 
-  const [enrollments, setEnrollments] = useState<StudentEnrollment[]>(() => {
+  const { enrollments: remoteEnrollments } = useStudentEnrollments(
+    onMockData ? null : user.uid,
+    onMockData ? null : semesterId
+  )
+  const [mockEnrollments, setMockEnrollments] = useState<StudentEnrollment[]>(() => {
     if (semesterId === MOCK_SEMESTER_IDS.spring2026) return [...MOCK_ENROLLMENTS_SPRING]
     if (semesterId === MOCK_SEMESTER_IDS.fall2026) return [...MOCK_ENROLLMENTS_FALL]
     if (semesterId === MOCK_SEMESTER_IDS.spring2027) return [...MOCK_ENROLLMENTS_SPRING2027]
     return []
   })
+  const enrollments: StudentEnrollment[] = onMockData ? mockEnrollments : remoteEnrollments
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false)
 
   // ── Lesson state ─────────────────────────────────────────────────────────────
@@ -411,12 +489,26 @@ export default function SemesterPage() {
   }, [cancelTarget, enrollments, semester])
 
   function handleAddStudent(enrollment: StudentEnrollment) {
-    setEnrollments((prev) => [...prev, enrollment])
     setEnrollDialogOpen(false)
+    if (onMockData) {
+      setMockEnrollments((prev) => [...prev, enrollment])
+      return
+    }
+    if (!user.uid || !semesterId) return
+    void saveEnrollment(user.uid, semesterId, enrollment).catch(() => {
+      setSaveStatus('error')
+    })
   }
 
   function handleRemoveStudent(studentId: string) {
-    setEnrollments((prev) => prev.filter((e) => e.studentId !== studentId))
+    if (onMockData) {
+      setMockEnrollments((prev) => prev.filter((e) => e.studentId !== studentId))
+      return
+    }
+    if (!user.uid || !semesterId) return
+    void removeEnrollment(user.uid, semesterId, studentId).catch(() => {
+      setSaveStatus('error')
+    })
   }
 
   // ── Week override picker ─────────────────────────────────────────────────────
@@ -511,7 +603,7 @@ export default function SemesterPage() {
         <Box>
           <ConflictsPanel
             conflicts={availabilityConflicts}
-            students={MOCK_STUDENTS}
+            students={students}
             onSelect={handleConflictSelect}
           />
 
@@ -525,6 +617,11 @@ export default function SemesterPage() {
                 {t.saving}
               </Typography>
             )}
+            {saveStatus === 'error' && (
+              <Typography variant="caption" color="error.main">
+                {t.saveFailed}
+              </Typography>
+            )}
             {saveStatus === 'saved' && (
               <Typography variant="caption" color="success.main">
                 {t.saved}
@@ -535,6 +632,8 @@ export default function SemesterPage() {
             <AvailabilityCalendar
               blocks={availability.weeklyTemplate.blocks}
               onChange={handleTemplateChange}
+              displayStartHour={dayStartHour}
+              displayEndHour={dayEndHour}
             />
           </Box>
 
@@ -542,6 +641,8 @@ export default function SemesterPage() {
             overrides={availability.weekOverrides}
             semesterStart={semester.startDate}
             semesterEnd={semester.endDate}
+            displayStartHour={dayStartHour}
+            displayEndHour={dayEndHour}
             focusWeek={focusWeek}
             onAdd={handleAddOverride}
             onChange={handleOverrideChange}
@@ -575,7 +676,7 @@ export default function SemesterPage() {
             // behind a horizontal scroll. One card per student keeps every control reachable.
             <Stack spacing={1.5}>
               {enrollments.map((enrollment) => {
-                const student = MOCK_STUDENTS[enrollment.studentId]
+                const student = students[enrollment.studentId]
                 return (
                   <Box
                     key={enrollment.studentId}
@@ -628,7 +729,7 @@ export default function SemesterPage() {
               </TableHead>
               <TableBody>
                 {enrollments.map((enrollment) => {
-                  const student = MOCK_STUDENTS[enrollment.studentId]
+                  const student = students[enrollment.studentId]
                   return (
                     <TableRow key={enrollment.studentId} hover>
                       <TableCell>{student?.name ?? enrollment.studentId}</TableCell>
@@ -658,7 +759,7 @@ export default function SemesterPage() {
           <EnrollmentDialog
             key={enrollDialogOpen ? 'open' : 'closed'}
             open={enrollDialogOpen}
-            students={MOCK_STUDENTS}
+            students={students}
             alreadyEnrolledIds={enrollments.map((e) => e.studentId)}
             weeks={semesterWeeks}
             defaultCancellationWindowHours={semester.defaultCancellationWindowHours}
@@ -769,7 +870,7 @@ export default function SemesterPage() {
         <Box>
           <LessonCalendar
             lessons={lessons}
-            students={MOCK_STUDENTS}
+            students={students}
             locationName={location?.name}
             defaultDate={calendarDefaultDate}
             onCancel={(lesson) => {
@@ -783,7 +884,7 @@ export default function SemesterPage() {
             key={cancelTarget?.id ?? 'none'}
             open={Boolean(cancelTarget)}
             lesson={cancelTarget}
-            studentName={cancelTarget ? MOCK_STUDENTS[cancelTarget.studentId]?.name : undefined}
+            studentName={cancelTarget ? students[cancelTarget.studentId]?.name : undefined}
             cancellationWindowHours={cancelWindowHours}
             mode="teacher"
             onClose={() => {

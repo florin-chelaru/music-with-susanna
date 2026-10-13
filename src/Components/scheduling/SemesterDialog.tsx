@@ -1,4 +1,15 @@
-import { Box, DialogContent, TextField } from '@mui/material'
+import {
+  Box,
+  DialogContent,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  Stack,
+  TextField,
+  Typography
+} from '@mui/material'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
@@ -8,7 +19,7 @@ import { useContext, useMemo, useRef, useState } from 'react'
 import MultiActionDialog from '../MultiActionDialog'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
-import { Semester } from '../../util/scheduling'
+import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR, Semester } from '../../util/scheduling'
 
 interface SemesterDialogTexts {
   title: string
@@ -17,6 +28,11 @@ interface SemesterDialogTexts {
   startDate: string
   endDate: string
   cancellationWindow: string
+  dayWindow: string
+  dayStart: string
+  dayEnd: string
+  dayWindowHelper: string
+  dayRangeError: string
   cancel: string
   save: string
   dateRangeError: string
@@ -25,6 +41,11 @@ interface SemesterDialogTexts {
 const EN_US: SemesterDialogTexts = {
   title: 'Add Semester',
   editTitle: 'Edit Semester',
+  dayWindow: 'Teaching hours',
+  dayStart: 'From',
+  dayEnd: 'To',
+  dayWindowHelper: 'The hours the calendars show for this semester. Only affects what you see.',
+  dayRangeError: 'The day has to end after it starts.',
   name: 'Name',
   startDate: 'Start Date',
   endDate: 'End Date',
@@ -37,6 +58,11 @@ const EN_US: SemesterDialogTexts = {
 const RO_RO: SemesterDialogTexts = {
   title: 'Adaugă semestru',
   editTitle: 'Editează semestru',
+  dayWindow: 'Orele de predare',
+  dayStart: 'De la',
+  dayEnd: 'Până la',
+  dayWindowHelper: 'Orele afișate în calendarele acestui semestru. Afectează doar ce vezi.',
+  dayRangeError: 'Ziua trebuie să se termine după ce începe.',
   name: 'Nume',
   startDate: 'Data de început',
   endDate: 'Data de sfârșit',
@@ -59,8 +85,18 @@ function toDayjs(isoDate: string | undefined): Dayjs | null {
 
 type SemesterFormData = Pick<
   Semester,
-  'name' | 'startDate' | 'endDate' | 'defaultCancellationWindowHours'
+  | 'name'
+  | 'startDate'
+  | 'endDate'
+  | 'defaultCancellationWindowHours'
+  | 'dayStartHour'
+  | 'dayEndHour'
 >
+
+/** Whole hours only: this bounds what the grid draws, and lessons inside it still snap to 15. */
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => hour)
+
+const formatHour = (hour: number): string => `${String(hour).padStart(2, '0')}:00`
 
 export interface SemesterDialogProps {
   open: boolean
@@ -81,6 +117,9 @@ export default function SemesterDialog({ open, initial, onClose, onSave }: Semes
   const [startDate, setStartDate] = useState<Dayjs | null>(toDayjs(initial?.startDate))
   const [endDate, setEndDate] = useState<Dayjs | null>(toDayjs(initial?.endDate))
   const [dateError, setDateError] = useState(false)
+  const [dayStartHour, setDayStartHour] = useState(initial?.dayStartHour ?? DEFAULT_DAY_START_HOUR)
+  const [dayEndHour, setDayEndHour] = useState(initial?.dayEndHour ?? DEFAULT_DAY_END_HOUR)
+  const dayRangeError = dayEndHour <= dayStartHour
 
   function handleSave() {
     formRef.current?.requestSubmit()
@@ -100,11 +139,14 @@ export default function SemesterDialog({ open, initial, onClose, onSave }: Semes
       return
     }
     setDateError(false)
+    if (dayRangeError) return
     onSave({
       name,
       startDate: start,
       endDate: end,
-      defaultCancellationWindowHours: isNaN(hours) ? 24 : hours
+      defaultCancellationWindowHours: isNaN(hours) ? 24 : hours,
+      dayStartHour,
+      dayEndHour
     })
   }
 
@@ -170,6 +212,49 @@ export default function SemesterDialog({ open, initial, onClose, onSave }: Semes
               margin="normal"
               inputProps={{ min: 0 }}
             />
+
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 2 }}>
+              {t.dayWindow}
+            </Typography>
+            <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>{t.dayStart}</InputLabel>
+                <Select
+                  label={t.dayStart}
+                  value={String(dayStartHour)}
+                  onChange={(e: SelectChangeEvent) => {
+                    setDayStartHour(Number(e.target.value))
+                  }}>
+                  {HOUR_OPTIONS.map((hour) => (
+                    <MenuItem key={hour} value={hour}>
+                      {formatHour(hour)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth size="small" error={dayRangeError}>
+                <InputLabel>{t.dayEnd}</InputLabel>
+                <Select
+                  label={t.dayEnd}
+                  value={String(dayEndHour)}
+                  onChange={(e: SelectChangeEvent) => {
+                    setDayEndHour(Number(e.target.value))
+                  }}>
+                  {HOUR_OPTIONS.map((hour) => (
+                    <MenuItem key={hour} value={hour}>
+                      {formatHour(hour)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+            <Typography
+              variant="caption"
+              color={dayRangeError ? 'error.main' : 'text.secondary'}
+              display="block"
+              sx={{ mt: 0.5 }}>
+              {dayRangeError ? t.dayRangeError : t.dayWindowHelper}
+            </Typography>
           </Box>
         </DialogContent>
       </MultiActionDialog>

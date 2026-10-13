@@ -1,5 +1,5 @@
-import { onValue, ref } from 'firebase/database'
-import { useEffect, useState } from 'react'
+import { get, onValue, ref } from 'firebase/database'
+import { useEffect, useMemo, useState } from 'react'
 import { database } from '../store/Firebase'
 import {
   cancellationsPath,
@@ -13,13 +13,16 @@ import {
   semestersPath,
   studentLessonsPath,
   submissionPath,
+  teacherStudentsPath,
   submissionsPath,
   suggestionsPath,
-  teacherAvailabilityPath
+  teacherAvailabilityPath,
+  userPath
 } from './schedulingPaths'
 import {
   Cancellation,
   ConfirmedSchedule,
+  fromStoredAvailability,
   LessonInstance,
   Location,
   ScheduleSuggestion,
@@ -78,7 +81,13 @@ function useCollection<T>(path: string | null): {
   loading: boolean
 } {
   const { value, loading } = useNode<Record<string, T>>(path)
-  const values = value ? Object.entries(value).map(([id, item]) => ({ ...item, id })) : []
+  // Memoised on the snapshot, not rebuilt per render. A new array identity every render makes
+  // every caller's dependency array meaningless, and any effect that syncs from one of these
+  // loops forever.
+  const values = useMemo(
+    () => (value ? Object.entries(value).map(([id, item]) => ({ ...item, id })) : []),
+    [value]
+  )
   return { values, loading }
 }
 
@@ -105,7 +114,12 @@ export function useTeacherAvailability(teacherId: Id, semesterId: Id) {
   const { value, loading } = useNode<WeeklyAvailability>(
     teacherId && semesterId ? teacherAvailabilityPath(teacherId, semesterId) : null
   )
-  return { availability: value, loading }
+  // Normalised here rather than in each page: RTDB drops empty objects and arrays, so a teacher
+  // with no overrides reads back with no `weekOverrides` key and every consumer would otherwise
+  // have to defend against it. Memoised for the reason above — normalising returns a new object,
+  // which without this fires the page's sync effect on every render.
+  const availability = useMemo(() => (value ? fromStoredAvailability(value) : null), [value])
+  return { availability, loading }
 }
 
 export function useStudentEnrollments(teacherId: Id, semesterId: Id) {
@@ -201,4 +215,61 @@ export function useMyNotifications(teacherId: Id, studentId: Id) {
     notifications: studentId ? values.filter((n) => n.recipientId === studentId) : values,
     loading
   }
+}
+
+// ─── Directory ────────────────────────────────────────────────────────────────
+
+/**
+ * The teacher's own students, with the names to show them by.
+ *
+ * Deliberately not every account with role 'student'. The studio has two teachers, and thirteen
+ * student accounts belong to neither — listing all of them would let one teacher enroll the
+ * other's students and bury the real ones. `/teachers/{tid}/students` is the mapping that
+ * predates this feature and already answers the question.
+ *
+ * The values under that mapping are empty strings: it is a set of ids, so the names come from
+ * `/users`, which any signed-in user may read.
+ */
+export function useTeacherStudents(teacherId: Id) {
+  const { value: ids, loading: idsLoading } = useNode<Record<string, unknown>>(
+    teacherId ? teacherStudentsPath(teacherId) : null
+  )
+  const [students, setStudents] = useState<Record<string, { name: string; email: string }>>({})
+  const [loading, setLoading] = useState(true)
+
+  // A string rather than the object, so the effect re-runs when the set of students changes and
+  // not merely when a new snapshot arrives carrying the same ids.
+  const idList = Object.keys(ids ?? {})
+    .sort()
+    .join(',')
+
+  useEffect(() => {
+    const uids = idList ? idList.split(',') : []
+    if (uids.length === 0) {
+      setStudents({})
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    void Promise.all(
+      uids.map(async (uid) => [uid, (await get(ref(database, userPath(uid)))).val()] as const)
+    ).then((entries) => {
+      if (cancelled) return
+      const directory: Record<string, { name: string; email: string }> = {}
+      entries.forEach(([uid, record]) => {
+        const user = record as { name?: string; email?: string } | null
+        // An id with no user record is a dangling mapping, not a student — offering the raw uid
+        // in a dropdown would be worse than leaving it out.
+        if (user) directory[uid] = { name: user.name ?? uid, email: user.email ?? '' }
+      })
+      setStudents(directory)
+      setLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [idList])
+
+  return { students, loading: idsLoading || loading }
 }

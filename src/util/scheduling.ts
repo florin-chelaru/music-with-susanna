@@ -22,6 +22,27 @@ export const LABEL_SCORES: Record<AvailabilityLabel, number> = {
  */
 export const DEFAULT_TIMEZONE = 'Europe/Bucharest'
 
+/**
+ * The hours a semester's calendars show, when the teacher has not said otherwise.
+ *
+ * A window, not a constraint: it decides how much of the day the grids draw, so a teacher who
+ * only ever teaches afternoons is not looking at eight empty morning rows. Lessons still snap
+ * and score the same way inside it.
+ */
+export const DEFAULT_DAY_START_HOUR = 8
+export const DEFAULT_DAY_END_HOUR = 20
+
+/** A semester's visible day, with the defaults filled in for records written before it existed. */
+export function dayWindow(semester: Pick<Semester, 'dayStartHour' | 'dayEndHour'> | null): {
+  startHour: number
+  endHour: number
+} {
+  return {
+    startHour: semester?.dayStartHour ?? DEFAULT_DAY_START_HOUR,
+    endHour: semester?.dayEndHour ?? DEFAULT_DAY_END_HOUR
+  }
+}
+
 export const SCHEDULING_CONFIG = {
   SLOT_SNAP_MINUTES: 15,
   MIN_BREAK_MINUTES: 10,
@@ -57,7 +78,53 @@ export interface AvailabilityBlock {
 export interface WeeklyAvailability {
   weeklyTemplate: { blocks: AvailabilityBlock[] }
   // key: Monday date "YYYY-MM-DD". Empty blocks array = fully unavailable that week.
-  weekOverrides: Record<string, { blocks: AvailabilityBlock[] }>
+  weekOverrides: Record<string, WeekOverride>
+}
+
+export interface WeekOverride {
+  blocks: AvailabilityBlock[]
+  /**
+   * When this override was last written.
+   *
+   * It exists to keep the node from being empty. RTDB discards empty objects and arrays, so an
+   * override meaning "away all week" — `{ blocks: [] }` — would collapse to `{}` and then vanish
+   * altogether, turning "I am away" into "I never said anything". A scalar alongside the blocks
+   * keeps the node alive, and the edit time is worth having anyway.
+   */
+  savedAt?: number
+}
+
+/**
+ * Availability as RTDB will actually keep it.
+ *
+ * @see WeekOverride.savedAt for why each override gains a timestamp.
+ */
+export function toStoredAvailability(availability: WeeklyAvailability): WeeklyAvailability {
+  const weekOverrides: Record<string, WeekOverride> = {}
+  Object.entries(availability.weekOverrides).forEach(([weekStart, override]) => {
+    weekOverrides[weekStart] = { blocks: override.blocks, savedAt: Date.now() }
+  })
+  return { weeklyTemplate: availability.weeklyTemplate, weekOverrides }
+}
+
+/**
+ * Availability as read back, with everything RTDB dropped put back.
+ *
+ * A teacher with no hours set, or no overrides, comes back missing those keys rather than
+ * holding empty ones. Filling them in at this boundary means no component has to guess, and
+ * none of them crashes on `Object.entries(undefined)`.
+ */
+export function fromStoredAvailability(raw: unknown): WeeklyAvailability {
+  const value = (raw ?? {}) as Partial<WeeklyAvailability>
+  const overrides = value.weekOverrides ?? {}
+  const weekOverrides: Record<string, WeekOverride> = {}
+  Object.entries(overrides).forEach(([weekStart, override]) => {
+    weekOverrides[weekStart] = { blocks: override?.blocks ?? [], savedAt: override?.savedAt }
+  })
+  return {
+    weeklyTemplate: { blocks: value.weeklyTemplate?.blocks ?? [] },
+    weekOverrides
+  }
 }
 
 export interface Location {
@@ -78,6 +145,12 @@ export interface Semester {
   status: SemesterStatus
   defaultCancellationWindowHours: number
   timezone: string // e.g. "Europe/Bucharest"
+  /**
+   * The hours the calendars draw for this semester, 0–23. Optional because semesters created
+   * before this existed have neither; `dayWindow()` fills in the default.
+   */
+  dayStartHour?: number
+  dayEndHour?: number
   createdAt: number
 }
 

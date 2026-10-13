@@ -61,6 +61,17 @@ describe('scheduling hooks', () => {
     expect(result.current.rounds).toEqual([])
   })
 
+  // A fresh array or object on every render makes every caller's dependency array meaningless,
+  // and an effect that syncs from one of these re-fires forever — "Maximum update depth
+  // exceeded", from a hook that looks entirely innocent.
+  test('returns the same reference until the data actually changes', () => {
+    nextSnapshot({ 'round-1': { roundNumber: 1 } })
+    const { result, rerender } = renderHook(() => useSchedulingRounds('t1', 's1'))
+    const first = result.current.rounds
+    rerender()
+    expect(result.current.rounds).toBe(first)
+  })
+
   test('empty data loads rather than hanging', () => {
     const { result } = renderHook(() => useStudentSubmissions('t1', 's1', 'r1'))
     expect(result.current.submissions).toEqual({})

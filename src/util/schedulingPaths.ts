@@ -66,3 +66,22 @@ export const notificationsPath = (tid: string): string => `notifications/${T}/${
 
 /** The teacher's own students, from the mapping that predates this feature. */
 export const teacherStudentsPath = (tid: string): string => `${T}/${tid}/students`
+
+/**
+ * One user record.
+ *
+ * Only ever one: the rule granting a read is declared at `users/$uid`, and a grant on a child
+ * does not grant its parent, so the `users` collection itself cannot be listed. Anything needing
+ * several records reads them one at a time, which is what the students page has always done.
+ */
+export const userPath = (uid: string): string => `users/${uid}`
+
+/**
+ * Where a deleted semester and everything it owned is archived.
+ *
+ * Deletes in this repo are always soft — the homework, resources, videos and posts paths all do
+ * the same copy-then-remove — so a semester deleted by mistake is still recoverable from the
+ * console even though the app offers no way back.
+ */
+export const deletedSemesterPath = (tid: string, sid: string): string =>
+  `deleted/scheduling/${T}/${tid}/semesters/${sid}`
