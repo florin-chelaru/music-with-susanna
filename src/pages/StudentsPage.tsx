@@ -9,11 +9,17 @@ import {
   AccordionSummary,
   Alert,
   Box,
+  Checkbox,
   Container,
   DialogContent,
   DialogContentText,
   Link,
+  List,
+  ListItemButton,
+  ListItemText,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   Toolbar,
   Typography
@@ -38,6 +44,11 @@ import { scrollToTop } from '../util/window'
 interface StudentsPageTexts {
   add: string
   addStudent: string
+  tabNewStudent: string
+  tabImportExisting: string
+  importHint: string
+  importNoneAvailable: string
+  importAction: string
   areYouSure: string
   authErrorEmptyCredentials: string
   authErrorInvalidCredentials: string
@@ -65,6 +76,11 @@ interface StudentsPageTexts {
 const EN_US: StudentsPageTexts = {
   add: 'Add',
   addStudent: 'Add student',
+  tabNewStudent: 'New student',
+  tabImportExisting: 'Import existing',
+  importHint: 'Students already in the studio. Adding one gives you access to them too.',
+  importNoneAvailable: 'Every student in the studio is already yours.',
+  importAction: 'Import',
   areYouSure:
     'Are you sure you want to delete the student? Type the full name of the student below if you are really sure.',
   authErrorEmptyCredentials: 'Empty email or password',
@@ -93,6 +109,11 @@ const EN_US: StudentsPageTexts = {
 const RO_RO: StudentsPageTexts = {
   add: 'Adaugă',
   addStudent: 'Adaugă student',
+  tabNewStudent: 'Elev nou',
+  tabImportExisting: 'Importă existent',
+  importHint: 'Elevi deja în studio. Dacă adaugi unul, ai și tu acces la el.',
+  importNoneAvailable: 'Toți elevii din studio sunt deja ai tăi.',
+  importAction: 'Importă',
   areYouSure:
     'Ești sigur că vrei să ștergi studentul? Scrie numele complet al studentului mai jos dacă ești sigur.',
   authErrorEmptyCredentials: 'Email sau parolă lipsă',
@@ -181,6 +202,53 @@ export default function StudentsPage({}: StudentsPageProps) {
 
   // Add student
   const [openAddStudentDialog, setOpenAddStudentDialog] = useState<boolean>(false)
+  const [addTab, setAddTab] = useState(0)
+  // Everyone in the studio, for the import tab. Readable because a teacher may now list /users;
+  // before that a teacher had no way to discover a student another teacher had created, which
+  // made adding one a dead end — the account already existed, so creating it failed.
+  const [studio, setStudio] = useState<User[]>([])
+  const [importIds, setImportIds] = useState<string[]>([])
+  const [importError, setImportError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!openAddStudentDialog || user?.role !== UserRole.TEACHER) return
+    const unsubscribe = onValue(ref(database, 'users'), (snapshot) => {
+      const all = (snapshot.val() ?? {}) as Record<string, Omit<User, 'uid'>>
+      setStudio(
+        Object.entries(all)
+          .filter(([, record]) => record.role === UserRole.STUDENT)
+          .map(([uid, record]) => ({ ...record, uid }))
+          .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+      )
+    })
+    return unsubscribe
+  }, [openAddStudentDialog, user?.role])
+
+  // Mine are excluded by id rather than by email: two accounts can share a name, and the id is
+  // what the mapping is keyed on anyway.
+  const importable = studio.filter(
+    (candidate) => !students.some((mine) => mine.uid === candidate.uid)
+  )
+
+  async function importSelectedStudents() {
+    if (!user?.uid || importIds.length === 0) return
+    setImportError(null)
+    try {
+      await Promise.all(
+        importIds.flatMap((studentId) => [
+          // Written one level down, never onto `students/{uid}`. A `set` on the parent — which
+          // is what adding a new student does — would replace the node and drop whichever
+          // teacher already had them, which is precisely the case being imported.
+          set(ref(database, `students/${studentId}/teachers/${user.uid}`), ''),
+          set(ref(database, `teachers/${user.uid}/students/${studentId}`), '')
+        ])
+      )
+      setImportIds([])
+      setOpenAddStudentDialog(false)
+    } catch (error) {
+      setImportError(String(error))
+    }
+  }
   const [addStudentError, setAddStudentError] = useState<string | null>(null)
   const addStudentFormRef = useRef<HTMLFormElement>(null)
 
@@ -448,16 +516,70 @@ export default function StudentsPage({}: StudentsPageProps) {
         onClose={() => setOpenAddStudentDialog(false)}
         aria-describedby="alert-dialog-description"
         title={componentStrings.addStudent}
+        fullWidth
+        maxWidth="xs"
         actions={[
           { label: componentStrings.cancel, onClick: () => setOpenAddStudentDialog(false) },
-          {
-            label: componentStrings.add,
-            onClick: () => {
-              addStudentFormRef.current?.requestSubmit()
-            }
-          }
+          addTab === 0
+            ? {
+                label: componentStrings.add,
+                onClick: () => {
+                  addStudentFormRef.current?.requestSubmit()
+                }
+              }
+            : {
+                label: componentStrings.importAction,
+                disabled: importIds.length === 0,
+                onClick: () => {
+                  void importSelectedStudents()
+                }
+              }
         ]}>
-        <DialogContent>
+        <Tabs
+          value={addTab}
+          onChange={(_, value: number) => {
+            setAddTab(value)
+          }}
+          variant="fullWidth">
+          <Tab label={componentStrings.tabNewStudent} />
+          <Tab label={componentStrings.tabImportExisting} />
+        </Tabs>
+
+        <DialogContent sx={{ display: addTab === 1 ? 'block' : 'none' }}>
+          {importError && <Alert severity="error">{importError}</Alert>}
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            {componentStrings.importHint}
+          </Typography>
+          {importable.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              {componentStrings.importNoneAvailable}
+            </Typography>
+          ) : (
+            <List dense disablePadding>
+              {importable.map((candidate) => (
+                <ListItemButton
+                  key={candidate.uid}
+                  onClick={() => {
+                    setImportIds((previous) =>
+                      previous.includes(candidate.uid as string)
+                        ? previous.filter((id) => id !== candidate.uid)
+                        : [...previous, candidate.uid as string]
+                    )
+                  }}>
+                  <Checkbox
+                    edge="start"
+                    tabIndex={-1}
+                    disableRipple
+                    checked={importIds.includes(candidate.uid as string)}
+                  />
+                  <ListItemText primary={candidate.name} secondary={candidate.email} />
+                </ListItemButton>
+              ))}
+            </List>
+          )}
+        </DialogContent>
+
+        <DialogContent sx={{ display: addTab === 0 ? 'block' : 'none' }}>
           {addStudentError && (
             <Alert severity="error">{parseAuthError(addStudentError, componentStrings)}</Alert>
           )}

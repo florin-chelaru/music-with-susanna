@@ -1,6 +1,7 @@
 {
   "rules": {
     "users": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'teacher'",
       "$uid": {
         ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'teacher'",
         ".read": "auth != null",

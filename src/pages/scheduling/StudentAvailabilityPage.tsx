@@ -21,6 +21,7 @@ import { UserRole } from '../../util/User'
 import {
   AvailabilityBlock,
   AvailabilityLabel,
+  dayWindow,
   LABEL_SCORES,
   SCHEDULING_CONFIG,
   scoreForDayTime
@@ -195,6 +196,9 @@ export default function StudentAvailabilityPage() {
   }, [existing])
 
   const teacherBlocks = teacherAvailability?.weeklyTemplate.blocks ?? []
+  // The teacher's own teaching hours. The student is answering a question about this semester,
+  // so they should be looking at the same slice of the day the teacher set for it.
+  const { startHour: dayStartHour, endHour: dayEndHour } = dayWindow(semester)
 
   // ── Validation ───────────────────────────────────────────────────────────────
 
@@ -264,6 +268,8 @@ export default function StudentAvailabilityPage() {
           <AvailabilityCalendar
             blocks={preferences}
             overlayBlocks={teacherBlocks}
+            displayStartHour={dayStartHour}
+            displayEndHour={dayEndHour}
             onChange={(blocks) => {
               setPreferences(blocks)
               setSubmitted(false)
@@ -289,6 +295,8 @@ export default function StudentAvailabilityPage() {
             semesterStart={semester.startDate}
             semesterEnd={semester.endDate}
             overlayBlocks={teacherBlocks}
+            displayStartHour={dayStartHour}
+            displayEndHour={dayEndHour}
             onAdd={handleAddOverride}
             onChange={(weekStart, blocks) => {
               setOverrides((prev) => ({ ...prev, [weekStart]: { blocks } }))
