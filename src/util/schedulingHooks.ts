@@ -11,6 +11,7 @@ import {
   roundsPath,
   semesterPath,
   semestersPath,
+  studentCancellationsPath,
   studentLessonsPath,
   studentTeachersPath,
   submissionPath,
@@ -264,6 +265,19 @@ export function useMyLessons(studentId: Id) {
     LessonInstance & { teacherId: string; semesterId: string }
   >(studentId ? studentLessonsPath(studentId) : null)
   return { lessons: values, loading }
+}
+
+/**
+ * A student's own cancellations, from their mirror for the same reason as their lessons.
+ *
+ * Theirs alone, which is the point: the teacher's node holds every student's cancellations and
+ * the reasons given for them, so it is not something a student may list.
+ */
+export function useMyCancellations(studentId: Id) {
+  const { values, loading } = useCollection<
+    Cancellation & { teacherId: string; semesterId: string }
+  >(studentId ? studentCancellationsPath(studentId) : null)
+  return { cancellations: values, loading }
 }
 
 export function useMyNotifications(teacherId: Id, studentId: Id) {

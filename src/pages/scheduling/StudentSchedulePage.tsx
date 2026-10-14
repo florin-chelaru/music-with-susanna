@@ -15,15 +15,24 @@ import { useNavigate } from 'react-router-dom'
 import CancelLessonDialog, {
   CancelLessonOptions
 } from '../../Components/scheduling/CancelLessonDialog'
+import CancellationsPanel from '../../Components/scheduling/CancellationsPanel'
 import LessonCalendar from '../../Components/scheduling/LessonCalendar'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
-import { applyCancellation, LessonInstance, SchedulingRound, Semester } from '../../util/scheduling'
+import {
+  applyCancellation,
+  isWithinCancellationWindow,
+  LessonInstance,
+  SchedulingRound,
+  Semester
+} from '../../util/scheduling'
+import { cancelLessons } from '../../util/schedulingWrites'
 import { formatCountdown } from '../../util/schedulingDates'
 import { useNow } from '../../util/useNow'
 import {
+  useMyCancellations,
   useMyEnrolledSemesters,
   useMyLessons,
   useMySubmittedRounds,
@@ -47,6 +56,8 @@ interface StudentSchedulePageTexts {
   deadlinePassed: string
   lessonsTitle: string
   noLessons: string
+  lesson: string
+  cancelFailed: string
   withTeacher: string
 }
 
@@ -65,6 +76,8 @@ const EN_US: StudentSchedulePageTexts = {
   deadlinePassed: 'deadline passed',
   lessonsTitle: 'My lessons',
   noLessons: 'No lessons scheduled yet.',
+  lesson: 'Lesson',
+  cancelFailed: 'The cancellation did not go through. Please tell your teacher directly.',
   withTeacher: 'with'
 }
 
@@ -83,6 +96,8 @@ const RO_RO: StudentSchedulePageTexts = {
   deadlinePassed: 'termenul a trecut',
   lessonsTitle: 'Lecțiile mele',
   noLessons: 'Nicio lecție programată încă.',
+  lesson: 'Lecție',
+  cancelFailed: 'Anularea nu a reușit. Anunță-ți direct profesorul.',
   withTeacher: 'cu'
 }
 
@@ -131,6 +146,7 @@ export default function StudentSchedulePage() {
   const { semesters: enrolled, loading: enrolledLoading } = useMyEnrolledSemesters(studentId)
   const { teachers } = useMyTeachers(studentId)
   const { lessons: myLessons } = useMyLessons(studentId)
+  const { cancellations } = useMyCancellations(studentId)
 
   // Every round across every enrolled semester, so the next hook can ask whether this student
   // has answered each one.
@@ -176,6 +192,7 @@ export default function StudentSchedulePage() {
   )
 
   const [cancelTarget, setCancelTarget] = useState<LessonInstance | null>(null)
+  const [cancelError, setCancelError] = useState(false)
 
   const now = useNow()
 
@@ -192,12 +209,37 @@ export default function StudentSchedulePage() {
   const subjectFor = (lesson: LessonInstance): string | undefined =>
     teachers[(lesson as MyLesson).teacherId]?.subject
 
-  function handleConfirmCancel({ cancelAllForward }: CancelLessonOptions) {
-    const target = cancelTarget
-    if (!target) return
-    // TODO (Step Q): write the Cancellation record and notify the teacher.
-    setLessons((prev) => applyCancellation(prev, target, cancelAllForward))
+  function handleConfirmCancel({ cancelAllForward, reason }: CancelLessonOptions) {
+    const target = cancelTarget as MyLesson | null
     setCancelTarget(null)
+    if (!target || !user.uid) return
+    setLessons((prev) => applyCancellation(prev, target, cancelAllForward))
+
+    const affected = applyCancellation(lessons, target, cancelAllForward).filter(
+      (lesson, index) => lesson.status === 'canceled' && lessons[index]?.status !== 'canceled'
+    )
+    const semester = enrolled.find(({ semester: s }) => s.id === target.semesterId)?.semester
+    // TODO (Step Q): notify the teacher, with an iCalendar cancellation.
+    //
+    // withinWindow is written by the student and the teacher could not trust it on its own —
+    // but canceledAt is the server's clock, which is the fact they actually read.
+    void cancelLessons(
+      target.teacherId,
+      target.semesterId,
+      affected.map((lesson) => ({ id: lesson.id, studentId: lesson.studentId })),
+      {
+        canceledBy: user.uid,
+        otherParty: target.teacherId,
+        withinWindow: isWithinCancellationWindow(
+          target.scheduledStart,
+          semester?.defaultCancellationWindowHours ?? 24
+        ),
+        makeupOffered: false,
+        reason: reason.trim() || undefined
+      }
+    ).catch(() => {
+      setCancelError(true)
+    })
   }
 
   // The calendar opens on today while a semester is running, so a student lands on the weeks
@@ -312,6 +354,29 @@ export default function StudentSchedulePage() {
       <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
         {t.lessonsTitle}
       </Typography>
+
+      {/* A failed cancellation matters more here than elsewhere: the student has been told the
+          lesson is off, and only the database knows otherwise. */}
+      {cancelError && (
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          onClose={() => {
+            setCancelError(false)
+          }}>
+          {t.cancelFailed}
+        </Alert>
+      )}
+
+      {/* Above the calendar, where a cancelled lesson is a struck-through event and says nothing
+          about what it cost. Whether a lesson is charged is the part a student actually needs. */}
+      <CancellationsPanel
+        cancellations={cancellations}
+        lessons={lessons}
+        titleFor={(_, lesson) => (lesson ? subjectFor(lesson) ?? t.lesson : t.lesson)}
+        viewerId={studentId ?? ''}
+        mode="student"
+      />
 
       {lessons.length === 0 ? (
         <Alert severity="info">{t.noLessons}</Alert>

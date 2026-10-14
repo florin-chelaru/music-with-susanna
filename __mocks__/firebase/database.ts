@@ -11,3 +11,6 @@ export const onValue = jest.fn((_, listener: (snap: { val: () => unknown }) => v
 })
 export const push = jest.fn(() => ({ key: 'mock-push-key' }))
 export const update = jest.fn(() => Promise.resolve())
+// The real sentinel RTDB substitutes server-side. Returned verbatim so a test comparing two
+// mirrored writes sees the same value on both sides, as the database will.
+export const serverTimestamp = jest.fn(() => ({ '.sv': 'timestamp' }))

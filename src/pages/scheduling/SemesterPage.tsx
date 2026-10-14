@@ -31,6 +31,7 @@ import WeekOverridesSection from '../../Components/scheduling/WeekOverridesSecti
 import CancelLessonDialog, {
   CancelLessonOptions
 } from '../../Components/scheduling/CancelLessonDialog'
+import CancellationsPanel from '../../Components/scheduling/CancellationsPanel'
 import ConflictsPanel from '../../Components/scheduling/ConflictsPanel'
 import MultiActionDialog from '../../Components/MultiActionDialog'
 import EnrollmentDialog from '../../Components/scheduling/EnrollmentDialog'
@@ -44,7 +45,9 @@ import { UserRole } from '../../util/User'
 import {
   applyCancellation,
   AvailabilityBlock,
+  Cancellation,
   dayWindow,
+  isWithinCancellationWindow,
   EMPTY_AVAILABILITY,
   LessonInstance,
   RoundStatus,
@@ -55,6 +58,7 @@ import {
 } from '../../util/scheduling'
 import { findScheduleConflicts, ScheduleConflict } from '../../util/schedulingConflicts'
 import {
+  useCancellations,
   useLessonInstances,
   useLocations,
   useSchedulingRounds,
@@ -64,6 +68,8 @@ import {
   useSemester
 } from '../../util/schedulingHooks'
 import {
+  acknowledgeCancellation,
+  cancelLessons,
   countRoundSubmissions,
   createRound,
   deleteRound,
@@ -487,6 +493,17 @@ export default function SemesterPage() {
     setLessons(onMockData ? mockLessons : remoteLessons)
   }, [onMockData, mockLessons, remoteLessons])
   const [cancelTarget, setCancelTarget] = useState<LessonInstance | null>(null)
+  const { cancellations } = useCancellations(
+    onMockData ? null : user.uid,
+    onMockData ? null : semesterId
+  )
+
+  function handleAcknowledge(cancellation: Cancellation, charged: boolean) {
+    if (!user.uid || !semesterId) return
+    void acknowledgeCancellation(user.uid, semesterId, cancellation, charged).catch(() => {
+      setSaveStatus('error')
+    })
+  }
 
   // ── Scheduling round state ───────────────────────────────────────────────────
 
@@ -563,13 +580,36 @@ export default function SemesterPage() {
     })
   }
 
-  function handleConfirmCancel({ cancelAllForward }: CancelLessonOptions) {
+  function handleConfirmCancel({ cancelAllForward, offerMakeup, reason }: CancelLessonOptions) {
     const target = cancelTarget
-    if (!target) return
-    // TODO (Step Q): write the Cancellation record, update RTDB, notify the other party.
-    // `reason` and `offerMakeup` are collected already but have nowhere to go until then.
-    setLessons((prev) => applyCancellation(prev, target, cancelAllForward))
     setCancelTarget(null)
+    if (!target) return
+    // Shown immediately; the subscription confirms it a moment later.
+    setLessons((prev) => applyCancellation(prev, target, cancelAllForward))
+    if (onMockData || !user.uid || !semesterId) return
+
+    // The same set the view just marked, so what is written matches what the teacher saw.
+    const affected = applyCancellation(lessons, target, cancelAllForward).filter(
+      (lesson, index) => lesson.status === 'canceled' && lessons[index]?.status !== 'canceled'
+    )
+    // TODO (Step Q): notify the student, with an iCalendar cancellation for their own calendar.
+    void cancelLessons(
+      user.uid,
+      semesterId,
+      affected.map((lesson) => ({ id: lesson.id, studentId: lesson.studentId })),
+      {
+        canceledBy: user.uid,
+        otherParty: target.studentId,
+        withinWindow: isWithinCancellationWindow(
+          target.scheduledStart,
+          semester?.defaultCancellationWindowHours ?? 24
+        ),
+        makeupOffered: offerMakeup,
+        reason: reason.trim() || undefined
+      }
+    ).catch(() => {
+      setSaveStatus('error')
+    })
   }
 
   // The calendar opens on today when the semester is running, and on its start date otherwise,
@@ -1024,6 +1064,18 @@ export default function SemesterPage() {
       {/* ── Calendar tab ───────────────────────────────────────────────────── */}
       {tab === 3 && (
         <Box>
+          {/* Above the calendar rather than inside it: a cancellation needs a decision, and the
+              teacher should meet it on the way to the lessons rather than by finding a greyed
+              event. */}
+          <CancellationsPanel
+            cancellations={cancellations}
+            lessons={lessons}
+            titleFor={(cancellation) =>
+              students[cancellation.studentId]?.name ?? cancellation.studentId
+            }
+            viewerId={user.uid ?? ''}
+            onAcknowledge={handleAcknowledge}
+          />
           <LessonCalendar
             lessons={lessons}
             students={students}

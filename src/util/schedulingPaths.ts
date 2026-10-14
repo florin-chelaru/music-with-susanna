@@ -57,6 +57,21 @@ export const studentLessonPath = (uid: string, lid: string): string =>
 
 export const cancellationsPath = (tid: string, sid: string): string =>
   `cancellations/${T}/${tid}/semesters/${sid}`
+
+/**
+ * The student-readable mirror of a cancellation, for the same reason as `studentLessonsPath`.
+ *
+ * The teacher's record is readable by the student it names, but only one at a time and only once
+ * they know the id — and the ids live under the teacher, which a student cannot list. A blanket
+ * listing grant there is not an option either: one semester's cancellations hold every student's,
+ * reasons included. So each record is written twice, and the student lists their own copy.
+ *
+ * Every write to `cancellationsPath` needs the matching write here. `schedulingWrites.test.ts`
+ * holds that to account.
+ */
+export const studentCancellationsPath = (uid: string): string => `studentCancellations/${uid}`
+export const studentCancellationPath = (uid: string, cid: string): string =>
+  `${studentCancellationsPath(uid)}/${cid}`
 export const cancellationBundlesPath = (tid: string, sid: string): string =>
   `cancellationBundles/${T}/${tid}/semesters/${sid}`
 export const cancellationRequestsPath = (tid: string, sid: string): string =>

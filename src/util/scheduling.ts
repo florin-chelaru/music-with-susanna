@@ -364,8 +364,10 @@ export interface LessonInstance {
 export interface Cancellation {
   id: string
   lessonId: string
+  /** Whose lesson it was, whoever cancelled it. Addresses the student's mirror, and names them. */
+  studentId: string
   canceledBy: string // uid
-  otherParty: string // uid; stored explicitly so read rules need no join
+  otherParty: string // uid; the read rule on the teacher's own copy is written against this
   canceledAt: number
   withinWindow: boolean
   charged: boolean
@@ -374,6 +376,8 @@ export interface Cancellation {
   acknowledgmentStatus: 'pending' | 'acknowledged'
   acknowledgmentAt?: number
   bundleId?: string
+  /** Shared with the other party. Collected by the dialog and previously discarded. */
+  reason?: string
 }
 
 export interface CancellationBundle {

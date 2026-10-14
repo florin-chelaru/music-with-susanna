@@ -41,9 +41,9 @@ const EN_US: CancelLessonDialogTexts = {
   reason: 'Reason (optional)',
   reasonPlaceholder: 'Shared with the other person',
   insideWindow:
-    'This is inside the cancellation window. The lesson is charged and no makeup lesson is offered.',
+    'This is inside the cancellation window, so you will still be charged for this lesson and no makeup is offered. Your teacher can waive the charge when they see your reason.',
   outsideWindow:
-    'This is outside the cancellation window. There is no charge, and a makeup lesson can be requested.',
+    'This is outside the cancellation window, so there is no charge and you can ask for a makeup lesson.',
   teacherNote: 'The student is notified and asked to acknowledge.',
   keep: 'Keep lesson',
   confirm: 'Cancel lesson'
@@ -59,9 +59,9 @@ const RO_RO: CancelLessonDialogTexts = {
   reason: 'Motiv (opțional)',
   reasonPlaceholder: 'Vizibil celeilalte persoane',
   insideWindow:
-    'Anularea este în interiorul ferestrei. Lecția se taxează și nu se oferă recuperare.',
+    'Anularea este în interiorul ferestrei, așa că lecția se taxează și nu se oferă recuperare. Profesorul poate renunța la taxă după ce vede motivul tău.',
   outsideWindow:
-    'Anularea este în afara ferestrei. Nu se taxează și se poate cere o lecție de recuperare.',
+    'Anularea este în afara ferestrei, așa că nu se taxează și poți cere o lecție de recuperare.',
   teacherNote: 'Elevul este notificat și trebuie să confirme.',
   keep: 'Păstrează lecția',
   confirm: 'Anulează lecția'

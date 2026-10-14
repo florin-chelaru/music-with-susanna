@@ -1,4 +1,4 @@
-import { get, push, ref, remove, set, update } from 'firebase/database'
+import { get, push, ref, remove, serverTimestamp, set, update } from 'firebase/database'
 import { database } from '../store/Firebase'
 import {
   cancellationBundlesPath,
@@ -16,6 +16,8 @@ import {
   roundsPath,
   semesterPath,
   semestersPath,
+  studentCancellationPath,
+  studentCancellationsPath,
   studentLessonPath,
   studentLessonsPath,
   submissionPath,
@@ -25,6 +27,7 @@ import {
 } from './schedulingPaths'
 import {
   AvailabilityBlock,
+  Cancellation,
   Location,
   RoundStatus,
   Semester,
@@ -431,6 +434,113 @@ export async function confirmSchedule(
   await update(ref(database), updates)
 }
 
+// ─── Cancelling lessons ───────────────────────────────────────────────────────
+
+export interface CancellableLesson {
+  id: string
+  studentId: string
+}
+
+export interface CancellationDetails {
+  /** uid of whoever pressed cancel. */
+  canceledBy: string
+  /** The uid on the other side, stored outright so a read rule needs no join. */
+  otherParty: string
+  withinWindow: boolean
+  makeupOffered: boolean
+  reason?: string
+}
+
+/**
+ * Cancels one lesson, or a lesson and everything after it, in a single update.
+ *
+ * Each lesson is touched in **four** places: the cancellation record and its student-side mirror,
+ * and the lesson marked canceled in both `lessonInstances` and the student's lesson index. A
+ * student may write only that one status field, and only from `scheduled` to `canceled`, which is
+ * what lets them cancel at all without a server.
+ *
+ * `canceledAt` is the server's clock, not the caller's. The rules demand it of a student, because
+ * whether a cancellation was late is the one fact the teacher's judgement rests on and the one
+ * thing rules can check. Writing `Date.now()` here would be rejected — and should be.
+ */
+export async function cancelLessons(
+  teacherId: string,
+  semesterId: string,
+  lessons: CancellableLesson[],
+  details: CancellationDetails
+): Promise<void> {
+  const updates: Record<string, unknown> = {}
+
+  lessons.forEach((lesson) => {
+    const id = newKey(cancellationsPath(teacherId, semesterId))
+    const record = stripUndefined({
+      id,
+      lessonId: lesson.id,
+      studentId: lesson.studentId,
+      canceledBy: details.canceledBy,
+      otherParty: details.otherParty,
+      canceledAt: serverTimestamp(),
+      withinWindow: details.withinWindow,
+      // Inside the window the lesson is charged and no makeup is offered; outside it, neither.
+      charged: details.withinWindow,
+      makeupOffered: details.makeupOffered,
+      acknowledgmentStatus: 'pending' as const,
+      reason: details.reason
+    })
+    updates[`${cancellationsPath(teacherId, semesterId)}/${id}`] = record
+    // The student's copy carries the teacher and semester, like their lessons do: their index is
+    // flat, so without them a cancellation could not be traced back to the record it mirrors.
+    updates[studentCancellationPath(lesson.studentId, id)] = { ...record, teacherId, semesterId }
+    updates[`${lessonPath(teacherId, semesterId, lesson.id)}/status`] = 'canceled'
+    updates[`${studentLessonPath(lesson.studentId, lesson.id)}/status`] = 'canceled'
+  })
+
+  await update(ref(database), updates)
+}
+
+/**
+ * The teacher's reply to a cancellation: seen, and whether it is charged after all.
+ *
+ * `charged` is decided here rather than at cancellation time. The window rule says what happens
+ * by default, but a teacher who reads "my daughter has a temperature" can waive it — and the
+ * record should say what was actually decided, not what the rule would have said.
+ *
+ * Which is exactly why this has to reach the student's mirror as well. The charge is the part of
+ * a cancellation they care about, and a waived one that never leaves the teacher's copy is a
+ * kindness the student never learns about.
+ */
+export async function acknowledgeCancellation(
+  teacherId: string,
+  semesterId: string,
+  cancellation: Pick<Cancellation, 'id' | 'studentId'>,
+  charged: boolean
+): Promise<void> {
+  const reply = {
+    acknowledgmentStatus: 'acknowledged' as const,
+    acknowledgmentAt: Date.now(),
+    charged
+  }
+  await update(ref(database), {
+    ...prefixed(`${cancellationsPath(teacherId, semesterId)}/${cancellation.id}`, reply),
+    ...prefixed(studentCancellationPath(cancellation.studentId, cancellation.id), reply)
+  })
+}
+
+/**
+ * The fields of a merge, rewritten as root-relative paths.
+ *
+ * A merge into one node is an `update()` on that node; a merge into two is an `update()` at the
+ * root, which takes whole paths. Spelling those out by hand is how a mirror ends up with one
+ * field fewer than the record it mirrors.
+ */
+function prefixed(path: string, fields: Record<string, unknown>): Record<string, unknown> {
+  const updates: Record<string, unknown> = {}
+  Object.entries(fields).forEach(([key, value]) => {
+    updates[`${path}/${key}`] = value
+  })
+  return updates
+}
+
 // ─── Deleting a semester ──────────────────────────────────────────────────────
 
 /** Everything a semester owns, by the name it is archived under. */
@@ -481,14 +591,14 @@ export async function countSemesterContents(
  * between them would otherwise leave a semester that is gone from the teacher's list but still
  * feeding lessons to its students.
  *
- * The per-student lesson index is the reason this is more than deleting a subtree. It is keyed
- * by student rather than by semester, so its entries have to be removed one at a time — miss
- * them and a student goes on seeing lessons for a semester that no longer exists.
+ * The per-student indexes are the reason this is more than deleting a subtree. Both are keyed by
+ * student rather than by semester, so their entries have to be removed one at a time — miss them
+ * and a student goes on seeing lessons and cancellations for a semester that no longer exists.
  *
- * Those entries are derived from the lessons rather than read back from the index, because a
- * teacher cannot read the index: the rule granting them a lesson is declared on the entry, and
- * a grant on a child does not grant listing its parent. The lesson id is the index key, so the
- * lessons already fetched say everything needed. Step O must keep writing them that way.
+ * Those entries are derived from the records rather than read back from the indexes, because a
+ * teacher cannot read either one: the rule granting them an entry is declared on the entry, and
+ * a grant on a child does not grant listing its parent. Each record's id is its index key, so the
+ * snapshots already fetched say everything needed.
  */
 export async function deleteSemester(teacherId: string, semesterId: string): Promise<void> {
   const owned = ownedPaths(teacherId, semesterId)
@@ -508,13 +618,22 @@ export async function deleteSemester(teacherId: string, semesterId: string): Pro
     updates[owned[name]] = null
   })
 
-  // The index entries to clear, taken from the lessons themselves. Not archived separately:
-  // the index is a mirror, and the lessons it mirrors are archived above.
-  const lessonsValue = snapshots[Object.keys(owned).indexOf('lessons')].val()
-  const lessons = (lessonsValue ?? {}) as Record<string, { studentId?: string }>
-  Object.entries(lessons).forEach(([lessonId, lesson]) => {
-    if (!lesson?.studentId) return
-    updates[`${studentLessonsPath(lesson.studentId)}/${lessonId}`] = null
+  // The mirrored entries to clear, taken from the records themselves. Not archived separately:
+  // an index is a mirror, and everything it mirrors is archived above.
+  //
+  // Both mirrors are keyed by the record's own id and addressed by its `studentId`, so the
+  // snapshots already say everything needed. A third mirror belongs in this table.
+  const mirrors: Array<[string, (uid: string) => string]> = [
+    ['lessons', studentLessonsPath],
+    ['cancellations', studentCancellationsPath]
+  ]
+  mirrors.forEach(([name, indexPath]) => {
+    const value = snapshots[Object.keys(owned).indexOf(name)].val()
+    const records = (value ?? {}) as Record<string, { studentId?: string }>
+    Object.entries(records).forEach(([id, record]) => {
+      if (!record?.studentId) return
+      updates[`${indexPath(record.studentId)}/${id}`] = null
+    })
   })
 
   await update(ref(database), updates)

@@ -1738,6 +1738,89 @@ the teacher, since presence of a record is the signal the round page depends on.
 - Bundle flow: "cancel all going forward" creates `CancellationBundle` + N `Cancellation` records, sends one bundled notification
 - Acknowledgment: write `acknowledgmentStatus: "acknowledged"` on the other party's action
 
+**How a student's cancellation reaches the lesson (settled 2026-10-14).** A student cannot write
+`lessonInstances`, so the lesson would go on reading `scheduled` while a cancellation record said
+otherwise. Three answers were weighed: derive it at read time, reconcile it in a Cloud Function,
+or let the student write that one field. The third was taken — a rules carve-out permitting
+`status` on their own lesson, only from `scheduled` to `canceled`, in both `lessonInstances` and
+their own index.
+
+Deriving it would tax every read that touches lessons — calendars, conflicts panel, ICS export,
+counts — and a reader that forgot the join would show a cancelled lesson as live, silently. The
+Cloud Function is the stronger design and remains the eventual one, but it needs the functions
+repo wired before any of Step Q could be tested, which is why the plan deferred it once already.
+
+`canceledAt` is `serverTimestamp()`, not the caller's clock: the rules demand it of a student,
+because whether a cancellation was late is the one fact the teacher's judgement rests on and the
+one thing a rule can check.
+
+**No un-cancelling (decided 2026-10-14).** A student who changes their mind asks for a makeup
+rather than reversing the cancellation. The lesson was cancelled; a makeup records what actually
+happened, where an un-cancel would erase it — along with the `canceledAt` the teacher's reading
+of the cancellation window depends on. It also keeps the rules carve-out to a single legal
+transition, and means the question "was this lesson cancelled?" has one answer forever after.
+
+**`/studentCancellations/{uid}` (decided 2026-10-14).** A student could read a cancellation whose
+id they already knew and could not discover any — the listing wall again, hit for the fifth time.
+Three shapes were weighed:
+
+- *Grant students listing on the teacher's node.* One rule line, and it hands every enrolled
+  student every other student's cancellations, reasons included. The semesters grant was safe
+  because a semester is common knowledge; this is not.
+- *Carry the outcome onto the student's lesson index entry.* A field-level carve-out, no new path,
+  nothing to sweep on delete — but it answers only "was this charged?" and loses the record. A
+  student wants the list, for the same reason a teacher does.
+- *A third mirror,* taken. Written beside the cancellation record, listable by its owner alone.
+
+So a cancellation is two records, like a lesson. The cost is one more thing that can drift, which
+`schedulingWrites.test.ts` exists to prevent: it asserts the invariant rather than the payload —
+the same record ids and the same fields within them are touched on both sides of every mirror, in
+`cancelLessons`, `acknowledgeCancellation`, `confirmSchedule` and `deleteSemester`. A write that
+reaches one side only fails there, including one written later. `MIRRORS` in that file is the
+list to extend if a third one ever appears.
+
+The same file checks that every root in `schedulingPaths.ts` has a block in
+`database.rules.json` — a path and the rule granting it live in different files, and neither
+mentions the other.
+
+`studentId` was added to `Cancellation` for this: it addresses the mirror, and it replaces the
+panel's guess at whose cancellation it was (`lesson?.studentId ?? otherParty`, which named the
+*teacher* whenever the student cancelled and the lesson had not loaded). `otherParty` stays
+because the deployed read rule on the teacher's own copy is written against it.
+
+---
+
+#### Step Q2 — Makeup and ad-hoc lessons
+
+The data model is already in place: `isAdHoc`, `isMakeup` and `parentLessonId` on
+`LessonInstance`, and the cancel dialog already collects **Offer a makeup** and discards it.
+What is missing is any way to create one.
+
+- The teacher picks a time for a makeup, reusing `MoveLessonDialog` — it already lists the times
+  that suit both sides, scores them, and offers an *Any time* escape hatch for a slot outside
+  anyone's stated hours, which is exactly what a makeup usually is.
+- A makeup is written to both `lessonInstances` and the student's index, like any other lesson,
+  with `isMakeup: true`, `isAdHoc: true` and `parentLessonId` naming the lesson it replaces.
+- The cancelled lesson's record gains `makeupLessonId`, so the pair can be read from either end.
+- It is also the answer to a student who regrets a cancellation — see Step Q's note.
+
+---
+
+#### Step Q3 — Requesting to move a lesson
+
+The only genuinely new concept of the three: a student proposes a different time and the teacher
+accepts or declines. Nothing in the schema expresses it — this is a new record and a two-sided
+flow, closer in size to a scheduling round than to a cancellation, which is why it is its own
+step rather than part of Q.
+
+Open questions for when it is designed:
+
+- Does a request hold the proposed time, or is it merely "this does not work for me, please
+  move it"? The first is more useful and needs the candidate-time machinery; the second is a
+  cancellation with extra words.
+- What happens to the original lesson while a request is pending — does it still stand?
+- Can the teacher counter-propose, or only accept and decline?
+
 ---
 
 #### Step R — ICS export

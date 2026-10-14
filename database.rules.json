@@ -235,7 +235,11 @@
             "$sid": {
               "lessons": {
                 "$lid": {
-                  ".read": "data.child('studentId').val() === auth.uid"
+                  ".read": "data.child('studentId').val() === auth.uid",
+                  "status": {
+                    ".write": "data.parent().child('studentId').val() === auth.uid && data.val() === 'scheduled'",
+                    ".validate": "newData.val() === 'canceled'"
+                  }
                 }
               }
             }
@@ -307,7 +311,21 @@
         ".read": "$uid === auth.uid",
         "$lid": {
           ".read": "data.child('teacherId').val() === auth.uid",
-          ".write": "newData.child('teacherId').val() === auth.uid || (!newData.exists() && data.child('teacherId').val() === auth.uid)"
+          ".write": "newData.child('teacherId').val() === auth.uid || (!newData.exists() && data.child('teacherId').val() === auth.uid)",
+          "status": {
+            ".write": "$uid === auth.uid && data.val() === 'scheduled'",
+            ".validate": "newData.val() === 'canceled'"
+          }
+        }
+      }
+    },
+    "studentCancellations": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        "$cid": {
+          ".read": "data.child('teacherId').val() === auth.uid",
+          ".write": "newData.child('teacherId').val() === auth.uid || (!newData.exists() && data.child('teacherId').val() === auth.uid) || ($uid === auth.uid && !data.exists() && newData.child('canceledBy').val() === auth.uid && newData.child('studentId').val() === auth.uid && root.child('teachers').child(newData.child('teacherId').val()).child('students').child($uid).exists())",
+          ".validate": "newData.child('teacherId').val() === auth.uid || newData.child('canceledAt').val() === now"
         }
       }
     }
