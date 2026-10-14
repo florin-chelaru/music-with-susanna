@@ -13,6 +13,7 @@ import CalendarToolbar from './CalendarToolbar'
 import { calendarShellSx, monthAgendaSx, timeGridSx } from './calendarStyles'
 import { LessonInstance, LessonStatus } from '../../util/scheduling'
 import { subjectLabel } from '../../util/User'
+import { daysBetween } from '../../util/schedulingDates'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
@@ -90,6 +91,24 @@ interface LessonEvent {
   lesson: LessonInstance
 }
 
+/**
+ * One lesson, as two lines: what it is, then when.
+ *
+ * react-big-calendar's own layout puts the time range and the title side by side, which a week
+ * column is too narrow to hold — the interval ends up clipped mid-digit. Stacking them keeps
+ * both readable, and gives the month view the time it otherwise omits entirely.
+ */
+function LessonEventBlock({ event, title }: { event: LessonEvent; title: string }) {
+  return (
+    <Box sx={{ lineHeight: 1.25, overflow: 'hidden' }}>
+      <Box sx={{ fontWeight: 600, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{title}</Box>
+      <Box sx={{ fontSize: '0.6875rem', opacity: 0.85, whiteSpace: 'nowrap' }}>
+        {dayjs(event.start).format('HH:mm')}–{dayjs(event.end).format('HH:mm')}
+      </Box>
+    </Box>
+  )
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface LessonCalendarProps {
@@ -97,14 +116,16 @@ export interface LessonCalendarProps {
   /** Teacher view: maps studentId → display name. Omit for the student view. */
   students?: Record<string, { name: string }>
   /**
-   * Student view: what is being taught, from the teacher's `subject` on their user record.
-   * An event titled only "Lesson" tells a student nothing — the production data already has
-   * two teachers, one teaching violin and one teaching computer science.
+   * Student view: what is being taught, looked up per lesson.
    *
-   * TODO (Step P): a student's lessons can come from several teachers, so this becomes a
-   * per-lesson lookup rather than one subject for the whole calendar.
+   * Per lesson rather than one subject for the calendar, because a student's lessons can come
+   * from several teachers — the production data already has one teaching violin and one teaching
+   * computer science, with a student enrolled with both. A single subject would have to be wrong
+   * for half the calendar, and falling back to "Lesson" tells the student nothing at all.
+   *
+   * Returns the teacher's own wording; the calendar translates and capitalises it.
    */
-  subject?: string
+  subjectFor?: (lesson: LessonInstance) => string | undefined
   locationName?: string
   /** Omit to hide the cancel affordance entirely. */
   onCancel?: (lesson: LessonInstance) => void
@@ -117,7 +138,7 @@ export interface LessonCalendarProps {
 export default function LessonCalendar({
   lessons,
   students,
-  subject,
+  subjectFor,
   locationName,
   onCancel,
   onExportIcs,
@@ -134,6 +155,17 @@ export default function LessonCalendar({
 
   const [view, setView] = useState<View>(Views.MONTH)
   const [date, setDate] = useState<Date>(defaultDate ?? new Date())
+
+  // The agenda is a list, not a page of a calendar: it spans every lesson there is, so the
+  // reader scrolls rather than stepping through months to find out what they have. Month and
+  // week keep their own date untouched.
+  const agenda = useMemo(() => {
+    if (lessons.length === 0) return { date, length: 30 }
+    const starts = lessons.map((lesson) => lesson.scheduledStart)
+    const first = new Date(Math.min(...starts))
+    const last = new Date(Math.max(...starts))
+    return { date: first, length: Math.max(1, daysBetween(first, last) + 1) }
+  }, [lessons, date])
   const [selected, setSelected] = useState<{ lesson: LessonInstance; anchor: HTMLElement } | null>(
     null
   )
@@ -173,6 +205,7 @@ export default function LessonCalendar({
   // not be told their lesson is "violin".
   const titleFor = (lesson: LessonInstance): string => {
     if (students) return students[lesson.studentId]?.name ?? lesson.studentId
+    const subject = subjectFor?.(lesson)
     if (!subject) return t.lesson
     const label = subjectLabel(subject, localeManager.locale)
     return label.charAt(0).toUpperCase() + label.slice(1)
@@ -230,7 +263,13 @@ export default function LessonCalendar({
     () => ({
       ...calendarShellSx(theme, { minHeight: 520 }),
       ...timeGridSx(theme),
-      ...monthAgendaSx(theme)
+      ...monthAgendaSx(theme),
+      // This calendar prints the interval inside its own event block, so the library's label
+      // would render the time a second time, above the title.
+      '& .rbc-event-label': { display: 'none' },
+      // The agenda lists the whole term at once, so it is capped and scrolled rather than
+      // allowed to run on for several screens.
+      '& .rbc-agenda-view': { maxHeight: 460, overflowY: 'auto' }
     }),
     [theme]
   )
@@ -249,32 +288,6 @@ export default function LessonCalendar({
           </Button>
         </Stack>
       )}
-
-      <Box sx={calendarSx}>
-        <Calendar
-          localizer={localizer}
-          culture={dayjsLocale}
-          key={dayjsLocale}
-          events={events}
-          messages={messages}
-          components={{ toolbar: CalendarToolbar }}
-          views={[Views.MONTH, Views.WEEK, Views.AGENDA]}
-          view={view}
-          onView={(v) => {
-            setView(v)
-          }}
-          date={date}
-          onNavigate={(d) => {
-            setDate(d)
-          }}
-          popup
-          selectable={false}
-          onSelectEvent={(event: LessonEvent, e) => {
-            setSelected({ lesson: event.lesson, anchor: e.currentTarget as HTMLElement })
-          }}
-          eventPropGetter={eventPropGetter}
-        />
-      </Box>
 
       {/* Only the statuses actually present, so the legend never explains a colour that is
           not on screen. */}
@@ -298,6 +311,40 @@ export default function LessonCalendar({
             </Stack>
           ))}
       </Stack>
+
+      <Box sx={calendarSx}>
+        <Calendar
+          localizer={localizer}
+          culture={dayjsLocale}
+          key={dayjsLocale}
+          events={events}
+          messages={messages}
+          components={{
+            toolbar: CalendarToolbar,
+            // Per view rather than globally: the agenda already has its own Time column, so a
+            // custom block there would print the interval twice.
+            month: { event: LessonEventBlock },
+            week: { event: LessonEventBlock },
+            day: { event: LessonEventBlock }
+          }}
+          views={[Views.MONTH, Views.WEEK, Views.AGENDA]}
+          view={view}
+          onView={(v) => {
+            setView(v)
+          }}
+          date={view === Views.AGENDA ? agenda.date : date}
+          length={agenda.length}
+          onNavigate={(d) => {
+            setDate(d)
+          }}
+          popup
+          selectable={false}
+          onSelectEvent={(event: LessonEvent, e) => {
+            setSelected({ lesson: event.lesson, anchor: e.currentTarget as HTMLElement })
+          }}
+          eventPropGetter={eventPropGetter}
+        />
+      </Box>
 
       <Popover
         open={Boolean(selected)}

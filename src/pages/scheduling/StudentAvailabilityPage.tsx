@@ -96,7 +96,7 @@ const RO_RO: StudentAvailabilityPageTexts = {
   ready: 'Poți trimite.',
   warningTitle: 'Unele alegeri sunt puțin probabile',
   warningBody:
-    'Profesorul nu este liber, sau este liber doar la nevoie, la: {list}. Alegând ore pe care le preferă, șansele tale cresc mult.',
+    'În următoarele intervale selectate, profesorul are disponibilitate limitată: {list}. Șansele de a programa o lecție sunt mai mari în intervalele pe care profesorul le-a marcat drept „Disponibil” sau „Preferat”.',
   submit: 'Trimite disponibilitatea',
   resubmit: 'Actualizează răspunsul',
   submittedTitle: 'Mulțumim',

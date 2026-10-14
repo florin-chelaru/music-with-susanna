@@ -41,7 +41,13 @@ import {
   SlotTime,
   findConflict
 } from '../../util/scheduling'
-import { formatDate, parseDate, parseMinutes } from '../../util/schedulingDates'
+import {
+  daysBetween,
+  formatDate,
+  parseDate,
+  parseMinutes,
+  slotDateTime
+} from '../../util/schedulingDates'
 import CalendarToolbar from './CalendarToolbar'
 import ConflictsPanel from './ConflictsPanel'
 import MoveLessonDialog from './MoveLessonDialog'
@@ -216,6 +222,28 @@ const DnDCalendar = withDragAndDrop(Calendar as any)
 const pad = (n: number): string => String(n).padStart(2, '0')
 const timeOf = (date: Date): string => `${pad(date.getHours())}:${pad(date.getMinutes())}`
 
+/**
+ * One lesson, as two lines: who it is with, then when.
+ *
+ * The library stacks the time above the title in a week column and omits it from the month view
+ * entirely. A week column is also too narrow to hold a time range beside a name, so the interval
+ * ends up clipped mid-digit.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function SlotEventBlock({ event, title }: { event: any; title: string }) {
+  // Typed against react-big-calendar's own Event, so the concrete type is recovered by a cast —
+  // the same approach the drag and selection handlers use.
+  const slot = (event as SlotEvent).slot
+  return (
+    <Box sx={{ lineHeight: 1.25, overflow: 'hidden' }}>
+      <Box sx={{ fontWeight: 600, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{title}</Box>
+      <Box sx={{ fontSize: '0.6875rem', opacity: 0.85, whiteSpace: 'nowrap' }}>
+        {slot.startTime}–{slot.endTime}
+      </Box>
+    </Box>
+  )
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function EditableScheduleCalendar({
@@ -246,6 +274,7 @@ export default function EditableScheduleCalendar({
   // stepping through it a week at a time was the only way to see what the solver produced.
   const [view, setView] = useState<View>(Views.MONTH)
   const [date, setDate] = useState<Date>(defaultDate ?? new Date())
+
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<{ index: number; anchor: HTMLElement } | null>(null)
   const gridRef = useRef<HTMLDivElement>(null)
@@ -275,20 +304,25 @@ export default function EditableScheduleCalendar({
 
   const events: SlotEvent[] = useMemo(
     () =>
-      slots.map((slot, index) => {
-        const [sh, sm] = slot.startTime.split(':').map(Number)
-        const [eh, em] = slot.endTime.split(':').map(Number)
-        const day = parseDate(slot.date)
-        return {
-          index,
-          title: students[slot.studentId]?.name ?? slot.studentId,
-          start: day.hour(sh).minute(sm).second(0).millisecond(0).toDate(),
-          end: day.hour(eh).minute(em).second(0).millisecond(0).toDate(),
-          slot
-        }
-      }),
+      slots.map((slot, index) => ({
+        index,
+        title: students[slot.studentId]?.name ?? slot.studentId,
+        start: slotDateTime(slot.date, slot.startTime).toDate(),
+        end: slotDateTime(slot.date, slot.endTime).toDate(),
+        slot
+      })),
     [slots, students]
   )
+
+  // The agenda has no navigation, so it has to cover every lesson or the rest would be
+  // unreachable from it.
+  const agenda = useMemo(() => {
+    if (events.length === 0) return { date, length: 30 }
+    const starts = events.map((event) => event.start.getTime())
+    const first = new Date(Math.min(...starts))
+    const last = new Date(Math.max(...starts))
+    return { date: first, length: Math.max(1, daysBetween(first, last) + 1) }
+  }, [events, date])
 
   // react-big-calendar types this callback against its own Event, so the concrete event type
   // is recovered by a cast — the same approach AvailabilityCalendar uses.
@@ -485,7 +519,10 @@ export default function EditableScheduleCalendar({
     () => ({
       ...calendarShellSx(theme, { minHeight: 520 }),
       ...timeGridSx(theme),
-      ...monthAgendaSx(theme)
+      ...monthAgendaSx(theme),
+      // This calendar prints the interval inside its own event block, so the library's label
+      // would render the time a second time, above the title.
+      '& .rbc-event-label': { display: 'none' }
     }),
     [theme]
   )
@@ -607,12 +644,19 @@ export default function EditableScheduleCalendar({
           onView={(v: View) => {
             setView(v)
           }}
-          date={date}
+          date={view === Views.AGENDA ? agenda.date : date}
+          length={agenda.length}
           onNavigate={(d: Date) => {
             setDate(d)
           }}
           messages={messages}
-          components={{ toolbar: CalendarToolbar }}
+          components={{
+            toolbar: CalendarToolbar,
+            // Per view: the agenda has its own Time column and would print the interval twice.
+            month: { event: SlotEventBlock },
+            week: { event: SlotEventBlock },
+            day: { event: SlotEventBlock }
+          }}
           popup
           step={SCHEDULING_CONFIG.SLOT_SNAP_MINUTES}
           timeslots={1}

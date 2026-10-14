@@ -96,12 +96,16 @@ export interface WeightedSuggestion extends SchedulingResult {
  */
 export function getEffectiveBlocksForDate(
   weeklyBlocks: AvailabilityBlock[],
-  weekOverrides: Record<string, { blocks: AvailabilityBlock[] }>,
+  weekOverrides: Record<string, { blocks: AvailabilityBlock[] }> | undefined,
   date: string
 ): AvailabilityBlock[] {
   const dayOfWeek = toDayOfWeek(date)
-  const override = weekOverrides[weekStartDate(date)]
-  const source = override ? override.blocks : weeklyBlocks
+  // Both arguments are defaulted because RTDB discards empty collections: a teacher with no
+  // week overrides, or a student who marked none, reads back without the key entirely. Callers
+  // normalise at the boundary, but this is pure and called from several places, and the failure
+  // it prevents is a crash rather than a wrong answer.
+  const override = weekOverrides?.[weekStartDate(date)]
+  const source = override ? override.blocks : weeklyBlocks ?? []
   return source.filter((block) => block.dayOfWeek === dayOfWeek)
 }
 

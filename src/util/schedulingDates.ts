@@ -89,6 +89,22 @@ export function daysBetween(from: DateInput, to: DateInput): number {
 // through a Date object would reintroduce exactly the timezone hazards above.
 
 // "09:30" → 570
+/**
+ * A date-only string and an "HH:mm" turned into one moment.
+ *
+ * Shared so the calendar's events and the lessons actually written to the database are built the
+ * same way — a disagreement between them would put a lesson on screen at one time and in the
+ * database at another.
+ */
+export function slotDateTime(date: DateInput, time: string): Dayjs {
+  const minutes = parseMinutes(time)
+  return parseDate(date)
+    .hour(Math.floor(minutes / 60))
+    .minute(minutes % 60)
+    .second(0)
+    .millisecond(0)
+}
+
 export function parseMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number)
   return hours * 60 + minutes

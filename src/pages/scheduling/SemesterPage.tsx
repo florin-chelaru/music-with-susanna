@@ -1,9 +1,12 @@
 import {
+  Alert,
   Box,
   Button,
   Chip,
   Container,
+  DialogContent,
   IconButton,
+  Link,
   Stack,
   Tab,
   Table,
@@ -29,6 +32,7 @@ import CancelLessonDialog, {
   CancelLessonOptions
 } from '../../Components/scheduling/CancelLessonDialog'
 import ConflictsPanel from '../../Components/scheduling/ConflictsPanel'
+import MultiActionDialog from '../../Components/MultiActionDialog'
 import EnrollmentDialog from '../../Components/scheduling/EnrollmentDialog'
 import LessonCalendar from '../../Components/scheduling/LessonCalendar'
 import NewRoundDialog from '../../Components/scheduling/NewRoundDialog'
@@ -51,6 +55,7 @@ import {
 } from '../../util/scheduling'
 import { findScheduleConflicts, ScheduleConflict } from '../../util/schedulingConflicts'
 import {
+  useLessonInstances,
   useLocations,
   useSchedulingRounds,
   useStudentEnrollments,
@@ -59,7 +64,10 @@ import {
   useSemester
 } from '../../util/schedulingHooks'
 import {
+  countRoundSubmissions,
   createRound,
+  deleteRound,
+  reviveRound,
   removeEnrollment,
   saveEnrollment,
   saveTeacherAvailability
@@ -112,13 +120,25 @@ interface SemesterPageTexts {
   round: string
   newRound: string
   noRounds: string
-  open: string
+  deleteRound: string
+  reviveRound: string
+  deleteRoundTitle: string
+  deleteRoundBody: string
+  deleteRoundSubmissions: string
+  deleteRoundWarning: string
+  keepRound: string
   deadline: string
   submittedOf: string
   roundAlreadyOpen: string
   roundStatusCollecting: string
   roundStatusReady: string
   roundStatusSuggested: string
+  roundStatusAbandoned: string
+  abandonRound: string
+  abandonRoundTitle: string
+  abandonRoundBody: string
+  abandonRoundKeepsAnswers: string
+  keepGoing: string
   roundStatusFinalized: string
 }
 
@@ -150,13 +170,26 @@ const EN_US: SemesterPageTexts = {
   round: 'Round',
   newRound: 'New Round',
   noRounds: 'No scheduling rounds yet.',
-  open: 'Open',
+  deleteRound: 'Delete round',
+  reviveRound: 'Revive',
+  deleteRoundTitle: 'Delete this round?',
+  deleteRoundBody: 'Round {n} and everything collected in it will be removed.',
+  deleteRoundSubmissions: '{n} students have already answered.',
+  deleteRoundWarning: 'Their answers go with it. A round that produced lessons cannot be deleted.',
+  keepRound: 'Keep round',
   deadline: 'Deadline',
   submittedOf: '{done} of {total} submitted',
   roundAlreadyOpen: 'A round is already collecting availability. Close it before opening another.',
   roundStatusCollecting: 'Collecting',
   roundStatusReady: 'Ready',
   roundStatusSuggested: 'Suggested',
+  roundStatusAbandoned: 'Abandoned',
+  abandonRound: 'Abandon round',
+  abandonRoundTitle: 'Abandon this round?',
+  abandonRoundBody: 'Round {n} stops here. Students will no longer see it.',
+  abandonRoundKeepsAnswers:
+    'Their answers are kept, so the next round can start from them instead of asking again.',
+  keepGoing: 'Keep going',
   roundStatusFinalized: 'Finalized'
 }
 
@@ -189,7 +222,14 @@ const RO_RO: SemesterPageTexts = {
   round: 'Runda',
   newRound: 'Rundă nouă',
   noRounds: 'Nicio rundă de planificare încă.',
-  open: 'Deschide',
+  deleteRound: 'Șterge runda',
+  reviveRound: 'Reia',
+  deleteRoundTitle: 'Ștergi această rundă?',
+  deleteRoundBody: 'Runda {n} și tot ce s-a colectat în ea vor fi eliminate.',
+  deleteRoundSubmissions: '{n} elevi au răspuns deja.',
+  deleteRoundWarning:
+    'Răspunsurile lor dispar odată cu ea. O rundă care a produs lecții nu poate fi ștearsă.',
+  keepRound: 'Păstrează runda',
   deadline: 'Termen limită',
   submittedOf: '{done} din {total} au trimis',
   roundAlreadyOpen:
@@ -197,6 +237,13 @@ const RO_RO: SemesterPageTexts = {
   roundStatusCollecting: 'În colectare',
   roundStatusReady: 'Pregătită',
   roundStatusSuggested: 'Cu sugestii',
+  roundStatusAbandoned: 'Abandonată',
+  abandonRound: 'Abandonează runda',
+  abandonRoundTitle: 'Abandonezi această rundă?',
+  abandonRoundBody: 'Runda {n} se oprește aici. Elevii nu o vor mai vedea.',
+  abandonRoundKeepsAnswers:
+    'Răspunsurile lor se păstrează, ca runda următoare să pornească de la ele.',
+  keepGoing: 'Continuă runda',
   roundStatusFinalized: 'Finalizată'
 }
 
@@ -221,6 +268,8 @@ function roundStatusLabel(status: RoundStatus, t: SemesterPageTexts): string {
       return t.roundStatusReady
     case 'suggested':
       return t.roundStatusSuggested
+    case 'abandoned':
+      return t.roundStatusAbandoned
     case 'finalized':
       return t.roundStatusFinalized
   }
@@ -422,11 +471,21 @@ export default function SemesterPage() {
 
   // ── Lesson state ─────────────────────────────────────────────────────────────
 
-  const [lessons, setLessons] = useState<LessonInstance[]>(() => {
+  const { lessons: remoteLessons } = useLessonInstances(
+    onMockData ? null : user.uid,
+    onMockData ? null : semesterId
+  )
+  const mockLessons = useMemo<LessonInstance[]>(() => {
     if (semesterId === MOCK_SEMESTER_IDS.spring2026) return [...MOCK_LESSON_INSTANCES_SPRING]
     if (semesterId === MOCK_SEMESTER_IDS.fall2026) return [...MOCK_LESSON_INSTANCES_FALL]
     return []
-  })
+  }, [semesterId])
+
+  // Mirrored into local state so cancelling still updates the view before Step Q writes it.
+  const [lessons, setLessons] = useState<LessonInstance[]>([])
+  useEffect(() => {
+    setLessons(onMockData ? mockLessons : remoteLessons)
+  }, [onMockData, mockLessons, remoteLessons])
   const [cancelTarget, setCancelTarget] = useState<LessonInstance | null>(null)
 
   // ── Scheduling round state ───────────────────────────────────────────────────
@@ -443,6 +502,47 @@ export default function SemesterPage() {
   }, [semesterId])
   const rounds: SchedulingRound[] = onMockData ? mockRounds : remoteRounds
   const [newRoundOpen, setNewRoundOpen] = useState(false)
+  const [deleteRoundTarget, setDeleteRoundTarget] = useState<SchedulingRound | null>(null)
+  // Read when the dialog opens: the teacher should be told how many answers they are discarding
+  // before they do it, not after.
+  const [roundAnswers, setRoundAnswers] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!deleteRoundTarget || !user.uid || !semesterId) return
+    setRoundAnswers(null)
+    let cancelled = false
+    void countRoundSubmissions(user.uid, semesterId, deleteRoundTarget.id).then((count) => {
+      if (!cancelled) setRoundAnswers(count)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [deleteRoundTarget, user.uid, semesterId])
+
+  // Reviving is only on the table while nothing else is in the way: another round collecting
+  // would leave students with two open requests, and a confirmed schedule would mean confirming
+  // this one adds a second term's lessons rather than replacing the first.
+  const canReviveAny =
+    !rounds.some((round) => round.status === 'collecting') &&
+    !rounds.some((round) => round.status === 'finalized')
+
+  function handleReviveRound(round: SchedulingRound) {
+    if (onMockData || !user.uid || !semesterId) return
+    void reviveRound(user.uid, semesterId, round.id, round.abandonedFrom ?? 'suggested').catch(
+      () => {
+        setSaveStatus('error')
+      }
+    )
+  }
+
+  function handleDeleteRound() {
+    const target = deleteRoundTarget
+    setDeleteRoundTarget(null)
+    if (!target || !user.uid || !semesterId) return
+    void deleteRound(user.uid, semesterId, target.id).catch(() => {
+      setSaveStatus('error')
+    })
+  }
 
   // Only one round may collect at a time, otherwise students would have two open
   // requests for the same semester and no way to tell which one counts.
@@ -454,8 +554,11 @@ export default function SemesterPage() {
     // Numbered from what is on screen rather than from a fresh read: the teacher is looking at
     // the list, and counting at write time would need a read that could race another tab.
     const roundNumber = rounds.reduce((max, round) => Math.max(max, round.roundNumber), 0) + 1
+    // The latest previous round is what the new one starts from, so students amend rather than
+    // redraw a term. Its own status does not matter — abandoned or closed, the answers stand.
+    const previous = [...rounds].sort((a, b) => b.roundNumber - a.roundNumber)[0]
     // TODO (Step Q): notify every enrolled student that a round has opened.
-    void createRound(user.uid, semesterId, roundNumber, deadline).catch(() => {
+    void createRound(user.uid, semesterId, roundNumber, deadline, previous?.id).catch(() => {
       setSaveStatus('error')
     })
   }
@@ -822,9 +925,19 @@ export default function SemesterPage() {
                       }}>
                       <Box sx={{ flex: 1 }}>
                         <Stack direction="row" alignItems="center" spacing={1}>
-                          <Typography variant="body2" fontWeight={600}>
+                          {/* The whole row is about this round, so its name is the way in —
+                              a separate Open button repeated that in every row. */}
+                          <Link
+                            component="button"
+                            variant="subtitle1"
+                            underline="hover"
+                            fontWeight={600}
+                            textAlign="left"
+                            onClick={() => {
+                              navigate(`/scheduling/semesters/${semester.id}/rounds/${round.id}`)
+                            }}>
                             {t.round} {round.roundNumber}
-                          </Typography>
+                          </Link>
                           <Chip
                             size="small"
                             label={roundStatusLabel(round.status, t)}
@@ -840,18 +953,62 @@ export default function SemesterPage() {
                               .replace('{total}', String(enrollments.length))}`}
                         </Typography>
                       </Box>
-                      <Button
-                        size="small"
-                        onClick={() => {
-                          navigate(`/scheduling/semesters/${semester.id}/rounds/${round.id}`)
-                        }}>
-                        {t.open}
-                      </Button>
+                      {round.status === 'abandoned' && canReviveAny && !onMockData && (
+                        <Button
+                          size="small"
+                          onClick={() => {
+                            handleReviveRound(round)
+                          }}>
+                          {t.reviveRound}
+                        </Button>
+                      )}
+                      {/* A finalized round produced the lessons being taught; deleting it would
+                          leave them with no account of where they came from. */}
+                      {round.status !== 'finalized' && !onMockData && (
+                        <IconButton
+                          size="small"
+                          aria-label={`${t.deleteRound} ${round.roundNumber}`}
+                          onClick={() => {
+                            setDeleteRoundTarget(round)
+                          }}>
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      )}
                     </Box>
                   )
                 })}
             </Stack>
           )}
+
+          <MultiActionDialog
+            open={deleteRoundTarget !== null}
+            onClose={() => {
+              setDeleteRoundTarget(null)
+            }}
+            title={t.deleteRoundTitle}
+            fullWidth
+            maxWidth="xs"
+            actions={[
+              {
+                label: t.keepRound,
+                onClick: () => {
+                  setDeleteRoundTarget(null)
+                }
+              },
+              { label: t.deleteRound, disabled: roundAnswers === null, onClick: handleDeleteRound }
+            ]}>
+            <DialogContent>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                {t.deleteRoundBody.replace('{n}', String(deleteRoundTarget?.roundNumber ?? ''))}
+              </Typography>
+              {roundAnswers !== null && roundAnswers > 0 && (
+                <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+                  {t.deleteRoundSubmissions.replace('{n}', String(roundAnswers))}
+                </Typography>
+              )}
+              <Alert severity="warning">{t.deleteRoundWarning}</Alert>
+            </DialogContent>
+          </MultiActionDialog>
 
           <NewRoundDialog
             key={newRoundOpen ? 'open' : 'closed'}

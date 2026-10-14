@@ -31,7 +31,8 @@ import {
   SchedulingRound,
   scoreForDayTime,
   SlotScores,
-  SlotTime
+  SlotTime,
+  weightBandKey
 } from '../../util/scheduling'
 import {
   candidatesForDate,
@@ -53,15 +54,23 @@ import {
   useSchedulingRounds,
   useSemester,
   useStudentEnrollments,
+  useScheduleSuggestions,
   useStudentSubmissions,
   useTeacherAvailability,
   useTeacherStudents
 } from '../../util/schedulingHooks'
 import {
+  abandonRound,
+  closeRoundWithSuggestions,
+  confirmSchedule,
+  reviveRound
+} from '../../util/schedulingWrites'
+import {
   formatCountdown,
   formatMinutes,
   parseDate,
   parseMinutes,
+  slotDateTime,
   toDayOfWeek
 } from '../../util/schedulingDates'
 import { useNow } from '../../util/useNow'
@@ -92,6 +101,12 @@ interface SchedulingRoundPageTexts {
   statusCollecting: string
   statusReady: string
   statusSuggested: string
+  statusAbandoned: string
+  abandonRound: string
+  abandonedNotice: string
+  reviveRound: string
+  reviveBlocked: string
+  reviveAlreadyConfirmed: string
   statusFinalized: string
   notCollecting: string
   notFound: string
@@ -123,6 +138,15 @@ const EN_US: SchedulingRoundPageTexts = {
   statusCollecting: 'Collecting',
   statusReady: 'Ready',
   statusSuggested: 'Suggested',
+  statusAbandoned: 'Abandoned',
+  abandonRound: 'Abandon this round',
+  abandonedNotice:
+    'This round was abandoned. The answers collected in it are kept, so a new round can start from them.',
+  reviveRound: 'Revive this round',
+  reviveBlocked:
+    'This round cannot be revived while another one is collecting. Close or abandon that one first.',
+  reviveAlreadyConfirmed:
+    'This round cannot be revived: a schedule is already confirmed for this semester, and confirming a second one would add another set of lessons rather than replace it.',
   statusFinalized: 'Finalized',
   notCollecting: 'This round is no longer collecting availability.',
   notFound: 'Round not found.',
@@ -158,6 +182,14 @@ const RO_RO: SchedulingRoundPageTexts = {
   statusCollecting: 'În colectare',
   statusReady: 'Pregătită',
   statusSuggested: 'Cu sugestii',
+  statusAbandoned: 'Abandonată',
+  abandonRound: 'Abandonează runda',
+  abandonedNotice:
+    'Runda a fost abandonată. Răspunsurile colectate se păstrează, așa că o rundă nouă poate porni de la ele.',
+  reviveRound: 'Reia runda',
+  reviveBlocked: 'Altă rundă colectează răspunsuri. Închide-o sau abandoneaz-o întâi.',
+  reviveAlreadyConfirmed:
+    'Runda nu poate fi reluată: există deja un orar confirmat pentru acest semestru, iar confirmarea altuia ar adăuga un set suplimentar de lecții, nu l-ar înlocui.',
   statusFinalized: 'Finalizată',
   notCollecting: 'Această rundă nu mai colectează disponibilitate.',
   notFound: 'Runda nu a fost găsită.',
@@ -190,6 +222,8 @@ export function roundStatusLabel(status: RoundStatus, t: SchedulingRoundPageText
       return t.statusReady
     case 'suggested':
       return t.statusSuggested
+    case 'abandoned':
+      return t.statusAbandoned
     case 'finalized':
       return t.statusFinalized
   }
@@ -199,7 +233,7 @@ export function roundStatusLabel(status: RoundStatus, t: SchedulingRoundPageText
 // after the round's deadline, so today's week can be empty.
 /** A schedule's identity for the purpose of remembering edits: the weight band that produced it. */
 function bandKey(suggestion: WeightedSuggestion): string {
-  return `${suggestion.weightFrom}-${suggestion.weightTo}`
+  return weightBandKey(suggestion.weightFrom, suggestion.weightTo)
 }
 
 /**
@@ -299,9 +333,9 @@ export default function SchedulingRoundPage() {
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
 
-  // TODO (Step O): run this when the teacher closes the round and persist the result, rather
-  // than recomputing on every render of a round that is already `suggested`.
-  const suggestions: WeightedSuggestion[] = useMemo(() => {
+  // Computed fresh. Used to preview a mock round, and to produce what gets written down when
+  // the teacher closes a real one — never to display a round that has already been closed.
+  const computed: WeightedSuggestion[] = useMemo(() => {
     if (!semester || !round) return []
     const schedulingInput: SchedulingInput = {
       semesterStart: semester.startDate,
@@ -311,13 +345,115 @@ export default function SchedulingRoundPage() {
       submissions
     }
     return pickSpread(generateAllSuggestions(schedulingInput))
-  }, [semester, round])
+  }, [semester, round, availability, enrollments, submissions])
+
+  const { suggestions: storedSuggestions } = useScheduleSuggestions(
+    onMockData ? null : user.uid,
+    onMockData ? null : semesterId,
+    onMockData ? null : roundId
+  )
+
+  // What the teacher is choosing between. Read back rather than recomputed, because the solver's
+  // inputs keep moving: a late submission or an edit to the teacher's own availability would
+  // otherwise change the cards under them, including the one they were halfway through picking.
+  const suggestions: WeightedSuggestion[] = useMemo(() => {
+    if (onMockData) return computed
+    return Object.values(storedSuggestions)
+      .map((suggestion) => suggestion as unknown as WeightedSuggestion)
+      .sort((a, b) => b.weightFrom - a.weightFrom)
+  }, [onMockData, computed, storedSuggestions])
   // Edits are kept per schedule and outlive stepping back to the cards. Losing an afternoon of
   // hand-placing because the teacher went back to compare against another option is not a
   // trade-off worth making. Keyed by weight band rather than position: the band is what the card
   // is, and it survives the list being recomputed.
   const [editsByBand, setEditsByBand] = useState<Record<string, EditableSlot[]>>({})
-  const [confirmed, setConfirmed] = useState(false)
+  const [justConfirmed, setJustConfirmed] = useState(false)
+  // A finalized round was confirmed, in this session or an earlier one — so a reload shows the
+  // schedule rather than a bare "no longer collecting" notice.
+  const confirmed = justConfirmed || round?.status === 'finalized'
+  const [busy, setBusy] = useState(false)
+  const [writeError, setWriteError] = useState<string | null>(null)
+
+  function handleCloseRound() {
+    if (onMockData || !user.uid || !semesterId || !roundId) return
+    setBusy(true)
+    setWriteError(null)
+    // What gets written down is what was just computed. Recomputing inside the write would be
+    // reading inputs that may already have moved since the teacher looked.
+    void closeRoundWithSuggestions(user.uid, semesterId, roundId, computed)
+      .catch((error) => {
+        setWriteError(String(error))
+      })
+      .finally(() => {
+        setBusy(false)
+      })
+  }
+
+  function handleAbandonRound() {
+    if (onMockData || !user.uid || !semesterId || !roundId || !round) return
+    setBusy(true)
+    setWriteError(null)
+    void abandonRound(user.uid, semesterId, roundId, round.status)
+      .catch((error) => {
+        setWriteError(String(error))
+      })
+      .finally(() => {
+        setBusy(false)
+      })
+  }
+
+  // Where a revived round would land, and whether reviving is on the table at all.
+  //
+  // Not offered while another round is collecting — two open requests for one semester leave
+  // students with no way to tell which counts — nor once any round has been confirmed, because
+  // confirming a second schedule adds a term's lessons rather than replacing the first. In both
+  // cases the obstacle has to be cleared first, so there is nothing useful a button could do.
+  const reviveTo: RoundStatus = round?.abandonedFrom ?? 'suggested'
+  const anotherCollecting = remoteRounds.some((r) => r.status === 'collecting')
+  const alreadyConfirmed = remoteRounds.some((r) => r.status === 'finalized')
+  const canRevive = !anotherCollecting && !alreadyConfirmed
+
+  function handleReviveRound() {
+    if (onMockData || !user.uid || !semesterId || !roundId || !canRevive) return
+    setBusy(true)
+    setWriteError(null)
+    void reviveRound(user.uid, semesterId, roundId, reviveTo)
+      .catch((error) => {
+        setWriteError(String(error))
+      })
+      .finally(() => {
+        setBusy(false)
+      })
+  }
+
+  function handleConfirmSchedule() {
+    if (!editedSlots || !semester) return
+    if (onMockData) {
+      setJustConfirmed(true)
+      return
+    }
+    if (!user.uid || !semesterId || !roundId) return
+    setBusy(true)
+    setWriteError(null)
+    const lessons = editedSlots.map((slot) => ({
+      studentId: slot.studentId,
+      locationId: semester.locationId,
+      scheduledStart: slotDateTime(slot.date, slot.startTime).valueOf(),
+      scheduledEnd: slotDateTime(slot.date, slot.endTime).valueOf(),
+      timezone: semester.timezone
+    }))
+    // TODO (Step Q): notify every student that their schedule is confirmed.
+    void confirmSchedule(user.uid, semesterId, roundId, lessons)
+      .then(() => {
+        setJustConfirmed(true)
+      })
+      .catch((error) => {
+        setWriteError(String(error))
+      })
+      .finally(() => {
+        setBusy(false)
+      })
+  }
 
   const selected = selectedIndex !== null ? suggestions[selectedIndex] : null
   const selectedBand = selected ? bandKey(selected) : null
@@ -522,7 +658,61 @@ export default function SchedulingRoundPage() {
         </Box>
       </Typography>
 
-      {round.status === 'suggested' ? (
+      {writeError && (
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          onClose={() => {
+            setWriteError(null)
+          }}>
+          {writeError}
+        </Alert>
+      )}
+
+      {/* An abandoned round still shows what it produced. Hiding it made the schedules
+          unreachable the moment a new round opened, which is the opposite of keeping them. */}
+      {round.status === 'abandoned' ? (
+        <Box>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {t.abandonedNotice}
+          </Alert>
+          {canRevive ? (
+            <Button
+              variant="outlined"
+              size="small"
+              disabled={busy}
+              sx={{ mb: 2 }}
+              onClick={handleReviveRound}>
+              {t.reviveRound}
+            </Button>
+          ) : (
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+              {alreadyConfirmed ? t.reviveAlreadyConfirmed : t.reviveBlocked}
+            </Typography>
+          )}
+          <Box
+            sx={{
+              mx: 'calc(50% - 50vw)',
+              px: 'calc(50vw - 50%)',
+              overflowX: 'auto',
+              pb: 1.5
+            }}>
+            <Stack direction="row" spacing={2} alignItems="stretch" sx={{ width: 'max-content' }}>
+              {cards.map((card) => (
+                <Box key={card.band} sx={{ width: 300, flexShrink: 0 }}>
+                  <SuggestedScheduleCard
+                    weightFrom={card.suggestion.weightFrom}
+                    weightTo={card.suggestion.weightTo}
+                    suggestion={card.suggestion}
+                    students={students}
+                    edited={card.edited}
+                  />
+                </Box>
+              ))}
+            </Stack>
+          </Box>
+        </Box>
+      ) : round.status === 'suggested' || round.status === 'finalized' ? (
         <Box>
           {confirmed ? (
             <Alert severity="success">{t.confirmedBanner}</Alert>
@@ -562,13 +752,7 @@ export default function SchedulingRoundPage() {
               <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
                 {t.selectedHint}
               </Alert>
-              <Button
-                variant="contained"
-                onClick={() => {
-                  // TODO (Step O): write the confirmed schedule, generate the lesson
-                  // instances and advance the round to `finalized`.
-                  setConfirmed(true)
-                }}>
+              <Button variant="contained" disabled={busy} onClick={handleConfirmSchedule}>
                 {t.confirmSchedule}
               </Button>
             </Box>
@@ -627,6 +811,18 @@ export default function SchedulingRoundPage() {
                 </Stack>
               </Box>
               <Alert severity="info">{t.pickOne}</Alert>
+              {/* None of these are any good: stop here rather than confirming a schedule the
+                  teacher does not want, and open a new round instead. */}
+              {!onMockData && (
+                <Button
+                  color="inherit"
+                  size="small"
+                  disabled={busy}
+                  sx={{ mt: 1 }}
+                  onClick={handleAbandonRound}>
+                  {t.abandonRound}
+                </Button>
+              )}
             </>
           )}
         </Box>
@@ -706,15 +902,16 @@ export default function SchedulingRoundPage() {
             {canClose ? t.readyToClose : t.waitingOn.replace('{count}', String(pendingCount))}
           </Alert>
 
-          <Button
-            variant="contained"
-            disabled={!canClose}
-            onClick={() => {
-              // TODO (Step O): run generateAllSuggestions, write them to RTDB and
-              // advance the round to `suggested`.
-            }}>
-            {t.closeRound}
-          </Button>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Button variant="contained" disabled={!canClose || busy} onClick={handleCloseRound}>
+              {t.closeRound}
+            </Button>
+            {!onMockData && (
+              <Button color="inherit" disabled={busy} onClick={handleAbandonRound}>
+                {t.abandonRound}
+              </Button>
+            )}
+          </Stack>
         </>
       )}
     </Container>

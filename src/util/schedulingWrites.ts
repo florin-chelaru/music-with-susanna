@@ -11,10 +11,12 @@ import {
   lessonsPath,
   locationPath,
   locationsPath,
+  lessonPath,
   roundPath,
   roundsPath,
   semesterPath,
   semestersPath,
+  studentLessonPath,
   studentLessonsPath,
   submissionPath,
   submissionsPath,
@@ -29,7 +31,8 @@ import {
   StudentEnrollment,
   StudentSubmission,
   toStoredAvailability,
-  WeeklyAvailability
+  WeeklyAvailability,
+  weightBandKey
 } from './scheduling'
 
 // Writes for the scheduling paths.
@@ -199,16 +202,39 @@ export async function createRound(
   teacherId: string,
   semesterId: string,
   roundNumber: number,
-  deadline: number
+  deadline: number,
+  carryFromRoundId?: string
 ): Promise<string> {
   const id = newKey(roundsPath(teacherId, semesterId))
-  await set(ref(database, roundPath(teacherId, semesterId, id)), {
-    id,
-    roundNumber,
-    status: 'collecting',
-    deadline,
-    createdAt: Date.now()
-  })
+  const updates: Record<string, unknown> = {
+    [roundPath(teacherId, semesterId, id)]: {
+      id,
+      roundNumber,
+      status: 'collecting',
+      deadline,
+      createdAt: Date.now()
+    }
+  }
+
+  // Students amend rather than re-enter: the new round starts from what each of them said last
+  // time, reset to pending so the teacher can still see who has actually confirmed it.
+  if (carryFromRoundId) {
+    const previous = await get(
+      ref(database, submissionsPath(teacherId, semesterId, carryFromRoundId))
+    )
+    const answers = (previous.val() ?? {}) as Record<string, StudentSubmission>
+    Object.entries(answers).forEach(([studentId, answer]) => {
+      updates[submissionPath(teacherId, semesterId, id, studentId)] = stripUndefined({
+        studentId,
+        status: 'pending' as const,
+        recurringPreferences: answer.recurringPreferences ?? [],
+        weekOverrides: answer.weekOverrides ?? {},
+        carriedForward: true
+      })
+    })
+  }
+
+  await update(ref(database), updates)
   return id
 }
 
@@ -225,6 +251,184 @@ export async function setRoundStatus(
   status: RoundStatus
 ): Promise<void> {
   await update(ref(database, roundPath(teacherId, semesterId, roundId)), { status })
+}
+
+// ─── Closing a round ──────────────────────────────────────────────────────────
+
+/**
+ * Writes down the schedules the solver found, and closes the round to further submissions.
+ *
+ * Stored rather than recomputed per render. The solver reads the teacher's availability and the
+ * students' submissions, both of which keep changing — so a page that recomputed would show the
+ * teacher different cards each time they looked, and could change the one they were halfway
+ * through choosing. Once written, the options are a fact about a moment.
+ *
+ * Keyed by weight band, which is what a card *is*. The old scheme keyed them by strategy, from
+ * when there were three fixed ones.
+ */
+export async function closeRoundWithSuggestions(
+  teacherId: string,
+  semesterId: string,
+  roundId: string,
+  suggestions: Array<{ weightFrom: number; weightTo: number }>
+): Promise<void> {
+  const stored: Record<string, unknown> = {}
+  suggestions.forEach((suggestion) => {
+    stored[weightBandKey(suggestion.weightFrom, suggestion.weightTo)] = stripUndefined(suggestion)
+  })
+  await update(ref(database), {
+    [suggestionsPath(teacherId, semesterId, roundId)]: stored,
+    [`${roundPath(teacherId, semesterId, roundId)}/status`]: 'suggested'
+  })
+}
+
+/**
+ * Gives up on a round without destroying it.
+ *
+ * The submissions stay where they are: the point of abandoning rather than deleting is that the
+ * next round can be seeded from them. The stored suggestions stay too — they are what was
+ * rejected, and keeping them costs nothing.
+ */
+export async function abandonRound(
+  teacherId: string,
+  semesterId: string,
+  roundId: string,
+  currentStatus: RoundStatus
+): Promise<void> {
+  await update(ref(database, roundPath(teacherId, semesterId, roundId)), {
+    status: 'abandoned',
+    abandonedAt: Date.now(),
+    // Recorded rather than inferred on the way back. A round abandoned while still collecting
+    // and one abandoned after its suggestions were seen return to different places, and guessing
+    // from whether suggestions exist would be a guess that is usually right.
+    abandonedFrom: currentStatus
+  })
+}
+
+/**
+ * Puts an abandoned round back where it was.
+ *
+ * For a teacher who ran a second round and liked the first one better. The round still holds its
+ * submissions and its suggestions, so there is nothing to rebuild — only the status to restore.
+ */
+export async function reviveRound(
+  teacherId: string,
+  semesterId: string,
+  roundId: string,
+  status: RoundStatus
+): Promise<void> {
+  await update(ref(database, roundPath(teacherId, semesterId, roundId)), {
+    status,
+    abandonedAt: null,
+    abandonedFrom: null
+  })
+}
+
+/** What a round delete would take with it, read live so the confirmation states facts. */
+export async function countRoundSubmissions(
+  teacherId: string,
+  semesterId: string,
+  roundId: string
+): Promise<number> {
+  const snapshot = await get(ref(database, submissionsPath(teacherId, semesterId, roundId)))
+  return Object.keys((snapshot.val() ?? {}) as object).length
+}
+
+/**
+ * Archives a round with its submissions and suggestions, then removes it.
+ *
+ * For a round opened by mistake. A finalized round is refused by the caller, not here: its
+ * lessons exist and are being taught, and deleting the round that produced them would leave
+ * them with no account of where they came from.
+ *
+ * Archived under `deletedRounds` rather than `rounds`, because deleting the whole semester later
+ * writes the live `rounds` node to `${archive}/rounds` — which would overwrite anything already
+ * filed there.
+ */
+export async function deleteRound(
+  teacherId: string,
+  semesterId: string,
+  roundId: string
+): Promise<void> {
+  const owned = {
+    round: roundPath(teacherId, semesterId, roundId),
+    submissions: submissionsPath(teacherId, semesterId, roundId),
+    suggestions: suggestionsPath(teacherId, semesterId, roundId)
+  }
+  const archive = `${deletedSemesterPath(teacherId, semesterId)}/deletedRounds/${roundId}`
+
+  const snapshots = await Promise.all(
+    Object.values(owned).map(async (path) => await get(ref(database, path)))
+  )
+
+  const updates: Record<string, unknown> = { [`${archive}/deletedAt`]: Date.now() }
+  Object.keys(owned).forEach((name, index) => {
+    const value = snapshots[index].val()
+    if (value === null) return
+    updates[`${archive}/${name}`] = value
+    updates[owned[name as keyof typeof owned]] = null
+  })
+
+  await update(ref(database), updates)
+}
+
+// ─── Confirming a schedule ────────────────────────────────────────────────────
+
+/** A lesson about to be created, before it has an id. */
+export interface PlannedLesson {
+  studentId: string
+  locationId: string
+  scheduledStart: number
+  scheduledEnd: number
+  timezone: string
+}
+
+/**
+ * Confirms a schedule and creates every lesson in it.
+ *
+ * One root-level update, like the semester delete: a term half-created would leave students
+ * holding lessons their teacher cannot see, and no way to tell that had happened.
+ *
+ * **Each lesson is written twice** — under the teacher's semester, and into the student's own
+ * index at the same id. The index is the only path by which a student can discover their
+ * lessons, since the rules grant those per lesson by `studentId` and RTDB cannot turn that into
+ * a query; and `deleteSemester` clears the index by that id without reading it. Anything that
+ * later moves or cancels a lesson has to touch both.
+ */
+export async function confirmSchedule(
+  teacherId: string,
+  semesterId: string,
+  roundId: string,
+  lessons: PlannedLesson[]
+): Promise<void> {
+  const updates: Record<string, unknown> = {
+    [confirmedSchedulePath(teacherId, semesterId)]: {
+      roundId,
+      confirmedAt: Date.now(),
+      lessonCount: lessons.length
+    },
+    [`${roundPath(teacherId, semesterId, roundId)}/status`]: 'finalized',
+    [`${semesterPath(teacherId, semesterId)}/status`]: 'active'
+  }
+
+  lessons.forEach((lesson) => {
+    const id = newKey(lessonsPath(teacherId, semesterId))
+    const record = {
+      ...lesson,
+      id,
+      status: 'scheduled' as const,
+      isAdHoc: false,
+      isMakeup: false,
+      calendarSequence: 0,
+      createdAt: Date.now()
+    }
+    updates[lessonPath(teacherId, semesterId, id)] = record
+    // The student's copy carries the teacher and semester it belongs to: their index is flat,
+    // so without them a student's lesson could not be traced back to where it lives.
+    updates[studentLessonPath(lesson.studentId, id)] = { ...record, teacherId, semesterId }
+  })
+
+  await update(ref(database), updates)
 }
 
 // ─── Deleting a semester ──────────────────────────────────────────────────────

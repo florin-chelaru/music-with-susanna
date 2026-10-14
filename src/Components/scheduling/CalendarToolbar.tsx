@@ -30,35 +30,44 @@ export default function CalendarToolbar<TEvent extends object>({
 }: ToolbarProps<TEvent>) {
   const messages = localizer.messages as unknown as Record<string, string>
   const available = (Array.isArray(views) ? views : Object.keys(views)) as View[]
+  // The agenda lists everything at once rather than a page of it, so there is nothing to step
+  // backwards or forwards through — and a date label would describe a range the list ignores.
+  const navigable = view !== 'agenda'
 
   return (
     <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 1.5, flexWrap: 'wrap' }}>
-      <IconButton
-        size="small"
-        aria-label={messages.previous}
-        onClick={() => {
-          onNavigate('PREV')
-        }}>
-        <ChevronLeftIcon fontSize="small" />
-      </IconButton>
-      <IconButton
-        size="small"
-        aria-label={messages.next}
-        onClick={() => {
-          onNavigate('NEXT')
-        }}>
-        <ChevronRightIcon fontSize="small" />
-      </IconButton>
-      <Button
-        size="small"
-        onClick={() => {
-          onNavigate('TODAY')
-        }}>
-        {messages.today}
-      </Button>
+      {navigable && (
+        <IconButton
+          size="small"
+          aria-label={messages.previous}
+          onClick={() => {
+            onNavigate('PREV')
+          }}>
+          <ChevronLeftIcon fontSize="small" />
+        </IconButton>
+      )}
+      {navigable && (
+        <IconButton
+          size="small"
+          aria-label={messages.next}
+          onClick={() => {
+            onNavigate('NEXT')
+          }}>
+          <ChevronRightIcon fontSize="small" />
+        </IconButton>
+      )}
+      {navigable && (
+        <Button
+          size="small"
+          onClick={() => {
+            onNavigate('TODAY')
+          }}>
+          {messages.today}
+        </Button>
+      )}
 
       <Typography variant="subtitle2" fontWeight={600} sx={{ flex: 1, px: 1 }}>
-        {label}
+        {navigable ? label : ''}
       </Typography>
 
       {available.length > 1 && (

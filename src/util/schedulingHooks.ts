@@ -24,6 +24,8 @@ import {
   Cancellation,
   ConfirmedSchedule,
   fromStoredAvailability,
+  fromStoredSubmission,
+  fromStoredSuggestion,
   LessonInstance,
   Location,
   ScheduleSuggestion,
@@ -184,7 +186,14 @@ export function useStudentSubmissions(teacherId: Id, semesterId: Id, roundId: Id
   const { value, loading } = useNode<Record<string, StudentSubmission>>(
     teacherId && semesterId && roundId ? submissionsPath(teacherId, semesterId, roundId) : null
   )
-  return { submissions: value ?? {}, loading }
+  const submissions = useMemo(() => {
+    const restored: Record<string, StudentSubmission> = {}
+    Object.entries(value ?? {}).forEach(([studentId, submission]) => {
+      restored[studentId] = fromStoredSubmission(submission)
+    })
+    return restored
+  }, [value])
+  return { submissions, loading }
 }
 
 /**
@@ -197,7 +206,16 @@ export function useScheduleSuggestions(teacherId: Id, semesterId: Id, roundId: I
   const { value, loading } = useNode<Record<string, ScheduleSuggestion>>(
     teacherId && semesterId && roundId ? suggestionsPath(teacherId, semesterId, roundId) : null
   )
-  return { suggestions: value ?? {}, loading }
+  // Normalised for the same reason the availability is: the schedule with nothing missing is
+  // exactly the one RTDB strips keys from.
+  const suggestions = useMemo(() => {
+    const restored: Record<string, ScheduleSuggestion> = {}
+    Object.entries(value ?? {}).forEach(([band, suggestion]) => {
+      restored[band] = fromStoredSuggestion(suggestion)
+    })
+    return restored
+  }, [value])
+  return { suggestions, loading }
 }
 
 export function useConfirmedSchedule(teacherId: Id, semesterId: Id) {
@@ -229,7 +247,7 @@ export function useMySubmission(teacherId: Id, semesterId: Id, roundId: Id, stud
       ? submissionPath(teacherId, semesterId, roundId, studentId)
       : null
   )
-  return { submission: value, loading }
+  return { submission: value ? fromStoredSubmission(value) : null, loading }
 }
 
 /**

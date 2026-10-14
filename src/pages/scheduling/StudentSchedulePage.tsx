@@ -40,6 +40,8 @@ interface StudentSchedulePageTexts {
   editSubmission: string
   submitted: string
   pending: string
+  beingScheduled: string
+  beingScheduledHint: string
   deadline: string
   closesIn: string
   deadlinePassed: string
@@ -56,6 +58,8 @@ const EN_US: StudentSchedulePageTexts = {
   editSubmission: 'Edit submission',
   submitted: 'Submitted',
   pending: 'Not submitted',
+  beingScheduled: 'Being scheduled',
+  beingScheduledHint: 'Your answer is in. Your teacher is working out the timetable.',
   deadline: 'Deadline',
   closesIn: 'closes in',
   deadlinePassed: 'deadline passed',
@@ -72,6 +76,8 @@ const RO_RO: StudentSchedulePageTexts = {
   editSubmission: 'Modifică răspunsul',
   submitted: 'Trimis',
   pending: 'Netrimis',
+  beingScheduled: 'Se întocmește orarul',
+  beingScheduledHint: 'Răspunsul tău a ajuns. Profesorul pregătește orarul.',
   deadline: 'Termen limită',
   closesIn: 'se închide în',
   deadlinePassed: 'termenul a trecut',
@@ -86,6 +92,9 @@ const TEXTS = new Map<SupportedLocale, LocalizedData>([
 ])
 
 // ─── Mock lookups ─────────────────────────────────────────────────────────────
+
+/** A lesson as the student's own index stores it: the teacher and semester travel with it. */
+type MyLesson = LessonInstance & { teacherId: string; semesterId: string }
 
 interface OpenRequest {
   teacherId: string
@@ -135,17 +144,24 @@ export default function StudentSchedulePage() {
   const submittedRounds = useMySubmittedRounds(studentId, allRounds)
 
   // Mirrored into local state so cancelling still updates the view before Step Q writes it.
-  const [lessons, setLessons] = useState<LessonInstance[]>([])
+  const [lessons, setLessons] = useState<MyLesson[]>([])
   useEffect(() => {
     setLessons(myLessons)
   }, [myLessons])
 
-  // One entry per round still collecting, across every teacher the student studies with.
+  // Rounds still collecting, and rounds closed but not yet confirmed.
+  //
+  // The second kind matters: when the teacher closes a round, it stops collecting and the
+  // lessons do not exist yet, so filtering on `collecting` alone made the request vanish with
+  // nothing to replace it — from the student's side their submission had simply disappeared.
   const requests: OpenRequest[] = useMemo(
     () =>
       enrolled.flatMap(({ teacherId, semester, rounds }) =>
         rounds
-          .filter((round) => round.status === 'collecting')
+          // An abandoned round is deliberately absent: it is the one state where the teacher has
+          // decided this round leads nowhere, and leaving it on screen would go on promising a
+          // timetable while a fresh request sits underneath it.
+          .filter((round) => round.status === 'collecting' || round.status === 'suggested')
           .map((round) => ({
             teacherId,
             teacherName: teachers[teacherId]?.name ?? teacherId,
@@ -171,9 +187,10 @@ export default function StudentSchedulePage() {
     return enrolled.find(({ semester }) => semester.id === match?.semesterId)?.semester
   }, [cancelTarget, myLessons, enrolled])
 
-  // One subject only makes sense with one teacher; with two, the calendar says "Lesson".
-  const teacherIds = Object.keys(teachers)
-  const subject = teacherIds.length === 1 ? teachers[teacherIds[0]].subject : undefined
+  // Looked up per lesson from the teacher it belongs to. The student's index carries the
+  // teacherId precisely so a calendar holding two teachers' lessons can label each correctly.
+  const subjectFor = (lesson: LessonInstance): string | undefined =>
+    teachers[(lesson as MyLesson).teacherId]?.subject
 
   function handleConfirmCancel({ cancelAllForward }: CancelLessonOptions) {
     const target = cancelTarget
@@ -217,6 +234,9 @@ export default function StudentSchedulePage() {
         <Stack spacing={1.5}>
           {requests.map((request) => {
             const passed = request.round.deadline <= now
+            // Closed to answers, but the schedule is not out yet — the state that previously
+            // showed the student nothing at all.
+            const closed = request.round.status === 'suggested'
             return (
               <Box
                 key={`${request.semester.id}-${request.round.id}`}
@@ -237,14 +257,21 @@ export default function StudentSchedulePage() {
                     </Typography>
                     <Chip
                       size="small"
-                      label={request.submitted ? t.submitted : t.pending}
-                      color={request.submitted ? 'success' : 'warning'}
-                      variant={request.submitted ? 'filled' : 'outlined'}
+                      label={
+                        closed ? t.beingScheduled : request.submitted ? t.submitted : t.pending
+                      }
+                      color={closed ? 'default' : request.submitted ? 'success' : 'warning'}
+                      variant={closed || request.submitted ? 'filled' : 'outlined'}
                     />
                   </Stack>
                   <Typography variant="caption" color="text.secondary" display="block">
                     {t.withTeacher} {request.teacherName}
                   </Typography>
+                  {closed && (
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {t.beingScheduledHint}
+                    </Typography>
+                  )}
                   <Typography variant="caption" color="text.secondary">
                     {t.deadline}:{' '}
                     {dayjs(request.round.deadline).locale(dayjsLocale).format('D MMM YYYY, HH:mm')}{' '}
@@ -259,16 +286,20 @@ export default function StudentSchedulePage() {
                     </Box>
                   </Typography>
                 </Box>
-                <Button
-                  variant={request.submitted ? 'text' : 'contained'}
-                  size="small"
-                  onClick={() => {
-                    navigate(
-                      `/schedule/rounds/${request.teacherId}/${request.semester.id}/${request.round.id}`
-                    )
-                  }}>
-                  {request.submitted ? t.editSubmission : t.submitAvailability}
-                </Button>
+                {/* Nothing to do once the round is closed: the rules refuse a write, so an
+                    enabled button would only lead to a failure. */}
+                {!closed && (
+                  <Button
+                    variant={request.submitted ? 'text' : 'contained'}
+                    size="small"
+                    onClick={() => {
+                      navigate(
+                        `/schedule/rounds/${request.teacherId}/${request.semester.id}/${request.round.id}`
+                      )
+                    }}>
+                    {request.submitted ? t.editSubmission : t.submitAvailability}
+                  </Button>
+                )}
               </Box>
             )
           })}
@@ -290,7 +321,7 @@ export default function StudentSchedulePage() {
               own on every event is noise. They see who the lesson is with instead. */}
           <LessonCalendar
             lessons={lessons}
-            subject={subject}
+            subjectFor={subjectFor}
             defaultDate={calendarDefaultDate}
             onCancel={(lesson) => {
               setCancelTarget(lesson)

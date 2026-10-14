@@ -1562,7 +1562,58 @@ Original plan text follows.
 
 ---
 
-#### Step O — Wire SchedulingRoundPage to RTDB + integrate algorithm (next)
+#### ~~Step O — Wire SchedulingRoundPage to RTDB + integrate algorithm~~ ✅ DONE
+
+Closing writes the suggestions down and confirming generates the term's lessons, both as single
+root-level updates. Lessons are written twice, to `lessonInstances` and to the per-student index
+at the same id, as `deleteSemester` requires.
+
+**A round's full life cycle, settled while building it:**
+
+- **Reviving.** An abandoned round can be put back where it was, for a teacher whose second round
+  turned out worse than the first. `abandonRound` records the status it is leaving so revive
+  restores it exactly, rather than inferring from whether suggestions exist — an inference that
+  would be right most of the time, which is the worst kind of wrong. Offered only when no other
+  round is collecting and none has been confirmed: the first would leave students with two open
+  requests, and the second is the duplication gap below. Where it cannot be offered it is absent,
+  not disabled, because the obstacle has to be cleared elsewhere first.
+
+- **Abandoning.** A teacher who dislikes the suggestions can stop without confirming — and had to
+  be able to *say so*, because a rejected round left at `suggested` goes on telling students
+  their timetable is being worked out while a fresh request sits underneath it. `RoundStatus`
+  gained `abandoned`, available from `collecting` and from `suggested` alike. Submissions and
+  suggestions are kept: the point of abandoning rather than deleting is that the next round can
+  start from the answers already given.
+- **Deleting.** For a round opened by mistake. Soft and cascading over the round, its submissions
+  and its suggestions. Refused for a finalized round, whose lessons are being taught and would
+  otherwise lose any account of where they came from. Archived under `deletedRounds/{id}` rather
+  than `rounds/{id}`, because deleting the whole semester later writes the live `rounds` node to
+  `…/rounds` and would overwrite anything already filed there.
+
+**Three bugs this step surfaced**, two of them the same RTDB rule yet again:
+
+1. **Stored suggestions lost their empty keys.** A schedule with nothing missing writes
+   `missedLessonsByStudent: {}`, which is discarded — so the *best* result read back and crashed
+   the card. Normalised on read.
+2. **Student submissions lost theirs too**, and the solver dereferenced `weekOverrides` while
+   generating candidates. Normalised on read, and `getEffectiveBlocksForDate` now tolerates a
+   missing map, since it is pure and called from several places.
+3. **The band key contained `.`**, which RTDB forbids outright — `${weightFrom}-${weightTo}`
+   produces `0.6-0.9`. There is now one `weightBandKey`, used for the stored key and the editor's
+   per-schedule edits alike, so the schedule being edited and the one being written are provably
+   the same. Whole percentages, rounded, because the sweep reaches bounds by repeated addition
+   and `0.30000000000000004` would otherwise key differently from `0.3`.
+
+**Still open — re-running a confirmed semester.** Opening a second round works, but confirming it
+would *add* a second term's lessons rather than replace the first: `confirmSchedule` only ever
+writes, and the solver is given no knowledge of existing lessons. The rule for replacement needs
+deciding before this is built — naive deletion would rewrite a student's past, since lessons
+already completed or cancelled would vanish. Likely answer: replace only future, still-scheduled
+lessons.
+
+Original plan text follows.
+
+#### Step O — Wire SchedulingRoundPage to RTDB + integrate algorithm (original)
 
 The page already reads its round, enrollments, submissions and availability from RTDB, and runs
 the solver over them. What remains is making the result durable.
@@ -1602,6 +1653,15 @@ Two constraints already fixed by earlier steps:
 
 #### Step P — Wire student pages to RTDB (largely done)
 
+*(2026-10-14: two gaps closed. A closed-but-unconfirmed round showed the student **nothing** —
+the request vanished the moment the teacher closed it and no lessons existed yet, so their
+submission appeared to have been thrown away; such rounds now read "Being scheduled", with no
+button, since the rules refuse a write to a closed round. And lessons are titled by **their own
+teacher's** subject rather than one subject for the whole calendar, which could only ever be
+wrong for a student studying with two teachers — `applyCancellation` became generic to stop the
+student's lessons being narrowed back to `LessonInstance` and losing the `teacherId` the lookup
+needs.)*
+
 **Both student pages came off the mocks on 2026-10-13**, pulled ahead of Step O because closing a
 round computes suggestions from student submissions — without a way for students to submit, every
 real round has zero input and the solver returns everyone unschedulable.
@@ -1634,7 +1694,23 @@ Original plan text follows.
 
 ---
 
-#### Step P2 — Amend, don't re-enter: carry submissions between rounds
+#### ~~Step P2 — Amend, don't re-enter: carry submissions between rounds~~ ✅ DONE
+
+Built as specified: `createRound` takes the previous round and copies each student's answer in
+with `status: 'pending'`, `submittedAt` cleared and `carriedForward: true`. The latest previous
+round is the source whatever its own status — abandoned or closed, the answers stand.
+
+Found because the UI said so before the code did: the abandoned-round notice promised "the
+answers collected in it are kept, so a new round can start from them", which was false. A claim
+in the interface is a specification; this one was simply unimplemented.
+
+`carriedForward` is written but not yet displayed. The teacher's table shows a carried answer as
+*pending*, which is true — prefilled is not confirmed — but it cannot yet be told apart from a
+student who has never answered.
+
+Original plan text follows.
+
+#### Step P2 — Amend, don't re-enter (original)
 
 Core Concepts says *"students amend (not re-enter) their previous submission in subsequent rounds"*,
 but nothing implements it: `studentSubmissions` is keyed per round and no code copies round N−1

@@ -98,7 +98,8 @@ export interface SuggestedScheduleCardProps {
   selected?: boolean
   /** The teacher has changed this schedule; the figures below describe their version. */
   edited?: boolean
-  onUse: () => void
+  /** Omit to show the schedule without offering it — a round that is over, kept for reference. */
+  onUse?: () => void
   /** Omitted when there is nothing to discard. */
   onDiscardEdits?: () => void
 }
@@ -260,9 +261,11 @@ export default function SuggestedScheduleCard({
       )}
 
       <Stack spacing={0.5}>
-        <Button variant={selected ? 'contained' : 'outlined'} size="small" onClick={onUse}>
-          {t.useThis}
-        </Button>
+        {onUse && (
+          <Button variant={selected ? 'contained' : 'outlined'} size="small" onClick={onUse}>
+            {t.useThis}
+          </Button>
+        )}
         {onDiscardEdits && (
           <Button size="small" color="inherit" onClick={onDiscardEdits}>
             {t.discardEdits}

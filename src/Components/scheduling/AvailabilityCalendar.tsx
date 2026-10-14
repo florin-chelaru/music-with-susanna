@@ -20,6 +20,8 @@ import CheckIcon from '@mui/icons-material/Check'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import ScheduleIcon from '@mui/icons-material/Schedule'
+import BlockTimesDialog from './BlockTimesDialog'
 import { alpha } from '@mui/material/styles'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
@@ -556,6 +558,33 @@ export default function AvailabilityCalendar({
   }
 
   const [popover, setPopover] = useState<PopoverState | null>(null)
+  // The block whose times are being typed rather than dragged. Holds its index so the edit can
+  // be applied on save, and its current times so the dialog opens on them.
+  const [timesTarget, setTimesTarget] = useState<{
+    blockIdx: number
+    startTime: string
+    endTime: string
+  } | null>(null)
+
+  function openTimesDialog() {
+    if (!popover?.selectedId) return
+    const blockIdx = parseInt(popover.selectedId.replace('main-', ''), 10)
+    const block = blocks[blockIdx]
+    if (!block) return
+    setPopover(null)
+    setTimesTarget({ blockIdx, startTime: block.startTime, endTime: block.endTime })
+  }
+
+  function handleTimesSave(startTime: string, endTime: string) {
+    const target = timesTarget
+    setTimesTarget(null)
+    if (!onChange || !target) return
+    const edited = { ...blocks[target.blockIdx], startTime, endTime }
+    const rest = blocks.filter((_, i) => i !== target.blockIdx)
+    // Same overlap handling as a drag: a block stretched over its neighbour absorbs it rather
+    // than leaving two claims on the same minutes.
+    onChange([...removeOverlaps(rest, edited), edited])
+  }
 
   function closePopover() {
     setPopover(null)
@@ -792,6 +821,18 @@ export default function AvailabilityCalendar({
           />
         </Box>
 
+        <BlockTimesDialog
+          open={timesTarget !== null}
+          startTime={timesTarget?.startTime ?? '09:00'}
+          endTime={timesTarget?.endTime ?? '10:00'}
+          dayStartHour={displayStartHour}
+          dayEndHour={displayEndHour}
+          onClose={() => {
+            setTimesTarget(null)
+          }}
+          onSave={handleTimesSave}
+        />
+
         <Popover
           open={Boolean(popover)}
           anchorEl={popover?.anchorEl ?? null}
@@ -835,6 +876,12 @@ export default function AvailabilityCalendar({
                 {popover?.selectedId && (
                   <>
                     <Divider sx={{ my: 0.5 }} />
+                    <MenuItem dense onClick={openTimesDialog}>
+                      <ScheduleIcon sx={{ mr: 1.5, fontSize: '1.125rem' }} />
+                      <Typography variant="body2">
+                        {isRo ? 'Setează orele' : 'Set times'}
+                      </Typography>
+                    </MenuItem>
                     <MenuItem dense onClick={handleDelete} sx={{ color: 'error.main' }}>
                       <DeleteOutlineIcon sx={{ mr: 1.5, fontSize: '1.125rem' }} />
                       <Typography variant="body2">{isRo ? 'Șterge' : 'Delete'}</Typography>

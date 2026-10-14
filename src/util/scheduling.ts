@@ -94,6 +94,59 @@ export interface WeekOverride {
   savedAt?: number
 }
 
+/**
+ * A schedule's identity: the weight band that produced it.
+ *
+ * Expressed as whole percentages separated by an underscore — `60_90` — because RTDB forbids
+ * `.` in a key, which is exactly what the obvious `0.6-0.9` produces. Rounded rather than
+ * truncated so a band computed by repeated addition — 0.30000000000000004 — does not key
+ * differently from the same band computed any other way. The underscore keeps these visually
+ * distinct from the hyphenated push ids everything else here is keyed by.
+ *
+ * Used for the stored key and for the editor's per-schedule edits alike, so the thing the
+ * teacher is editing and the thing being written are provably the same schedule.
+ */
+export function weightBandKey(weightFrom: number, weightTo: number): string {
+  return `${Math.round(weightFrom * 100)}_${Math.round(weightTo * 100)}`
+}
+
+/**
+ * A stored submission, with everything RTDB dropped put back.
+ *
+ * A student who marked no weeks away has no `weekOverrides` key at all, and one who has not
+ * answered has no `recurringPreferences` either. The solver dereferences both.
+ */
+export function fromStoredSubmission(raw: unknown): StudentSubmission {
+  const value = (raw ?? {}) as Partial<StudentSubmission>
+  const overrides = value.weekOverrides ?? {}
+  const weekOverrides: Record<string, WeekOverride> = {}
+  Object.entries(overrides).forEach(([weekStart, override]) => {
+    weekOverrides[weekStart] = { blocks: override?.blocks ?? [], savedAt: override?.savedAt }
+  })
+  return {
+    ...(value as StudentSubmission),
+    recurringPreferences: value.recurringPreferences ?? [],
+    weekOverrides
+  }
+}
+
+/**
+ * A stored schedule, with everything RTDB dropped put back.
+ *
+ * A schedule where nothing went missing writes `missedLessonsByStudent: {}`, and an empty object
+ * is discarded outright — so the happiest result reads back as the broken one, and the card
+ * crashes on `Object.keys(undefined)`. Same for a schedule with no slots at all.
+ */
+export function fromStoredSuggestion(raw: unknown): ScheduleSuggestion {
+  const value = (raw ?? {}) as Partial<ScheduleSuggestion>
+  return {
+    ...(value as ScheduleSuggestion),
+    slots: value.slots ?? [],
+    missedLessonsByStudent: value.missedLessonsByStudent ?? {},
+    totalScore: value.totalScore ?? 0
+  }
+}
+
 /** A semester nobody has set hours for yet. Distinct from "not loaded", which shows nothing. */
 export const EMPTY_AVAILABILITY: WeeklyAvailability = {
   weeklyTemplate: { blocks: [] },
@@ -172,7 +225,16 @@ export interface StudentEnrollment {
   cancellationWindowHours?: number // falls back to semester default when absent
 }
 
-export type RoundStatus = 'collecting' | 'ready' | 'suggested' | 'finalized'
+/**
+ * `abandoned` is a round the teacher gave up on — either before the deadline, or after seeing
+ * suggestions they did not want. It is distinct from deleting the round: the students' answers
+ * survive, so the next round can start from them rather than asking everyone again.
+ *
+ * It also has to exist for the students' sake. A rejected round left at `suggested` goes on
+ * telling them their teacher is working out a timetable, indefinitely, while a fresh request
+ * sits underneath it.
+ */
+export type RoundStatus = 'collecting' | 'ready' | 'suggested' | 'abandoned' | 'finalized'
 
 export interface SchedulingRound {
   id: string
@@ -180,15 +242,27 @@ export interface SchedulingRound {
   status: RoundStatus
   deadline: number // timestamp ms
   createdAt: number
+  abandonedAt?: number
+  /** The status to return to if the round is revived. See `abandonRound`. */
+  abandonedFrom?: RoundStatus
 }
 
 export interface StudentSubmission {
   studentId: string
   status: 'pending' | 'submitted'
   submittedAt?: number
+  /**
+   * Copied from the previous round rather than answered in this one.
+   *
+   * Students amend rather than re-enter, so a new round starts from what they said last time —
+   * but prefilled is not confirmed. The flag lets the teacher's table tell the two apart, and is
+   * why the presence of a record cannot mean "submitted" on its own.
+   */
+  carriedForward?: boolean
   recurringPreferences: AvailabilityBlock[]
-  // key: Monday date "YYYY-MM-DD". Empty blocks = fully unavailable that week.
-  weekOverrides: Record<string, { blocks: AvailabilityBlock[] }>
+  // key: Monday date "YYYY-MM-DD". Empty blocks = fully unavailable that week. Same shape as the
+  // teacher's, savedAt included, for the same reason: an empty override would otherwise vanish.
+  weekOverrides: Record<string, WeekOverride>
 }
 
 export interface SuggestedSlot {
@@ -487,11 +561,16 @@ export function findConflict<T extends TimeSpan>(
 // `cancelAllForward` also cancels that student's later scheduled lessons — scoped to the
 // student even in a view that only ever holds one student's lessons, so the rule is the same
 // wherever it runs. Lessons already completed or canceled are left alone.
-export function applyCancellation(
-  lessons: LessonInstance[],
+/**
+ * Generic over the lesson shape because it only ever spreads what it is given — a student's
+ * lessons carry the teacher and semester they came from, and narrowing them to `LessonInstance`
+ * would throw that away for every caller downstream.
+ */
+export function applyCancellation<T extends LessonInstance>(
+  lessons: T[],
   target: LessonInstance,
   cancelAllForward: boolean
-): LessonInstance[] {
+): T[] {
   return lessons.map((lesson) => {
     if (lesson.id === target.id) return { ...lesson, status: 'canceled' }
     const laterForSameStudent =

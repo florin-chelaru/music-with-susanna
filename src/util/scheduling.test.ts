@@ -8,10 +8,13 @@ import {
   computeCombinedScore,
   isWithinCancellationWindow,
   fromStoredAvailability,
+  fromStoredSubmission,
+  fromStoredSuggestion,
   removeOverlaps,
   reverted,
   SCHEDULING_CONFIG,
   scoreForDayTime,
+  weightBandKey,
   toStoredAvailability
 } from './scheduling'
 
@@ -411,5 +414,55 @@ describe('availability storage', () => {
       blocks: [],
       savedAt: undefined
     })
+  })
+})
+
+// The schedule with nothing missing is exactly the one RTDB strips keys from, so the happiest
+// result is the one that reads back broken.
+describe('fromStoredSuggestion', () => {
+  test('restores the keys an empty record loses', () => {
+    const restored = fromStoredSuggestion({ weightFrom: 0.5, weightTo: 0.5 })
+    expect(restored.slots).toEqual([])
+    expect(restored.missedLessonsByStudent).toEqual({})
+    expect(restored.totalScore).toBe(0)
+  })
+
+  test('leaves a complete record alone', () => {
+    const stored = {
+      slots: [{ studentId: 'ana' }],
+      missedLessonsByStudent: { bob: 1 },
+      totalScore: 42
+    }
+    expect(fromStoredSuggestion(stored)).toMatchObject(stored)
+  })
+})
+
+// The third place the same rule bit: a student who marked no weeks away reads back with no
+// weekOverrides key at all, and the solver dereferences it while generating candidates.
+describe('fromStoredSubmission', () => {
+  test('restores the keys an empty record loses', () => {
+    const restored = fromStoredSubmission({ studentId: 'ana', status: 'submitted' })
+    expect(restored.recurringPreferences).toEqual([])
+    expect(restored.weekOverrides).toEqual({})
+  })
+
+  test('an override that lost its blocks still means away', () => {
+    const restored = fromStoredSubmission({ weekOverrides: { '2026-11-09': {} } })
+    expect(restored.weekOverrides['2026-11-09'].blocks).toEqual([])
+  })
+})
+
+// RTDB forbids '.' in a key, which is exactly what the obvious `${weightFrom}-${weightTo}`
+// produces — the write failed outright with "invalid key (0.6-0.9)".
+describe('weightBandKey', () => {
+  test('contains no character RTDB rejects', () => {
+    const key = weightBandKey(0.6, 0.9)
+    expect(key).toBe('60_90')
+    expect(key).not.toMatch(/[.#$/[\]]/)
+  })
+
+  test('a band reached by repeated addition keys the same as one written down', () => {
+    // 0.1 + 0.1 + 0.1 is 0.30000000000000004, which is how the sweep produces its bounds.
+    expect(weightBandKey(0.1 + 0.1 + 0.1, 0.9)).toBe(weightBandKey(0.3, 0.9))
   })
 })

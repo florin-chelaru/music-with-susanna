@@ -570,3 +570,60 @@ Next: **Step O** — closing a round writes its suggestions down, and confirming
 term's lessons into both the teacher's path and the per-student index. Closing stays manual,
 confirming happens once per round, and the generation is one atomic write of roughly two hundred
 entries.
+
+### 2026-10-14 — Step O, and a round's whole life cycle
+
+Closing a round writes its suggestions down; confirming generates the term's lessons into both
+the teacher's path and the per-student index. Both are single root-level updates.
+
+Most of the day went on states a round can reach that the plan had not named.
+
+**Abandoning had to exist, and the reason was the student's screen.** Yesterday's fix — showing a
+closed round as "Being scheduled" so a student's submission did not appear to vanish — made a
+rejected round actively misleading: it would promise a timetable indefinitely while a new request
+sat underneath it. `abandoned` keeps the answers so the next round can start from them, which
+deleting would not.
+
+**Three bugs, two of them the same rule for the fourth and fifth time.** Stored suggestions and
+student submissions both lose their empty keys, and in both cases it is the *happiest* input that
+breaks: a schedule with nothing missing, a student with no weeks away. The third was new —
+RTDB forbids `.` in a key, and `${weightFrom}-${weightTo}` produces `0.6-0.9`.
+
+**Two things were invisible because nobody had wired them.** The teacher's lesson calendar still
+read `MOCK_LESSON_INSTANCES`, so 27 real lessons sat in the database unseen; and a student's
+lessons were labelled "Lesson" because one subject was chosen for the whole calendar, which
+cannot be right for a student studying with two teachers.
+
+One near miss worth recording: a patch script threw on its last substitution, so **nothing** it
+had changed was written — while the imports around it, applied by an earlier script, were. The
+file still typechecked, because it was internally consistent; only reading it showed the buttons
+still carried their TODOs. "Compiles clean" did not mean "the change landed".
+
+Running totals: **172 tests**, lint clean, typecheck clean.
+
+Next: **Step Q** — cancellations, carrying the parked question about deriving cancelled state
+from the cancellation records, since a student cannot write `lessonInstances`.
+
+### 2026-10-14 (later) — what review turned up
+
+Reviewing the batch found three things the code did not do, two of which the interface claimed.
+
+**The abandoned-round notice was a lie.** It promised that answers were kept so a new round could
+start from them; nothing copied them. Step P2 existed in the plan and had never been built. A
+claim in the interface is a specification, and this one had drifted ahead of the code — so the
+fix was to build it rather than soften the sentence.
+
+**Abandoning hid what it claimed to keep.** The notice replaced the whole page, so the moment a
+new round opened, the previous round's schedules became unreachable. They are shown read-only
+now: `SuggestedScheduleCard`'s `onUse` became optional, and a card without it offers nothing.
+
+**The two-line event block had only been applied to one of the two calendars.** The round editor
+still stacked the time above the name and omitted it from the month view entirely.
+
+Also: reviving an abandoned round, guarded on nothing else collecting and nothing confirmed;
+Revive beside the round's name in the list; the round name as the link, replacing a per-row Open
+button; and a *Set times* dialog in the availability calendar, which sidesteps a scroll-snap bug
+on edge-dragging that remains unexplained — rbc's own auto-scroll is ruled out, since it is gated
+on `enableAutoScroll` and nothing sets it.
+
+Running totals: **172 tests**, lint clean, typecheck clean.
