@@ -221,7 +221,11 @@ export default function LessonCalendar({
         end: new Date(lesson.scheduledEnd),
         lesson
       })),
-    [lessons, students, dayjsLocale, t]
+    // `subjectFor` belongs here: a student's teacher directory is fetched a record at a time and
+    // lands after the first render, so a memo that ignored it would keep the titles it built
+    // while the directory was still empty — every lesson reading "Lesson" until something else
+    // happened to change `lessons`.
+    [lessons, students, subjectFor, dayjsLocale, t]
   )
 
   // Canceled lessons stay visible but read as struck through, so a gap in the schedule is

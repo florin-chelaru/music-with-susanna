@@ -10,7 +10,7 @@ import {
   Typography
 } from '@mui/material'
 import dayjs from 'dayjs'
-import { useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CancelLessonDialog, {
   CancelLessonOptions
@@ -206,8 +206,14 @@ export default function StudentSchedulePage() {
 
   // Looked up per lesson from the teacher it belongs to. The student's index carries the
   // teacherId precisely so a calendar holding two teachers' lessons can label each correctly.
-  const subjectFor = (lesson: LessonInstance): string | undefined =>
-    teachers[(lesson as MyLesson).teacherId]?.subject
+  //
+  // Kept stable across renders so the calendar can depend on it: the directory arrives after the
+  // first render, and a fresh identity every time would make memoising the events pointless.
+  const subjectFor = useCallback(
+    (lesson: LessonInstance): string | undefined =>
+      teachers[(lesson as MyLesson).teacherId]?.subject,
+    [teachers]
+  )
 
   function handleConfirmCancel({ cancelAllForward, reason }: CancelLessonOptions) {
     const target = cancelTarget as MyLesson | null
