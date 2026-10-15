@@ -1116,12 +1116,10 @@ export default function SemesterPage() {
             lessons={lessons}
             students={students}
             locationName={location?.name}
+            calendarName={semester.name}
             defaultDate={calendarDefaultDate}
             onCancel={(lesson) => {
               setCancelTarget(lesson)
-            }}
-            onExportIcs={() => {
-              // TODO (Step R): generate and download the .ics file
             }}
           />
           <CancelLessonDialog

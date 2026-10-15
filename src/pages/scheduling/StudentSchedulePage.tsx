@@ -419,6 +419,7 @@ export default function StudentSchedulePage() {
           <LessonCalendar
             lessons={lessons}
             subjectFor={subjectFor}
+            calendarName={t.lessonsTitle}
             defaultDate={calendarDefaultDate}
             onCancel={(lesson) => {
               setCancelTarget(lesson)

@@ -1849,9 +1849,23 @@ Open questions for when it is designed:
 
 ---
 
-#### Step R — ICS export
+#### ~~Step R — ICS export~~ ✅ DONE
 
-- `src/util/icsExport.ts` — wire the Export button in `LessonCalendar` to generate and download the `.ics` file
+`src/util/icsExport.ts`, with the export moved into `LessonCalendar` itself — the component
+already knows what every lesson is called, and a page rebuilding those titles would be a second
+place for them to drift. Both sides get the button; a teacher's file is named after the semester,
+a student's after their own lessons.
+
+Each event is keyed by its lesson id, which is the same id the cancellation emails put in their
+`calendarEvent`. That closes the loop Step Q left open: a cancellation used to be an orphan no
+client could match to anything, and now lands on the event it is about. Cancelled lessons are
+written out as `STATUS:CANCELLED` rather than omitted, so exporting again is a sync rather than a
+file that quietly leaves a called-off lesson standing.
+
+Hand-written rather than pulled from a library: the format is a few hundred bytes of text, and
+the parts that are easy to get wrong are the ones a library would hide. Folding counts octets,
+not characters, which matters the moment a Romanian name appears — and it is computed rather than
+measured with `TextEncoder`, which every browser has and jsdom does not.
 
 ---
 

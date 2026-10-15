@@ -7,6 +7,7 @@ import { useContext, useMemo, useState } from 'react'
 import { Calendar, View, Views } from 'react-big-calendar'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
+import { downloadIcs, icsFileName, lessonsToIcs } from '../../util/icsExport'
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { localizer } from '../../util/calendarLocalizer'
 import CalendarToolbar from './CalendarToolbar'
@@ -35,6 +36,7 @@ interface LessonCalendarTexts {
   statusRescheduled: string
   cancelLesson: string
   exportIcs: string
+  exportFallbackName: string
 }
 
 const EN_US: LessonCalendarTexts = {
@@ -54,7 +56,8 @@ const EN_US: LessonCalendarTexts = {
   statusCanceled: 'Canceled',
   statusRescheduled: 'Rescheduled',
   cancelLesson: 'Cancel lesson',
-  exportIcs: 'Export .ics'
+  exportIcs: 'Export .ics',
+  exportFallbackName: 'Lessons'
 }
 
 const RO_RO: LessonCalendarTexts = {
@@ -74,7 +77,8 @@ const RO_RO: LessonCalendarTexts = {
   statusCanceled: 'Anulată',
   statusRescheduled: 'Reprogramată',
   cancelLesson: 'Anulează lecția',
-  exportIcs: 'Exportă .ics'
+  exportIcs: 'Exportă .ics',
+  exportFallbackName: 'Lecții'
 }
 
 const TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -129,8 +133,11 @@ export interface LessonCalendarProps {
   locationName?: string
   /** Omit to hide the cancel affordance entirely. */
   onCancel?: (lesson: LessonInstance) => void
-  /** Omit to hide the export button. */
-  onExportIcs?: () => void
+  /**
+   * What the exported calendar is called — the semester for a teacher, "my lessons" for a
+   * student. Also names the downloaded file.
+   */
+  calendarName?: string
   /** Which month the calendar opens on. Defaults to today. */
   defaultDate?: Date
 }
@@ -141,7 +148,7 @@ export default function LessonCalendar({
   subjectFor,
   locationName,
   onCancel,
-  onExportIcs,
+  calendarName,
   defaultDate
 }: LessonCalendarProps) {
   const theme = useTheme()
@@ -283,11 +290,19 @@ export default function LessonCalendar({
   const selectedLesson = selected?.lesson ?? null
   const canCancel = onCancel && selectedLesson?.status === 'scheduled'
 
+  function handleExport() {
+    const name = calendarName ?? t.exportFallbackName
+    downloadIcs(lessonsToIcs(lessons, name, { titleFor, locationName }), icsFileName(name))
+  }
+
   return (
     <Box>
-      {onExportIcs && (
+      {/* The export belongs here rather than in each page: this component already knows what
+          every lesson is called, and a page rebuilding those titles would be a second place for
+          them to drift. */}
+      {lessons.length > 0 && (
         <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
-          <Button size="small" startIcon={<DownloadIcon />} onClick={onExportIcs}>
+          <Button size="small" startIcon={<DownloadIcon />} onClick={handleExport}>
             {t.exportIcs}
           </Button>
         </Stack>
