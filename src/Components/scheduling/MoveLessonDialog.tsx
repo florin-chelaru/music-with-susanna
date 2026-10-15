@@ -35,11 +35,11 @@ import { ScoreChip, scoreColor } from './scoreDisplay'
 interface MoveLessonDialogTexts {
   title: string
   scheduleTitle: string
-  keepsLength: string
+  keepsLength: (minutes: number) => string
   cancel: string
   save: string
   schedule: string
-  timesOn: string
+  timesOn: (date: string) => string
   noTimes: string
   anyTime: string
   scoreYou: string
@@ -51,11 +51,12 @@ interface MoveLessonDialogTexts {
 const EN_US: MoveLessonDialogTexts = {
   title: 'Move lesson',
   scheduleTitle: 'Schedule lesson',
-  keepsLength: 'The lesson keeps its {n}-minute length. Dots mark days you both have free.',
+  keepsLength: (minutes) =>
+    `The lesson keeps its ${minutes}-minute length. Dots mark days you both have free.`,
   cancel: 'Cancel',
   save: 'Move',
   schedule: 'Schedule',
-  timesOn: 'Times on {date}',
+  timesOn: (date) => `Times on ${date}`,
   noTimes: 'No time this day suits you both. Pick another day, or switch on any time below.',
   anyTime: 'Any time',
   scoreYou: 'you',
@@ -67,11 +68,12 @@ const EN_US: MoveLessonDialogTexts = {
 const RO_RO: MoveLessonDialogTexts = {
   title: 'Mută lecția',
   scheduleTitle: 'Programează lecția',
-  keepsLength: 'Lecția își păstrează durata de {n} minute. Punctele arată zilele comune libere.',
+  keepsLength: (minutes) =>
+    `Lecția își păstrează durata de ${minutes} minute. Punctele arată zilele comune libere.`,
   cancel: 'Renunță',
   save: 'Mută',
   schedule: 'Programează',
-  timesOn: 'Ore în {date}',
+  timesOn: (date) => `Ore în ${date}`,
   noTimes: 'Nicio oră din această zi nu vă convine amândurora. Alege altă zi sau orice oră.',
   anyTime: 'Orice oră',
   scoreYou: 'tu',
@@ -273,7 +275,7 @@ export default function MoveLessonDialog({
           {studentName}
         </Typography>
         <Typography variant="caption" color="text.secondary" display="block">
-          {t.keepsLength.replace('{n}', String(durationMinutes))}
+          {t.keepsLength(durationMinutes)}
         </Typography>
 
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={dayjsLocale}>
@@ -298,10 +300,7 @@ export default function MoveLessonDialog({
 
             <Box sx={{ flex: 1, minWidth: 0, pt: 1 }}>
               <Typography variant="caption" color="text.secondary" display="block">
-                {t.timesOn.replace(
-                  '{date}',
-                  date ? date.locale(dayjsLocale).format('ddd, D MMM') : ''
-                )}
+                {t.timesOn(date ? date.locale(dayjsLocale).format('ddd, D MMM') : '')}
               </Typography>
 
               <Box sx={{ maxHeight: 250, overflowY: 'auto', mt: 0.5, pr: 0.5 }}>

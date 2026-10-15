@@ -10,35 +10,35 @@ import { parseDate } from '../../util/schedulingDates'
 
 interface ConflictsPanelTexts {
   one: string
-  many: string
-  overlap: string
-  shortBreak: string
+  many: (count: number) => string
+  overlap: (name: string) => string
+  shortBreak: (minutes: number, name: string) => string
   teacherWeek: string
   teacherTemplate: string
-  studentWeek: string
-  studentTemplate: string
+  studentWeek: (name: string) => string
+  studentTemplate: (name: string) => string
 }
 
 const EN_US: ConflictsPanelTexts = {
   one: 'One thing to look at',
-  many: '{n} things to look at',
-  overlap: 'At the same time as {name}',
-  shortBreak: 'Less than {n} minutes after {name}',
+  many: (count) => `${count} things to look at`,
+  overlap: (name) => `At the same time as ${name}`,
+  shortBreak: (minutes, name) => `Less than ${minutes} minutes after ${name}`,
   teacherWeek: 'Outside your hours that week',
   teacherTemplate: 'Outside your usual hours',
-  studentWeek: 'Outside {name}’s hours that week',
-  studentTemplate: 'Outside {name}’s usual hours'
+  studentWeek: (name) => `Outside ${name}’s hours that week`,
+  studentTemplate: (name) => `Outside ${name}’s usual hours`
 }
 
 const RO_RO: ConflictsPanelTexts = {
   one: 'Un lucru de verificat',
-  many: '{n} lucruri de verificat',
-  overlap: 'În același timp cu {name}',
-  shortBreak: 'La mai puțin de {n} minute după {name}',
+  many: (count) => `${count} lucruri de verificat`,
+  overlap: (name) => `În același timp cu ${name}`,
+  shortBreak: (minutes, name) => `La mai puțin de ${minutes} minute după ${name}`,
   teacherWeek: 'În afara orelor tale din acea săptămână',
   teacherTemplate: 'În afara orelor tale obișnuite',
-  studentWeek: 'În afara orelor lui {name} din acea săptămână',
-  studentTemplate: 'În afara orelor obișnuite ale lui {name}'
+  studentWeek: (name) => `În afara orelor lui ${name} din acea săptămână`,
+  studentTemplate: (name) => `În afara orelor obișnuite ale lui ${name}`
 }
 
 const TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -81,14 +81,12 @@ export default function ConflictsPanel({ conflicts, students, onSelect }: Confli
     // No cast: the exhaustive Record is what makes a new ConflictKind a compile error here
     // rather than a blank line in the panel.
     const reasons: Record<ConflictKind, string> = {
-      overlap: t.overlap.replace('{name}', other),
-      short_break: t.shortBreak
-        .replace('{n}', String(SCHEDULING_CONFIG.MIN_BREAK_MINUTES))
-        .replace('{name}', other),
+      overlap: t.overlap(other),
+      short_break: t.shortBreak(SCHEDULING_CONFIG.MIN_BREAK_MINUTES, other),
       teacher_week: t.teacherWeek,
       teacher_template: t.teacherTemplate,
-      student_week: t.studentWeek.replace('{name}', nameOf(conflict.studentId)),
-      student_template: t.studentTemplate.replace('{name}', nameOf(conflict.studentId))
+      student_week: t.studentWeek(nameOf(conflict.studentId)),
+      student_template: t.studentTemplate(nameOf(conflict.studentId))
     }
     return reasons[conflict.kind]
   }
@@ -96,7 +94,7 @@ export default function ConflictsPanel({ conflicts, students, onSelect }: Confli
   return (
     <Alert severity="warning" sx={{ mb: 1.5 }}>
       <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
-        {conflicts.length === 1 ? t.one : t.many.replace('{n}', String(conflicts.length))}
+        {conflicts.length === 1 ? t.one : t.many(conflicts.length)}
       </Typography>
       <Stack spacing={0.5}>
         {conflicts.map((conflict, index) => (

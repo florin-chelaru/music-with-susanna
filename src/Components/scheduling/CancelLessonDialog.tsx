@@ -26,8 +26,8 @@ interface CancelLessonDialogTexts {
   offerMakeupHelp: string
   reason: string
   reasonPlaceholder: string
-  insideWindow: string
-  outsideWindow: string
+  insideWindow: (hours: number) => string
+  outsideWindow: (hours: number, teacher: string) => string
   yourTeacher: string
   teacherNote: string
   keep: string
@@ -42,10 +42,10 @@ const EN_US: CancelLessonDialogTexts = {
   offerMakeupHelp: 'You schedule the replacement separately afterwards.',
   reason: 'Reason (optional)',
   reasonPlaceholder: 'Shared with the other person',
-  insideWindow:
-    'It is less than {n} hours before the lesson. Payment is still due, and no makeup lesson will be scheduled.',
-  outsideWindow:
-    'There are more than {n} hours until the lesson. {teacher} will be in touch to arrange a makeup lesson.',
+  insideWindow: (hours) =>
+    `It is less than ${hours} hours before the lesson. Payment is still due, and no makeup lesson will be scheduled.`,
+  outsideWindow: (hours, teacher) =>
+    `There are more than ${hours} hours until the lesson. ${teacher} will be in touch to arrange a makeup lesson.`,
   yourTeacher: 'Your teacher',
   teacherNote: 'The student is notified and asked to acknowledge.',
   keep: 'Keep lesson',
@@ -61,10 +61,10 @@ const RO_RO: CancelLessonDialogTexts = {
   offerMakeupHelp: 'Programezi lecția de înlocuire separat, ulterior.',
   reason: 'Motiv (opțional)',
   reasonPlaceholder: 'Vizibil celeilalte persoane',
-  insideWindow:
-    'Sunt mai puțin de {n} ore până la lecție. Prin urmare, plata este obligatorie, și nu va fi programată o lecție de recuperare.',
-  outsideWindow:
-    'Sunt mai mult de {n} ore până la lecție. {teacher} te va contacta pentru a programa o lecție de recuperare.',
+  insideWindow: (hours) =>
+    `Sunt mai puțin de ${hours} ore până la lecție. Prin urmare, plata este obligatorie, și nu va fi programată o lecție de recuperare.`,
+  outsideWindow: (hours, teacher) =>
+    `Sunt mai mult de ${hours} ore până la lecție. ${teacher} te va contacta pentru a programa o lecție de recuperare.`,
   yourTeacher: 'Profesorul',
   teacherNote: 'Elevul este notificat și trebuie să confirme.',
   keep: 'Păstrează lecția',
@@ -158,13 +158,13 @@ export default function CancelLessonDialog({
               shown what that window is, and a policy stated as a number is one they can check
               against the clock. */}
           <Alert severity={withinWindow ? 'warning' : 'info'}>
-            {mode === 'student'
-              ? (withinWindow ? t.insideWindow : t.outsideWindow)
-                  .replace('{n}', String(cancellationWindowHours))
-                  // Their teacher by name, which is how a student refers to them. The generic
-                  // word stands in until the directory loads, so the sentence is never half-built.
-                  .replace('{teacher}', firstName(teacherName) ?? t.yourTeacher)
-              : t.teacherNote}
+            {mode !== 'student'
+              ? t.teacherNote
+              : withinWindow
+              ? t.insideWindow(cancellationWindowHours)
+              : // Their teacher by name, which is how a student refers to them. The generic word
+                // stands in until the directory loads, so the sentence is never half-built.
+                t.outsideWindow(cancellationWindowHours, firstName(teacherName) ?? t.yourTeacher)}
           </Alert>
 
           <TextField

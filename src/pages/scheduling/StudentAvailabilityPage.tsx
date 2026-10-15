@@ -46,11 +46,11 @@ interface StudentAvailabilityPageTexts {
   closedTitle: string
   closed: string
   weeklyTitle: string
-  needMore: string
+  needMore: (min: number) => string
   needPreferred: string
   ready: string
   warningTitle: string
-  warningBody: string
+  warningBody: (list: string) => string
   submit: string
   resubmit: string
   submittedTitle: string
@@ -68,12 +68,12 @@ const EN_US: StudentAvailabilityPageTexts = {
   closedTitle: 'This round is closed',
   closed: 'Availability is no longer being collected for this semester.',
   weeklyTitle: 'Your usual week',
-  needMore: 'Choose at least {min} time ranges in total.',
+  needMore: (min) => `Choose at least ${min} time ranges in total.`,
   needPreferred: 'Mark at least one time as Preferred.',
   ready: 'Ready to submit.',
   warningTitle: 'Some choices are unlikely to work',
-  warningBody:
-    'Your teacher is not free, or only reluctantly free, at: {list}. Marking times they prefer makes it much more likely you get one.',
+  warningBody: (list) =>
+    `Your teacher is not free, or only reluctantly free, at: ${list}. Marking times they prefer makes it much more likely you get one.`,
   submit: 'Submit availability',
   resubmit: 'Update submission',
   submittedTitle: 'Thank you',
@@ -91,12 +91,12 @@ const RO_RO: StudentAvailabilityPageTexts = {
   closedTitle: 'Runda este închisă',
   closed: 'Nu se mai colectează disponibilitate pentru acest semestru.',
   weeklyTitle: 'Săptămâna ta obișnuită',
-  needMore: 'Alege cel puțin {min} intervale în total.',
+  needMore: (min) => `Alege cel puțin ${min} intervale în total.`,
   needPreferred: 'Marchează cel puțin un interval ca Preferat.',
   ready: 'Poți trimite.',
   warningTitle: 'Unele alegeri sunt puțin probabile',
-  warningBody:
-    'În următoarele intervale selectate, profesorul are disponibilitate limitată: {list}. Șansele de a programa o lecție sunt mai mari în intervalele pe care profesorul le-a marcat drept „Disponibil” sau „Preferat”.',
+  warningBody: (list) =>
+    `În următoarele intervale selectate, profesorul are disponibilitate limitată: ${list}. Șansele de a programa o lecție sunt mai mari în intervalele pe care profesorul le-a marcat drept „Disponibil” sau „Preferat”.`,
   submit: 'Trimite disponibilitatea',
   resubmit: 'Actualizează răspunsul',
   submittedTitle: 'Mulțumim',
@@ -279,8 +279,7 @@ export default function StudentAvailabilityPage() {
           {unlikely.length > 0 && (
             <Alert severity="warning" sx={{ mt: 2 }}>
               <AlertTitle>{t.warningTitle}</AlertTitle>
-              {t.warningBody.replace(
-                '{list}',
+              {t.warningBody(
                 unlikely
                   .map(
                     (b) => `${weekdayName(b.dayOfWeek, dayjsLocale)} ${b.startTime}–${b.endTime}`
@@ -326,10 +325,7 @@ export default function StudentAvailabilityPage() {
                 <Stack component="span" sx={{ display: 'block' }}>
                   {missingCount > 0 && (
                     <Box component="span" sx={{ display: 'block' }}>
-                      {t.needMore.replace(
-                        '{min}',
-                        String(SCHEDULING_CONFIG.MIN_STUDENT_PREFERENCES)
-                      )}
+                      {t.needMore(SCHEDULING_CONFIG.MIN_STUDENT_PREFERENCES)}
                     </Box>
                   )}
                   {missingPreferred && (

@@ -17,14 +17,14 @@ interface SuggestedScheduleCardTexts {
   favoursYouHint: string
   favoursStudentsHint: string
   balancedHint: string
-  weightRange: string
-  weightSingle: string
+  weightRange: (from: number, to: number) => string
+  weightSingle: (from: number) => string
   averages: string
   satisfactionYou: string
   satisfactionStudents: string
   lessons: string
   unscheduled: string
-  missing: string
+  missing: (count: number) => string
   useThis: string
   selected: string
   edited: string
@@ -41,14 +41,14 @@ const EN_US: SuggestedScheduleCardTexts = {
   favoursYouHint: 'Leans towards your own preferred times.',
   favoursStudentsHint: 'Leans towards the times students asked for.',
   balancedHint: 'Weighs both sides about equally.',
-  weightRange: 'Your preference counts for {from}–{to}%',
-  weightSingle: 'Your preference counts for {from}%',
+  weightRange: (from, to) => `Your preference counts for ${from}–${to}%`,
+  weightSingle: (from) => `Your preference counts for ${from}%`,
   averages: 'Average satisfaction',
   satisfactionYou: 'You',
   satisfactionStudents: 'Your students',
   lessons: 'lessons',
   unscheduled: 'Could not be scheduled',
-  missing: 'missing {n}',
+  missing: (count) => `missing ${count}`,
   useThis: 'Use this',
   selected: 'Selected',
   edited: 'Edited',
@@ -65,14 +65,14 @@ const RO_RO: SuggestedScheduleCardTexts = {
   favoursYouHint: 'Înclină spre orele tale preferate.',
   favoursStudentsHint: 'Înclină spre orele cerute de elevi.',
   balancedHint: 'Le cântărește aproape egal.',
-  weightRange: 'Preferința ta cântărește {from}–{to}%',
-  weightSingle: 'Preferința ta cântărește {from}%',
+  weightRange: (from, to) => `Preferința ta cântărește ${from}–${to}%`,
+  weightSingle: (from) => `Preferința ta cântărește ${from}%`,
   averages: 'Satisfacție medie',
   satisfactionYou: 'Tu',
   satisfactionStudents: 'Elevii tăi',
   lessons: 'lecții',
   unscheduled: 'Nu au putut fi programați',
-  missing: 'lipsesc {n}',
+  missing: (count) => `lipsesc ${count}`,
   useThis: 'Alege varianta',
   selected: 'Selectată',
   edited: 'Modificat',
@@ -147,10 +147,8 @@ export default function SuggestedScheduleCard({
   const pct = (weight: number) => Math.round(weight * 100)
   const weightLabel =
     weightFrom === weightTo
-      ? t.weightSingle.replace('{from}', String(pct(weightFrom)))
-      : t.weightRange
-          .replace('{from}', String(pct(weightFrom)))
-          .replace('{to}', String(pct(weightTo)))
+      ? t.weightSingle(pct(weightFrom))
+      : t.weightRange(pct(weightFrom), pct(weightTo))
 
   // One line per student: how many lessons they got, on which recurring day and time.
   // The algorithm assigns specific dates, so a student can legitimately end up with more
@@ -244,7 +242,7 @@ export default function SuggestedScheduleCard({
               {line.lessonCount} {t.lessons} · {line.patterns.join(', ')}
               {line.missedLessons > 0 && (
                 <Typography component="span" variant="caption" color="warning.main">
-                  {` · ${t.missing.replace('{n}', String(line.missedLessons))}`}
+                  {` · ${t.missing(line.missedLessons)}`}
                 </Typography>
               )}
             </Typography>

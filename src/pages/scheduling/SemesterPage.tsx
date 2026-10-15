@@ -130,12 +130,12 @@ interface SemesterPageTexts {
   deleteRound: string
   reviveRound: string
   deleteRoundTitle: string
-  deleteRoundBody: string
-  deleteRoundSubmissions: string
+  deleteRoundBody: (round: number) => string
+  deleteRoundSubmissions: (count: number) => string
   deleteRoundWarning: string
   keepRound: string
   deadline: string
-  submittedOf: string
+  submittedOf: (done: number, total: number) => string
   roundAlreadyOpen: string
   roundStatusCollecting: string
   roundStatusReady: string
@@ -143,7 +143,6 @@ interface SemesterPageTexts {
   roundStatusAbandoned: string
   abandonRound: string
   abandonRoundTitle: string
-  abandonRoundBody: string
   abandonRoundKeepsAnswers: string
   keepGoing: string
   roundStatusFinalized: string
@@ -180,12 +179,12 @@ const EN_US: SemesterPageTexts = {
   deleteRound: 'Delete round',
   reviveRound: 'Revive',
   deleteRoundTitle: 'Delete this round?',
-  deleteRoundBody: 'Round {n} and everything collected in it will be removed.',
-  deleteRoundSubmissions: '{n} students have already answered.',
+  deleteRoundBody: (round) => `Round ${round} and everything collected in it will be removed.`,
+  deleteRoundSubmissions: (count) => `${count} students have already answered.`,
   deleteRoundWarning: 'Their answers go with it. A round that produced lessons cannot be deleted.',
   keepRound: 'Keep round',
   deadline: 'Deadline',
-  submittedOf: '{done} of {total} submitted',
+  submittedOf: (done, total) => `${done} of ${total} submitted`,
   roundAlreadyOpen: 'A round is already collecting availability. Close it before opening another.',
   roundStatusCollecting: 'Collecting',
   roundStatusReady: 'Ready',
@@ -193,7 +192,6 @@ const EN_US: SemesterPageTexts = {
   roundStatusAbandoned: 'Abandoned',
   abandonRound: 'Abandon round',
   abandonRoundTitle: 'Abandon this round?',
-  abandonRoundBody: 'Round {n} stops here. Students will no longer see it.',
   abandonRoundKeepsAnswers:
     'Their answers are kept, so the next round can start from them instead of asking again.',
   keepGoing: 'Keep going',
@@ -232,13 +230,13 @@ const RO_RO: SemesterPageTexts = {
   deleteRound: 'Șterge runda',
   reviveRound: 'Reia',
   deleteRoundTitle: 'Ștergi această rundă?',
-  deleteRoundBody: 'Runda {n} și tot ce s-a colectat în ea vor fi eliminate.',
-  deleteRoundSubmissions: '{n} elevi au răspuns deja.',
+  deleteRoundBody: (round) => `Runda ${round} și tot ce s-a colectat în ea vor fi eliminate.`,
+  deleteRoundSubmissions: (count) => `${count} elevi au răspuns deja.`,
   deleteRoundWarning:
     'Răspunsurile lor dispar odată cu ea. O rundă care a produs lecții nu poate fi ștearsă.',
   keepRound: 'Păstrează runda',
   deadline: 'Termen limită',
-  submittedOf: '{done} din {total} au trimis',
+  submittedOf: (done, total) => `${done} din ${total} au trimis`,
   roundAlreadyOpen:
     'O rundă colectează deja disponibilitate. Închide-o înainte de a deschide alta.',
   roundStatusCollecting: 'În colectare',
@@ -247,7 +245,6 @@ const RO_RO: SemesterPageTexts = {
   roundStatusAbandoned: 'Abandonată',
   abandonRound: 'Abandonează runda',
   abandonRoundTitle: 'Abandonezi această rundă?',
-  abandonRoundBody: 'Runda {n} se oprește aici. Elevii nu o vor mai vedea.',
   abandonRoundKeepsAnswers:
     'Răspunsurile lor se păstrează, ca runda următoare să pornească de la ele.',
   keepGoing: 'Continuă runda',
@@ -997,9 +994,7 @@ export default function SemesterPage() {
                           {t.deadline}:{' '}
                           {formatDeadline(round.deadline, localeManager.locale as SupportedLocale)}
                           {round.status === 'collecting' &&
-                            ` · ${t.submittedOf
-                              .replace('{done}', String(done))
-                              .replace('{total}', String(enrollments.length))}`}
+                            ` · ${t.submittedOf(done, enrollments.length)}`}
                         </Typography>
                       </Box>
                       {round.status === 'abandoned' && canReviveAny && !onMockData && (
@@ -1048,11 +1043,11 @@ export default function SemesterPage() {
             ]}>
             <DialogContent>
               <Typography variant="body2" sx={{ mb: 1 }}>
-                {t.deleteRoundBody.replace('{n}', String(deleteRoundTarget?.roundNumber ?? ''))}
+                {deleteRoundTarget && t.deleteRoundBody(deleteRoundTarget.roundNumber)}
               </Typography>
               {roundAnswers !== null && roundAnswers > 0 && (
                 <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-                  {t.deleteRoundSubmissions.replace('{n}', String(roundAnswers))}
+                  {t.deleteRoundSubmissions(roundAnswers)}
                 </Typography>
               )}
               <Alert severity="warning">{t.deleteRoundWarning}</Alert>

@@ -19,7 +19,7 @@ import { Cancellation, LessonInstance } from '../../util/scheduling'
 interface CancellationsPanelTexts {
   reviewTitle: string
   pendingTitle: string
-  showHistory: string
+  showHistory: (count: number) => string
   hideHistory: string
   billableLate: string
   billable: string
@@ -37,7 +37,7 @@ interface CancellationsPanelTexts {
 const EN_US: CancellationsPanelTexts = {
   reviewTitle: 'Cancellations to review',
   pendingTitle: 'Cancelled, awaiting your teacher',
-  showHistory: 'Past cancellations ({n})',
+  showHistory: (count) => `Past cancellations (${count})`,
   hideHistory: 'Hide past cancellations',
   billableLate: 'Billable (not cancelled in time)',
   billable: 'Billable',
@@ -55,7 +55,7 @@ const EN_US: CancellationsPanelTexts = {
 const RO_RO: CancellationsPanelTexts = {
   reviewTitle: 'Anulări de verificat',
   pendingTitle: 'Anulate, în așteptarea profesorului',
-  showHistory: 'Anulări anterioare ({n})',
+  showHistory: (count) => `Anulări anterioare (${count})`,
   hideHistory: 'Ascunde anulările anterioare',
   billableLate: 'De plată (nu a fost anulată la timp)',
   billable: 'De plată',
@@ -234,7 +234,7 @@ export default function CancellationsPanel({
             onClick={() => {
               setHistoryOpen((open) => !open)
             }}>
-            {historyOpen ? t.hideHistory : t.showHistory.replace('{n}', String(settled.length))}
+            {historyOpen ? t.hideHistory : t.showHistory(settled.length)}
           </Button>
           <Collapse in={historyOpen}>
             <Stack spacing={1.5} sx={{ mt: 1, px: 1 }}>

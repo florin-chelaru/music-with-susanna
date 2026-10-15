@@ -96,7 +96,7 @@ interface SchedulingRoundPageTexts {
   submitted: string
   pending: string
   closeRound: string
-  waitingOn: string
+  waitingOn: (pending: number) => string
   readyToClose: string
   statusCollecting: string
   statusReady: string
@@ -132,8 +132,8 @@ const EN_US: SchedulingRoundPageTexts = {
   submitted: 'Submitted',
   pending: 'Pending',
   closeRound: 'Close round & generate suggestions',
-  waitingOn:
-    'Waiting on {count} student(s). The round can be closed once everyone has submitted, or once the deadline passes.',
+  waitingOn: (pending) =>
+    `Waiting on ${pending} student(s). The round can be closed once everyone has submitted, or once the deadline passes.`,
   readyToClose: 'Everyone has submitted. The round is ready to close.',
   statusCollecting: 'Collecting',
   statusReady: 'Ready',
@@ -176,8 +176,8 @@ const RO_RO: SchedulingRoundPageTexts = {
   submitted: 'Trimis',
   pending: 'În așteptare',
   closeRound: 'Închide runda și generează sugestii',
-  waitingOn:
-    'Se așteaptă {count} elev(i). Runda poate fi închisă după ce trimit toți sau după expirarea termenului.',
+  waitingOn: (pending) =>
+    `Se așteaptă ${pending} elev(i). Runda poate fi închisă după ce trimit toți sau după expirarea termenului.`,
   readyToClose: 'Toți elevii au trimis. Runda poate fi închisă.',
   statusCollecting: 'În colectare',
   statusReady: 'Pregătită',
@@ -899,7 +899,7 @@ export default function SchedulingRoundPage() {
           )}
 
           <Alert severity={canClose ? 'success' : 'info'} sx={{ mb: 2 }}>
-            {canClose ? t.readyToClose : t.waitingOn.replace('{count}', String(pendingCount))}
+            {canClose ? t.readyToClose : t.waitingOn(pendingCount)}
           </Alert>
 
           <Stack direction="row" spacing={1} alignItems="center">

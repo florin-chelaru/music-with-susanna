@@ -10,10 +10,10 @@ import { countSemesterContents, SemesterContents } from '../../util/schedulingWr
 
 interface DeleteSemesterDialogTexts {
   title: string
-  body: string
-  students: string
-  lessons: string
-  rounds: string
+  body: (name: string) => string
+  students: (count: number) => string
+  lessons: (count: number) => string
+  rounds: (count: number) => string
   empty: string
   warning: string
   accountsKept: string
@@ -23,10 +23,10 @@ interface DeleteSemesterDialogTexts {
 
 const EN_US: DeleteSemesterDialogTexts = {
   title: 'Delete semester',
-  body: 'Deleting {name} also removes everything in it:',
-  students: '{n} enrollments',
-  lessons: '{n} lessons',
-  rounds: '{n} scheduling rounds',
+  body: (name) => `Deleting ${name} also removes everything in it:`,
+  students: (count) => `${count} enrollments`,
+  lessons: (count) => `${count} lessons`,
+  rounds: (count) => `${count} scheduling rounds`,
   empty: 'Nothing has been scheduled in it yet.',
   warning: 'Students lose these lessons from their own calendars. This cannot be undone here.',
   accountsKept:
@@ -37,10 +37,10 @@ const EN_US: DeleteSemesterDialogTexts = {
 
 const RO_RO: DeleteSemesterDialogTexts = {
   title: 'Șterge semestrul',
-  body: 'Ștergerea semestrului {name} elimină și tot ce conține:',
-  students: '{n} înscrieri',
-  lessons: '{n} lecții',
-  rounds: '{n} runde de programare',
+  body: (name) => `Ștergerea semestrului ${name} elimină și tot ce conține:`,
+  students: (count) => `${count} înscrieri`,
+  lessons: (count) => `${count} lecții`,
+  rounds: (count) => `${count} runde de programare`,
   empty: 'Nu s-a programat nimic în el încă.',
   warning:
     'Elevii pierd aceste lecții din propriile calendare. Operația nu poate fi anulată de aici.',
@@ -121,12 +121,12 @@ export default function DeleteSemesterDialog({
       ]}>
       <DialogContent>
         <Typography variant="body2" sx={{ mb: 1 }}>
-          {t.body.replace('{name}', semester.name)}
+          {t.body(semester.name)}
         </Typography>
         <Stack spacing={0.25} sx={{ mb: 1.5 }}>
           {lines.map((line) => (
             <Typography key={line.key} variant="body2" fontWeight={600}>
-              {line.label.replace('{n}', String(line.value))}
+              {line.label(line.value)}
             </Typography>
           ))}
           {contents && lines.length === 0 && (

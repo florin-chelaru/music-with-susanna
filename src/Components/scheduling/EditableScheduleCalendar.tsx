@@ -62,7 +62,7 @@ export type { EditableSlot } from '../../util/scheduling'
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
 interface EditableScheduleCalendarTexts {
-  conflictWith: string
+  conflictWith: (name: string) => string
   month: string
   week: string
   agenda: string
@@ -74,13 +74,13 @@ interface EditableScheduleCalendarTexts {
   lesson: string
   noLessons: string
   changedOne: string
-  changedMany: string
+  changedMany: (count: number) => string
   resetAll: string
   moveTo: string
   revertToSuggestion: string
   removeLesson: string
   needTimeOne: string
-  needTimeMany: string
+  needTimeMany: (count: number) => string
   scheduleIt: string
   averages: string
   satisfactionYou: string
@@ -93,7 +93,7 @@ interface EditableScheduleCalendarTexts {
 }
 
 const EN_US: EditableScheduleCalendarTexts = {
-  conflictWith: 'That time overlaps {name}.',
+  conflictWith: (name) => `That time overlaps ${name}.`,
   month: 'Month',
   week: 'Week',
   agenda: 'Agenda',
@@ -105,13 +105,13 @@ const EN_US: EditableScheduleCalendarTexts = {
   lesson: 'Lesson',
   noLessons: 'No lessons in this range.',
   changedOne: '1 lesson moved',
-  changedMany: '{n} lessons moved',
+  changedMany: (count) => `${count} lessons moved`,
   resetAll: 'Undo all',
   moveTo: 'Move to…',
   revertToSuggestion: 'Revert to suggestion',
   removeLesson: 'Remove this lesson',
   needTimeOne: 'One lesson still needs a time',
-  needTimeMany: '{n} lessons still need a time',
+  needTimeMany: (count) => `${count} lessons still need a time`,
   scheduleIt: 'Schedule',
   averages: 'Average satisfaction, as edited',
   satisfactionYou: 'You',
@@ -125,7 +125,7 @@ const EN_US: EditableScheduleCalendarTexts = {
 }
 
 const RO_RO: EditableScheduleCalendarTexts = {
-  conflictWith: 'Ora se suprapune cu {name}.',
+  conflictWith: (name) => `Ora se suprapune cu ${name}.`,
   month: 'Lună',
   week: 'Săptămână',
   agenda: 'Agendă',
@@ -137,13 +137,13 @@ const RO_RO: EditableScheduleCalendarTexts = {
   lesson: 'Lecție',
   noLessons: 'Nicio lecție în acest interval.',
   changedOne: 'O lecție mutată',
-  changedMany: '{n} lecții mutate',
+  changedMany: (count) => `${count} lecții mutate`,
   resetAll: 'Anulează tot',
   moveTo: 'Mută la…',
   revertToSuggestion: 'Revino la propunere',
   removeLesson: 'Șterge lecția',
   needTimeOne: 'O lecție așteaptă o oră',
-  needTimeMany: '{n} lecții așteaptă o oră',
+  needTimeMany: (count) => `${count} lecții așteaptă o oră`,
   scheduleIt: 'Programează',
   averages: 'Satisfacție medie, după modificări',
   satisfactionYou: 'Tu',
@@ -377,7 +377,7 @@ export default function EditableScheduleCalendar({
   function conflictMessage(index: number, candidate: SlotTime): string | null {
     const others = slots.filter((_, i) => i !== index)
     const clash = findConflict(candidate, others, 0)
-    return clash ? t.conflictWith.replace('{name}', nameOf(clash.studentId)) : null
+    return clash ? t.conflictWith(nameOf(clash.studentId)) : null
   }
 
   function applyMove(index: number, candidate: SlotTime) {
@@ -416,7 +416,7 @@ export default function EditableScheduleCalendar({
   function scheduleUnplaced(entry: UnscheduledLesson, candidate: SlotTime) {
     const clash = findConflict(candidate, slots, 0)
     if (clash) {
-      setMoveError(t.conflictWith.replace('{name}', nameOf(clash.studentId)))
+      setMoveError(t.conflictWith(nameOf(clash.studentId)))
       return
     }
     setMoveError(null)
@@ -563,9 +563,7 @@ export default function EditableScheduleCalendar({
       {unscheduled.length > 0 && (
         <Alert severity="warning" sx={{ mb: 1.5 }}>
           <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
-            {unscheduled.length === 1
-              ? t.needTimeOne
-              : t.needTimeMany.replace('{n}', String(unscheduled.length))}
+            {unscheduled.length === 1 ? t.needTimeOne : t.needTimeMany(unscheduled.length)}
           </Typography>
           <Stack spacing={0.5}>
             {unscheduled.map((entry, index) => (
@@ -608,7 +606,7 @@ export default function EditableScheduleCalendar({
         <Collapse in={movedCount > 0}>
           <Stack direction="row" alignItems="center" spacing={1}>
             <Typography variant="caption" color="text.secondary">
-              {movedCount === 1 ? t.changedOne : t.changedMany.replace('{n}', String(movedCount))}
+              {movedCount === 1 ? t.changedOne : t.changedMany(movedCount)}
             </Typography>
             <Button size="small" startIcon={<UndoIcon />} onClick={revertAll}>
               {t.resetAll}

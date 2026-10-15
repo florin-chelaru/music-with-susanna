@@ -21,7 +21,7 @@ interface EnrollmentDialogTexts {
   noStudentsAvailable: string
   duration: string
   totalLessons: string
-  totalLessonsHelper: string
+  totalLessonsHelper: (weeks: number) => string
   distribution: string
   spreadEven: string
   spreadStart: string
@@ -30,7 +30,7 @@ interface EnrollmentDialogTexts {
   spreadsAgree: string
   cancellationWindow: string
   cancellationWindowDefault: string
-  cancellationWindowOverride: string
+  cancellationWindowOverride: (hours: number) => string
   cancel: string
   save: string
 }
@@ -41,7 +41,7 @@ const EN_US: EnrollmentDialogTexts = {
   noStudentsAvailable: 'All students are already enrolled.',
   duration: 'Lesson Duration (min)',
   totalLessons: 'Total Lessons',
-  totalLessonsHelper: '{n} weeks in this semester',
+  totalLessonsHelper: (weeks) => `${weeks} weeks in this semester`,
   distribution: 'Spread',
   spreadEven: 'Even spread',
   spreadStart: 'More at the start',
@@ -50,7 +50,8 @@ const EN_US: EnrollmentDialogTexts = {
   spreadsAgree: 'These divide evenly across the term, so all three spreads give this.',
   cancellationWindow: 'Cancellation Window (h)',
   cancellationWindowDefault: 'The semester default. Change it to set one for this student alone.',
-  cancellationWindowOverride: 'Just for this student — the semester default is {n} h.',
+  cancellationWindowOverride: (hours) =>
+    `Just for this student — the semester default is ${hours} h.`,
   cancel: 'Cancel',
   save: 'Enroll'
 }
@@ -61,7 +62,7 @@ const RO_RO: EnrollmentDialogTexts = {
   noStudentsAvailable: 'Toți elevii sunt deja înscriși.',
   duration: 'Durată lecție (min)',
   totalLessons: 'Total lecții',
-  totalLessonsHelper: '{n} săptămâni în acest semestru',
+  totalLessonsHelper: (weeks) => `${weeks} săptămâni în acest semestru`,
   distribution: 'Repartizare',
   spreadEven: 'Uniformă',
   spreadStart: 'Mai multe la început',
@@ -71,7 +72,8 @@ const RO_RO: EnrollmentDialogTexts = {
   cancellationWindow: 'Fereastră anulare (h)',
   cancellationWindowDefault:
     'Valoarea implicită a semestrului. Schimb-o ca să o setezi doar pentru acest elev.',
-  cancellationWindowOverride: 'Doar pentru acest elev — valoarea semestrului este {n} h.',
+  cancellationWindowOverride: (hours) =>
+    `Doar pentru acest elev — valoarea semestrului este ${hours} h.`,
   cancel: 'Anulează',
   save: 'Înscrie'
 }
@@ -210,7 +212,7 @@ export default function EnrollmentDialog({
               required
               fullWidth
               margin="normal"
-              helperText={t.totalLessonsHelper.replace('{n}', String(weeks))}
+              helperText={t.totalLessonsHelper(weeks)}
               inputProps={{ min: 1 }}
             />
 
@@ -285,10 +287,7 @@ export default function EnrollmentDialog({
               helperText={
                 windowHours.trim() === String(defaultCancellationWindowHours)
                   ? t.cancellationWindowDefault
-                  : t.cancellationWindowOverride.replace(
-                      '{n}',
-                      String(defaultCancellationWindowHours)
-                    )
+                  : t.cancellationWindowOverride(defaultCancellationWindowHours)
               }
               inputProps={{ min: 0 }}
             />

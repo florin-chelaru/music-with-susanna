@@ -160,6 +160,29 @@ The `LocaleManager` class in [src/store/LocaleProvider.tsx](src/store/LocaleProv
 - Locale is persisted to localStorage and optionally reflected in `?hl=` URL params
 - MUI locale adapters are applied dynamically so MUI labels also localize
 
+**A text that takes a value is a function, never a placeholder string.** No `{n}` or `.replace()`
+anywhere:
+
+```ts
+// in the texts interface
+insideWindow: (hours: number) => string
+// EN
+insideWindow: (hours) => `It is less than ${hours} hours before the lesson.`,
+// RO
+insideWindow: (hours) => `Sunt mai puțin de ${hours} ore până la lecție.`,
+// at the call site
+t.insideWindow(cancellationWindowHours)
+```
+
+A placeholder string is unchecked twice over: drop the `.replace()` and the user reads a literal
+`{n}`, and nothing makes the Romanian carry the same placeholders as the English. As functions,
+both are the compiler's problem — a missing or mistyped argument will not build, and the two
+locales cannot drift apart because they implement one signature.
+
+Name parameters for what they are (`hours`, `name`, `count`), not after the placeholder they
+replaced. Keep them positional, as `EditorCardTexts.uploadingDescription` does. Interpolation is
+the only reason to reach for this — a text with nothing to substitute stays a plain string.
+
 ### Authentication & Authorization
 
 Firebase email/password auth. User role is read from RTDB at `users/{uid}/role`:
