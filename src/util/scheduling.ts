@@ -515,6 +515,16 @@ export function removeOverlaps(
   return result
 }
 
+/**
+ * A student's name, falling back to their id.
+ *
+ * The id is never what you want on screen, but it beats a blank: a conflict that says "overlaps"
+ * with nothing after it reads like a bug in the sentence rather than missing data.
+ */
+export function studentName(students: Record<string, { name: string }>, studentId: string): string {
+  return students[studentId]?.name ?? studentId
+}
+
 export const DEFAULT_CANCELLATION_WINDOW_HOURS = 24
 
 /**

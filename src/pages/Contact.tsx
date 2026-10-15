@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Container } from '@mui/material'
 import Toolbar from '@mui/material/Toolbar'
 import Grid2 from '@mui/material/Unstable_Grid2'

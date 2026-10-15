@@ -35,7 +35,7 @@ export default function UserPopover({}: UserPopoverProps) {
 
   const navigate = useNavigate()
 
-  const { user, dispatch } = useUser()
+  const { user } = useUser()
 
   return (
     <>

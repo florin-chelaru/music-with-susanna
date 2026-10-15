@@ -1,4 +1,4 @@
-import { Autocomplete, Chip, DialogContent, Stack, TextField, Typography } from '@mui/material'
+import { Autocomplete, Chip, DialogContent, Stack, TextField } from '@mui/material'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import MultiActionDialog from './MultiActionDialog'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'

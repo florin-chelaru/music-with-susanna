@@ -24,7 +24,7 @@ import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import { localizer } from '../../util/calendarLocalizer'
 import { calendarShellSx, monthAgendaSx, timeGridSx } from './calendarStyles'
 import {
@@ -39,7 +39,8 @@ import {
   SCHEDULING_CONFIG,
   SlotScores,
   SlotTime,
-  findConflict
+  findConflict,
+  studentName
 } from '../../util/scheduling'
 import {
   daysBetween,
@@ -266,9 +267,7 @@ export default function EditableScheduleCalendar({
   const t = localeManager.componentStrings(
     EditableScheduleCalendar.name
   ) as EditableScheduleCalendarTexts
-  const isRo = localeManager.locale === SupportedLocale.RO_RO
-  const dayjsLocale = isRo ? 'ro' : 'en'
-  dayjs.locale(dayjsLocale)
+  dayjs.locale(toDayjsLocale(localeManager.locale))
 
   // Month first, matching the lesson calendar. A term is three or four months long, and
   // stepping through it a week at a time was the only way to see what the solver produced.
@@ -372,7 +371,7 @@ export default function EditableScheduleCalendar({
   // MIN_BREAK_MINUTES is passed as 0 on purpose: the break is a constraint for the algorithm
   // to respect when it generates a schedule, not a rule to impose on the teacher. Dropping
   // one lesson immediately after another is a legitimate thing to want.
-  const nameOf = (studentId: string): string => students[studentId]?.name ?? studentId
+  const nameOf = (studentId: string): string => studentName(students, studentId)
 
   function conflictMessage(index: number, candidate: SlotTime): string | null {
     const others = slots.filter((_, i) => i !== index)
@@ -448,7 +447,9 @@ export default function EditableScheduleCalendar({
 
   // "Mon, 12 Oct, 10:00–10:45". Short enough to sit on one line next to a label.
   function formatSlotTime(time: SlotTime): string {
-    const day = parseDate(time.date).locale(dayjsLocale).format('ddd, D MMM')
+    const day = parseDate(time.date)
+      .locale(toDayjsLocale(localeManager.locale))
+      .format('ddd, D MMM')
     return `${day}, ${time.startTime}–${time.endTime}`
   }
 
@@ -634,8 +635,8 @@ export default function EditableScheduleCalendar({
       <Box ref={gridRef} sx={{ ...calendarSx, mt: 1, scrollMarginTop: 16 }}>
         <DnDCalendar
           localizer={localizer}
-          culture={dayjsLocale}
-          key={dayjsLocale}
+          culture={toDayjsLocale(localeManager.locale)}
+          key={toDayjsLocale(localeManager.locale)}
           events={events}
           views={[Views.MONTH, Views.WEEK, Views.AGENDA]}
           view={view}

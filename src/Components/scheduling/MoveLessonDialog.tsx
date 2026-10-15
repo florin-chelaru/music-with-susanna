@@ -18,7 +18,7 @@ import { Dayjs } from 'dayjs'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import MultiActionDialog from '../MultiActionDialog'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import {
   DEFAULT_DAY_END_HOUR,
   DEFAULT_DAY_START_HOUR,
@@ -176,8 +176,6 @@ export default function MoveLessonDialog({
 
   useMemo(() => localeManager.registerComponentStrings(MoveLessonDialog.name, TEXTS), [])
   const t = localeManager.componentStrings(MoveLessonDialog.name) as MoveLessonDialogTexts
-  const isRo = localeManager.locale === SupportedLocale.RO_RO
-  const dayjsLocale = isRo ? 'ro' : 'en'
 
   const [date, setDate] = useState<Dayjs | null>(null)
   const [startTime, setStartTime] = useState<string | null>(null)
@@ -278,7 +276,9 @@ export default function MoveLessonDialog({
           {t.keepsLength(durationMinutes)}
         </Typography>
 
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={dayjsLocale}>
+        <LocalizationProvider
+          dateAdapter={AdapterDayjs}
+          adapterLocale={toDayjsLocale(localeManager.locale)}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} divider={<Divider flexItem />}>
             <DateCalendar
               value={date}
@@ -300,7 +300,9 @@ export default function MoveLessonDialog({
 
             <Box sx={{ flex: 1, minWidth: 0, pt: 1 }}>
               <Typography variant="caption" color="text.secondary" display="block">
-                {t.timesOn(date ? date.locale(dayjsLocale).format('ddd, D MMM') : '')}
+                {t.timesOn(
+                  date ? date.locale(toDayjsLocale(localeManager.locale)).format('ddd, D MMM') : ''
+                )}
               </Typography>
 
               <Box sx={{ maxHeight: 250, overflowY: 'auto', mt: 0.5, pr: 0.5 }}>

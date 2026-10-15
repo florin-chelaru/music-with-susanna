@@ -29,7 +29,6 @@ import SchedulingRoundPage from './pages/scheduling/SchedulingRoundPage'
 import SemesterPage from './pages/scheduling/SemesterPage'
 import StudentAvailabilityPage from './pages/scheduling/StudentAvailabilityPage'
 import StudentSchedulePage from './pages/scheduling/StudentSchedulePage'
-import AvailabilityCalendarTest from './pages/scheduling/AvailabilityCalendarTest'
 import AnnouncementProvider from './store/AnnouncementProvider'
 import FabPositionProvider from './store/FabPositionProvider'
 import LocaleProvider from './store/LocaleProvider'
@@ -83,10 +82,6 @@ function App() {
                         <Route path="/resources/:resourceId" element={<ResourceDetailsPage />} />
                         <Route path="/privacy" element={<Privacy />} />
                         <Route path="/scheduling" element={<SchedulingPage />} />
-                        <Route
-                          path="/scheduling/availability-test"
-                          element={<AvailabilityCalendarTest />}
-                        />
                         <Route
                           path="/scheduling/semesters/:semesterId"
                           element={<SemesterPage />}

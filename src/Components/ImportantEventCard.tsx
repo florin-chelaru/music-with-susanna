@@ -5,9 +5,7 @@ import { Card, CardContent, CardMedia, Link } from '@mui/material'
 import Typography from '@mui/material/Typography'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
-import { useNavigate } from 'react-router-dom'
 import { withBaseURL } from '../util/string'
-import { AnnouncementContext, AnnouncementHandler } from '../store/AnnouncementProvider'
 
 interface ImportantEventCardTexts extends LocalizedData {
   content: React.ReactNode
@@ -56,14 +54,11 @@ const TEXTS = new Map<SupportedLocale, LocalizedData>([
 ])
 
 export default function ImportantEventCard() {
-  const announcementManager = useContext<AnnouncementHandler>(AnnouncementContext)
-  const strings = useContext<LocaleHandler>(LocaleContext).globalStringList
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(() => localeManager.registerComponentStrings(ImportantEventCard.name, TEXTS), [])
   const componentStrings = localeManager.componentStrings(
     ImportantEventCard.name
   ) as ImportantEventCardTexts
-  const navigate = useNavigate()
 
   return (
     <Card>

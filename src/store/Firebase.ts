@@ -27,7 +27,6 @@ export const analytics = getAnalytics(app)
 export const auth = getAuth(app)
 
 // temporary — remove after testing
-// ;(window as any)._auth = auth
 
 export const database = getDatabase(app)
 export const storage = getStorage(app)

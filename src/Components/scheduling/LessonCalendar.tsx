@@ -8,7 +8,7 @@ import { Calendar, View, Views } from 'react-big-calendar'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { downloadIcs, icsFileName, lessonsToIcs } from '../../util/icsExport'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import { localizer } from '../../util/calendarLocalizer'
 import CalendarToolbar from './CalendarToolbar'
 import { calendarShellSx, monthAgendaSx, timeGridSx } from './calendarStyles'
@@ -156,9 +156,7 @@ export default function LessonCalendar({
 
   useMemo(() => localeManager.registerComponentStrings(LessonCalendar.name, TEXTS), [])
   const t = localeManager.componentStrings(LessonCalendar.name) as LessonCalendarTexts
-  const isRo = localeManager.locale === SupportedLocale.RO_RO
-  const dayjsLocale = isRo ? 'ro' : 'en'
-  dayjs.locale(dayjsLocale)
+  dayjs.locale(toDayjsLocale(localeManager.locale))
 
   const [view, setView] = useState<View>(Views.MONTH)
   const [date, setDate] = useState<Date>(defaultDate ?? new Date())
@@ -232,7 +230,7 @@ export default function LessonCalendar({
     // lands after the first render, so a memo that ignored it would keep the titles it built
     // while the directory was still empty — every lesson reading "Lesson" until something else
     // happened to change `lessons`.
-    [lessons, students, subjectFor, dayjsLocale, t]
+    [lessons, students, subjectFor, toDayjsLocale(localeManager.locale), t]
   )
 
   // Canceled lessons stay visible but read as struck through, so a gap in the schedule is
@@ -334,8 +332,8 @@ export default function LessonCalendar({
       <Box sx={calendarSx}>
         <Calendar
           localizer={localizer}
-          culture={dayjsLocale}
-          key={dayjsLocale}
+          culture={toDayjsLocale(localeManager.locale)}
+          key={toDayjsLocale(localeManager.locale)}
           events={events}
           messages={messages}
           components={{
@@ -391,7 +389,9 @@ export default function LessonCalendar({
             </Stack>
 
             <Typography variant="body2" color="text.secondary">
-              {dayjs(selectedLesson.scheduledStart).locale(dayjsLocale).format('dddd, D MMMM YYYY')}
+              {dayjs(selectedLesson.scheduledStart)
+                .locale(toDayjsLocale(localeManager.locale))
+                .format('dddd, D MMMM YYYY')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {dayjs(selectedLesson.scheduledStart).format('HH:mm')} –{' '}

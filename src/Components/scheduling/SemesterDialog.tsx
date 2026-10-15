@@ -18,7 +18,7 @@ import 'dayjs/locale/ro'
 import { useContext, useMemo, useRef, useState } from 'react'
 import MultiActionDialog from '../MultiActionDialog'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR, Semester } from '../../util/scheduling'
 
 interface SemesterDialogTexts {
@@ -111,8 +111,6 @@ export default function SemesterDialog({ open, initial, onClose, onSave }: Semes
   useMemo(() => localeManager.registerComponentStrings(SemesterDialog.name, TEXTS), [])
   const t = localeManager.componentStrings(SemesterDialog.name) as SemesterDialogTexts
 
-  const dayjsLocale = localeManager.locale === SupportedLocale.RO_RO ? 'ro' : 'en'
-
   const formRef = useRef<HTMLFormElement>(null)
   const [startDate, setStartDate] = useState<Dayjs | null>(toDayjs(initial?.startDate))
   const [endDate, setEndDate] = useState<Dayjs | null>(toDayjs(initial?.endDate))
@@ -151,7 +149,9 @@ export default function SemesterDialog({ open, initial, onClose, onSave }: Semes
   }
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={dayjsLocale}>
+    <LocalizationProvider
+      dateAdapter={AdapterDayjs}
+      adapterLocale={toDayjsLocale(localeManager.locale)}>
       <MultiActionDialog
         open={open}
         onClose={onClose}

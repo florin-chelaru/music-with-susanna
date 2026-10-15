@@ -4,7 +4,7 @@ import { alpha } from '@mui/material/styles'
 import dayjs from 'dayjs'
 import { useContext, useMemo } from 'react'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import { averageScore, ScheduleSuggestion, SuggestedSlot } from '../../util/scheduling'
 import { SatisfactionSummary, ScoreChip } from './scoreDisplay'
 
@@ -133,8 +133,6 @@ export default function SuggestedScheduleCard({
 
   useMemo(() => localeManager.registerComponentStrings(SuggestedScheduleCard.name, TEXTS), [])
   const t = localeManager.componentStrings(SuggestedScheduleCard.name) as SuggestedScheduleCardTexts
-  const isRo = localeManager.locale === SupportedLocale.RO_RO
-  const dayjsLocale = isRo ? 'ro' : 'en'
 
   // Named from where the band sits rather than from a fixed strategy: the solver decides how
   // many distinct schedules exist, so there is no guarantee of exactly three.
@@ -167,7 +165,7 @@ export default function SuggestedScheduleCard({
       patterns: Array.from(
         new Set(
           slots.map((slot) => {
-            const day = dayjs(slot.date).locale(dayjsLocale).format('ddd')
+            const day = dayjs(slot.date).locale(toDayjsLocale(localeManager.locale)).format('ddd')
             // Show the full range, not just the start: lesson length varies per student
             // and is otherwise only visible on the Students tab.
             return `${day} ${slot.startTime}–${slot.endTime}`
@@ -178,7 +176,7 @@ export default function SuggestedScheduleCard({
       studentScore: averageScore(slots.map((slot) => slot.studentScore)),
       missedLessons: suggestion.missedLessonsByStudent[studentId] ?? 0
     }))
-  }, [suggestion, students, dayjsLocale])
+  }, [suggestion, students, toDayjsLocale(localeManager.locale)])
 
   // Missing a lesson and being unschedulable are different failures, and conflating them is what
   // let a student who is away for one week appear in the warning while also holding a full row of

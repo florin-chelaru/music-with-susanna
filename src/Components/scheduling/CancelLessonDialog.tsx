@@ -12,7 +12,7 @@ import dayjs from 'dayjs'
 import { useContext, useMemo, useState } from 'react'
 import MultiActionDialog from '../MultiActionDialog'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import { LessonInstance, isWithinCancellationWindow } from '../../util/scheduling'
 import { firstName } from '../../util/User'
 
@@ -111,8 +111,6 @@ export default function CancelLessonDialog({
 
   useMemo(() => localeManager.registerComponentStrings(CancelLessonDialog.name, TEXTS), [])
   const t = localeManager.componentStrings(CancelLessonDialog.name) as CancelLessonDialogTexts
-  const isRo = localeManager.locale === SupportedLocale.RO_RO
-  const dayjsLocale = isRo ? 'ro' : 'en'
 
   const [reason, setReason] = useState('')
   const [cancelAllForward, setCancelAllForward] = useState(false)
@@ -121,7 +119,7 @@ export default function CancelLessonDialog({
   if (!lesson) return null
 
   const withinWindow = isWithinCancellationWindow(lesson.scheduledStart, cancellationWindowHours)
-  const start = dayjs(lesson.scheduledStart).locale(dayjsLocale)
+  const start = dayjs(lesson.scheduledStart).locale(toDayjsLocale(localeManager.locale))
   const end = dayjs(lesson.scheduledEnd)
 
   return (

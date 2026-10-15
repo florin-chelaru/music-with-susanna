@@ -6,7 +6,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import { useContext, useMemo, useState } from 'react'
 import MultiActionDialog from '../MultiActionDialog'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 
 interface NewRoundDialogTexts {
   title: string
@@ -51,8 +51,6 @@ export default function NewRoundDialog({ open, onClose, onSave }: NewRoundDialog
 
   useMemo(() => localeManager.registerComponentStrings(NewRoundDialog.name, TEXTS), [])
   const t = localeManager.componentStrings(NewRoundDialog.name) as NewRoundDialogTexts
-  const isRo = localeManager.locale === SupportedLocale.RO_RO
-  const dayjsLocale = isRo ? 'ro' : 'en'
 
   // A week out is the common case; the teacher adjusts from there.
   const [deadline, setDeadline] = useState<Dayjs | null>(() =>
@@ -80,7 +78,9 @@ export default function NewRoundDialog({ open, onClose, onSave }: NewRoundDialog
         { label: t.save, autoFocus: true, onClick: handleSave }
       ]}>
       <DialogContent>
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={dayjsLocale}>
+        <LocalizationProvider
+          dateAdapter={AdapterDayjs}
+          adapterLocale={toDayjsLocale(localeManager.locale)}>
           <Box sx={{ pt: 0.5 }}>
             <DateTimePicker
               label={t.deadline}

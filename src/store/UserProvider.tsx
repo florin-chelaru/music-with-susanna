@@ -1,6 +1,6 @@
 import { onAuthStateChanged } from 'firebase/auth'
-import { Unsubscribe, get, ref } from 'firebase/database'
-import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react'
+import { get, ref } from 'firebase/database'
+import React, { createContext, useContext, useEffect, useReducer } from 'react'
 import { EMPTY_USER, LOADING_USER, User, UserRole } from '../util/User'
 import { auth, database } from './Firebase'
 
@@ -44,7 +44,6 @@ function userReducer(state: User, action: UserAction): User {
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, dispatch] = useReducer(userReducer, LOADING_USER)
-  const userNameUnsubscriberRef = useRef<Unsubscribe>()
 
   useEffect(() => {
     if (!user?.uid) {

@@ -33,7 +33,7 @@ import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
 import { LocaleContext, LocaleHandler } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import {
   AvailabilityBlock,
   AvailabilityLabel,
@@ -505,7 +505,7 @@ export default function AvailabilityCalendar({
 }: AvailabilityCalendarProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   const isRo = localeManager.locale === SupportedLocale.RO_RO
-  const dayjsLocale = isRo ? 'ro' : 'en'
+  const dayjsLocale = toDayjsLocale(localeManager.locale)
   const labelTitles = isRo ? LABEL_TITLE_RO : LABEL_TITLE_EN
 
   // Keep dayjs global locale in sync so DayColumnHeader renders in the right language

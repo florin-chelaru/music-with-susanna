@@ -20,7 +20,7 @@ import { useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import SchedulingNav from '../../Components/scheduling/SchedulingNav'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
 import {
@@ -28,7 +28,6 @@ import {
   dayWindow,
   EMPTY_AVAILABILITY,
   RoundStatus,
-  SchedulingRound,
   scoreForDayTime,
   SlotScores,
   SlotTime,
@@ -278,8 +277,6 @@ export default function SchedulingRoundPage() {
 
   useMemo(() => localeManager.registerComponentStrings(SchedulingRoundPage.name, TEXTS), [])
   const t = localeManager.componentStrings(SchedulingRoundPage.name) as SchedulingRoundPageTexts
-  const isRo = localeManager.locale === SupportedLocale.RO_RO
-  const dayjsLocale = isRo ? 'ro' : 'en'
 
   useEffect(() => {
     if (user.loading) return
@@ -660,7 +657,10 @@ export default function SchedulingRoundPage() {
       </Typography>
 
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {t.deadline}: {dayjs(round.deadline).locale(dayjsLocale).format('D MMMM YYYY, HH:mm')}{' '}
+        {t.deadline}:{' '}
+        {dayjs(round.deadline)
+          .locale(toDayjsLocale(localeManager.locale))
+          .format('D MMMM YYYY, HH:mm')}{' '}
         <Box component="span" sx={{ color: deadlinePassed ? 'warning.main' : 'text.secondary' }}>
           (
           {deadlinePassed
@@ -865,7 +865,9 @@ export default function SchedulingRoundPage() {
                     <Typography variant="caption" color="text.secondary">
                       {t.colSubmitted}:{' '}
                       {row.submittedAt
-                        ? dayjs(row.submittedAt).locale(dayjsLocale).format('D MMM, HH:mm')
+                        ? dayjs(row.submittedAt)
+                            .locale(toDayjsLocale(localeManager.locale))
+                            .format('D MMM, HH:mm')
                         : '—'}
                     </Typography>
                   </Box>
@@ -901,7 +903,9 @@ export default function SchedulingRoundPage() {
                     </TableCell>
                     <TableCell>
                       {row.submittedAt
-                        ? dayjs(row.submittedAt).locale(dayjsLocale).format('D MMM, HH:mm')
+                        ? dayjs(row.submittedAt)
+                            .locale(toDayjsLocale(localeManager.locale))
+                            .format('D MMM, HH:mm')
                         : '—'}
                     </TableCell>
                   </TableRow>

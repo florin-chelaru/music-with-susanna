@@ -418,11 +418,6 @@ export default function StudentsPage({}: StudentsPageProps) {
     )
   }, [user])
 
-  const [value, setValue] = useState('')
-  const valueChanged = (v: any) => {
-    setValue(v)
-  }
-
   return (
     <>
       <Container maxWidth="md" sx={{ pt: 3 }}>

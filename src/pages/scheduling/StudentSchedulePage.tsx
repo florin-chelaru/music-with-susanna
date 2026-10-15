@@ -18,7 +18,7 @@ import CancelLessonDialog, {
 import CancellationsPanel from '../../Components/scheduling/CancellationsPanel'
 import LessonCalendar from '../../Components/scheduling/LessonCalendar'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
 import {
@@ -130,8 +130,6 @@ export default function StudentSchedulePage() {
 
   useMemo(() => localeManager.registerComponentStrings(StudentSchedulePage.name, TEXTS), [])
   const t = localeManager.componentStrings(StudentSchedulePage.name) as StudentSchedulePageTexts
-  const isRo = localeManager.locale === SupportedLocale.RO_RO
-  const dayjsLocale = isRo ? 'ro' : 'en'
 
   useEffect(() => {
     if (user.loading) return
@@ -145,7 +143,7 @@ export default function StudentSchedulePage() {
   }, [user.loading, user.uid, user.role])
 
   const studentId = user.uid
-  const { semesters: enrolled, loading: enrolledLoading } = useMyEnrolledSemesters(studentId)
+  const { semesters: enrolled } = useMyEnrolledSemesters(studentId)
   const { teachers } = useMyTeachers(studentId)
   const { lessons: myLessons } = useMyLessons(studentId)
   const { cancellations } = useMyCancellations(studentId)
@@ -348,7 +346,9 @@ export default function StudentSchedulePage() {
                   )}
                   <Typography variant="caption" color="text.secondary">
                     {t.deadline}:{' '}
-                    {dayjs(request.round.deadline).locale(dayjsLocale).format('D MMM YYYY, HH:mm')}{' '}
+                    {dayjs(request.round.deadline)
+                      .locale(toDayjsLocale(localeManager.locale))
+                      .format('D MMM YYYY, HH:mm')}{' '}
                     <Box
                       component="span"
                       sx={{ color: passed ? 'warning.main' : 'text.secondary' }}>

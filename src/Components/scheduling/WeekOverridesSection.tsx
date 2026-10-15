@@ -9,7 +9,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import AvailabilityCalendar from './AvailabilityCalendar'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import { AvailabilityBlock } from '../../util/scheduling'
 import { parseDate, weekStartDate, weekStartOf } from '../../util/schedulingDates'
 
@@ -89,7 +89,6 @@ export default function WeekOverridesSection({
   useMemo(() => localeManager.registerComponentStrings(WeekOverridesSection.name, TEXTS), [])
   const t = localeManager.componentStrings(WeekOverridesSection.name) as WeekOverridesSectionTexts
   const locale = localeManager.locale as SupportedLocale
-  const dayjsLocale = locale === SupportedLocale.RO_RO ? 'ro' : 'en'
 
   const [showPicker, setShowPicker] = useState(false)
   const [pickedDate, setPickedDate] = useState<Dayjs | null>(null)
@@ -159,7 +158,9 @@ export default function WeekOverridesSection({
       </Stack>
 
       {showPicker && (
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={dayjsLocale}>
+        <LocalizationProvider
+          dateAdapter={AdapterDayjs}
+          adapterLocale={toDayjsLocale(localeManager.locale)}>
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
             <DatePicker
               label={t.weekOf}

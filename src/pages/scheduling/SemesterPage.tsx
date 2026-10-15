@@ -318,8 +318,6 @@ export default function SemesterPage() {
 
   useMemo(() => localeManager.registerComponentStrings(SemesterPage.name, TEXTS), [])
   const t = localeManager.componentStrings(SemesterPage.name) as SemesterPageTexts
-  const isRo = localeManager.locale === SupportedLocale.RO_RO
-  const dayjsLocale = isRo ? 'ro' : 'en'
 
   // ── Auth guard ───────────────────────────────────────────────────────────────
 
@@ -341,7 +339,7 @@ export default function SemesterPage() {
   // rest of the wiring lands. `onMockData` is the switch, and everything it guards disappears
   // with schedulingMocks.ts once Step P is done.
 
-  const { semester: remoteSemester, loading: semesterLoading } = useSemester(user.uid, semesterId)
+  const { semester: remoteSemester } = useSemester(user.uid, semesterId)
   const mockSemester = MOCK_SEMESTERS.find((s) => s.id === semesterId)
   const onMockData = Boolean(mockSemester)
   const semester = remoteSemester ?? mockSemester

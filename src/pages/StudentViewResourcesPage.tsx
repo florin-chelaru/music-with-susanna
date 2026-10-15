@@ -7,7 +7,7 @@ import { database } from '../store/Firebase'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../store/LocaleProvider'
 import { useUser } from '../store/UserProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
-import { Resource, useHomeworkResources } from '../util/resources'
+import { useHomeworkResources } from '../util/resources'
 import { get, ref } from 'firebase/database'
 import { SortOption, useResourcePageState } from './useResourcePageState'
 

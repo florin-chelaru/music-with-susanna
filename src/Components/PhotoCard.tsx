@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, CardMedia, CardProps, Typography, useMediaQuery, useTheme } from '@mui/material'
+import { Card, CardMedia, CardProps, Typography, useTheme } from '@mui/material'
 import { GREY } from '../theme/palette'
 
 interface PhotoCardProps extends CardProps {

@@ -1,8 +1,8 @@
 import { Alert, Box, Stack, Typography } from '@mui/material'
 import { useContext, useMemo } from 'react'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
-import { SCHEDULING_CONFIG } from '../../util/scheduling'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
+import { SCHEDULING_CONFIG, studentName } from '../../util/scheduling'
 import { ConflictKind, ScheduleConflict } from '../../util/schedulingConflicts'
 import { parseDate } from '../../util/schedulingDates'
 
@@ -69,12 +69,10 @@ export default function ConflictsPanel({ conflicts, students, onSelect }: Confli
 
   useMemo(() => localeManager.registerComponentStrings(ConflictsPanel.name, TEXTS), [])
   const t = localeManager.componentStrings(ConflictsPanel.name) as ConflictsPanelTexts
-  const isRo = localeManager.locale === SupportedLocale.RO_RO
-  const dayjsLocale = isRo ? 'ro' : 'en'
 
   if (conflicts.length === 0) return null
 
-  const nameOf = (studentId: string): string => students[studentId]?.name ?? studentId
+  const nameOf = (studentId: string): string => studentName(students, studentId)
 
   function reasonFor(conflict: ScheduleConflict): string {
     const other = conflict.otherStudentId ? nameOf(conflict.otherStudentId) : ''
@@ -110,7 +108,9 @@ export default function ConflictsPanel({ conflicts, students, onSelect }: Confli
             }}>
             <Typography variant="body2">
               {nameOf(conflict.studentId)} ·{' '}
-              {parseDate(conflict.date).locale(dayjsLocale).format('ddd, D MMM')}{' '}
+              {parseDate(conflict.date)
+                .locale(toDayjsLocale(localeManager.locale))
+                .format('ddd, D MMM')}{' '}
               {conflict.startTime}–{conflict.endTime}
             </Typography>
             <Typography variant="caption" color="text.secondary">

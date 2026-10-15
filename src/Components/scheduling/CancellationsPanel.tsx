@@ -11,7 +11,7 @@ import {
 import dayjs from 'dayjs'
 import { useContext, useMemo, useState } from 'react'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import { Cancellation, LessonInstance } from '../../util/scheduling'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
@@ -118,7 +118,6 @@ export default function CancellationsPanel({
   const localeManager = useContext<LocaleHandler>(LocaleContext)
   useMemo(() => localeManager.registerComponentStrings(CancellationsPanel.name, TEXTS), [])
   const t = localeManager.componentStrings(CancellationsPanel.name) as CancellationsPanelTexts
-  const dayjsLocale = localeManager.locale === SupportedLocale.RO_RO ? 'ro' : 'en'
 
   // Which ones the teacher has ticked to waive, before pressing Acknowledge.
   const [waived, setWaived] = useState<string[]>([])
@@ -152,7 +151,9 @@ export default function CancellationsPanel({
           {lesson && (
             <>
               {' · '}
-              {dayjs(lesson.scheduledStart).locale(dayjsLocale).format('ddd, D MMM, HH:mm')}
+              {dayjs(lesson.scheduledStart)
+                .locale(toDayjsLocale(localeManager.locale))
+                .format('ddd, D MMM, HH:mm')}
             </>
           )}
         </Typography>

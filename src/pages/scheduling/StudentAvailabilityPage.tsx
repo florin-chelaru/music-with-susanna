@@ -15,7 +15,7 @@ import AvailabilityCalendar from '../../Components/scheduling/AvailabilityCalend
 import SchedulingNav from '../../Components/scheduling/SchedulingNav'
 import WeekOverridesSection from '../../Components/scheduling/WeekOverridesSection'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
-import { SupportedLocale } from '../../util/SupportedLocale'
+import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
 import {
@@ -56,6 +56,7 @@ interface StudentAvailabilityPageTexts {
   resubmit: string
   submittedTitle: string
   submittedBody: string
+  saveFailed: string
   notFound: string
 }
 
@@ -79,6 +80,8 @@ const EN_US: StudentAvailabilityPageTexts = {
   resubmit: 'Update submission',
   submittedTitle: 'Thank you',
   submittedBody: 'Your availability has been sent. You can change it until the deadline passes.',
+  saveFailed:
+    'Your availability did not go through. Please try again, or tell your teacher directly.',
   notFound: 'Request not found.'
 }
 
@@ -102,6 +105,7 @@ const RO_RO: StudentAvailabilityPageTexts = {
   resubmit: 'Actualizează răspunsul',
   submittedTitle: 'Mulțumim',
   submittedBody: 'Disponibilitatea a fost trimisă. O poți modifica până la termenul limită.',
+  saveFailed: 'Disponibilitatea nu a ajuns. Încearcă din nou sau anunță-ți direct profesorul.',
   notFound: 'Cererea nu a fost găsită.'
 }
 
@@ -159,8 +163,7 @@ export default function StudentAvailabilityPage() {
   const t = localeManager.componentStrings(
     StudentAvailabilityPage.name
   ) as StudentAvailabilityPageTexts
-  const isRo = localeManager.locale === SupportedLocale.RO_RO
-  const dayjsLocale = isRo ? 'ro' : 'en'
+  const dayjsLocale = toDayjsLocale(localeManager.locale)
   const now = useNow()
 
   useEffect(() => {
@@ -337,6 +340,18 @@ export default function StudentAvailabilityPage() {
                 </Stack>
               )}
             </Alert>
+            {/* The student has just been told nothing. Without this the button simply fails to
+                advance, and their availability is silently missing from the round. */}
+            {saveError && (
+              <Alert
+                severity="error"
+                sx={{ mb: 2 }}
+                onClose={() => {
+                  setSaveError(false)
+                }}>
+                {t.saveFailed}
+              </Alert>
+            )}
             <Box>
               <Button
                 variant="contained"
