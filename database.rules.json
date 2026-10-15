@@ -245,7 +245,7 @@
                   ".read": "data.child('studentId').val() === auth.uid",
                   "status": {
                     ".write": "data.parent().child('studentId').val() === auth.uid && data.val() === 'scheduled'",
-                    ".validate": "newData.val() === 'canceled'"
+                    ".validate": "$tid === auth.uid || newData.val() === 'canceled'"
                   }
                 }
               }
@@ -321,7 +321,7 @@
           ".write": "newData.child('teacherId').val() === auth.uid || (!newData.exists() && data.child('teacherId').val() === auth.uid)",
           "status": {
             ".write": "$uid === auth.uid && data.val() === 'scheduled'",
-            ".validate": "newData.val() === 'canceled'"
+            ".validate": "newData.parent().child('teacherId').val() === auth.uid || newData.val() === 'canceled'"
           }
         }
       }
