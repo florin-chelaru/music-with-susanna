@@ -58,6 +58,7 @@ import {
   WeeklyAvailability
 } from '../../util/scheduling'
 import { findScheduleConflicts, ScheduleConflict } from '../../util/schedulingConflicts'
+import { notifyLessonCanceled, notifyRoundOpened } from '../../util/notifications'
 import {
   useCancellations,
   useLessonInstances,
@@ -79,7 +80,12 @@ import {
   saveEnrollment,
   saveTeacherAvailability
 } from '../../util/schedulingWrites'
-import { eachWeekStartInRange, formatDate, parseDate } from '../../util/schedulingDates'
+import {
+  eachWeekStartInRange,
+  formatDate,
+  formatDateTime,
+  parseDate
+} from '../../util/schedulingDates'
 import {
   MOCK_ENROLLMENTS_FALL,
   MOCK_ENROLLMENTS_SPRING,
@@ -277,16 +283,6 @@ function roundStatusLabel(status: RoundStatus, t: SemesterPageTexts): string {
     case 'finalized':
       return t.roundStatusFinalized
   }
-}
-
-function formatDeadline(ms: number, locale: SupportedLocale): string {
-  return new Intl.DateTimeFormat(locale === SupportedLocale.RO_RO ? 'ro-RO' : 'en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(new Date(ms))
 }
 
 function statusLabel(status: SemesterStatus, t: SemesterPageTexts): string {
@@ -572,10 +568,22 @@ export default function SemesterPage() {
     // The latest previous round is what the new one starts from, so students amend rather than
     // redraw a term. Its own status does not matter — abandoned or closed, the answers stand.
     const previous = [...rounds].sort((a, b) => b.roundNumber - a.roundNumber)[0]
-    // TODO (Step Q): notify every enrolled student that a round has opened.
-    void createRound(user.uid, semesterId, roundNumber, deadline, previous?.id).catch(() => {
-      setSaveStatus('error')
-    })
+    const teacherName = user.name ?? ''
+    const semesterName = semester?.name ?? ''
+    void createRound(user.uid, semesterId, roundNumber, deadline, previous?.id)
+      .then(() => {
+        // Only once the round exists. A student told to submit against a round that failed to
+        // open would find nothing to submit to.
+        notifyRoundOpened(
+          enrollments.map((enrollment) => enrollment.studentId),
+          teacherName,
+          semesterName,
+          deadline
+        )
+      })
+      .catch(() => {
+        setSaveStatus('error')
+      })
   }
 
   function handleConfirmCancel({ cancelAllForward, offerMakeup, reason }: CancelLessonOptions) {
@@ -590,7 +598,17 @@ export default function SemesterPage() {
     const affected = applyCancellation(lessons, target, cancelAllForward).filter(
       (lesson, index) => lesson.status === 'canceled' && lessons[index]?.status !== 'canceled'
     )
-    // TODO (Step Q): notify the student, with an iCalendar cancellation for their own calendar.
+    // Through the same helper the dialog used, so a student on their own window is judged
+    // against that window rather than the semester's.
+    const withinWindow = isWithinCancellationWindow(
+      target.scheduledStart,
+      cancellationWindowFor(
+        semester,
+        enrollments.find((e) => e.studentId === target.studentId)
+      )
+    )
+    const note = reason.trim() || undefined
+    const teacherName = user.name ?? ''
     void cancelLessons(
       user.uid,
       semesterId,
@@ -598,21 +616,35 @@ export default function SemesterPage() {
       {
         canceledBy: user.uid,
         otherParty: target.studentId,
-        // Through the same helper the dialog used, so a student on their own window is judged
-        // against that window rather than the semester's.
-        withinWindow: isWithinCancellationWindow(
-          target.scheduledStart,
-          cancellationWindowFor(
-            semester,
-            enrollments.find((e) => e.studentId === target.studentId)
-          )
-        ),
+        withinWindow,
         makeupOffered: offerMakeup,
-        reason: reason.trim() || undefined
+        reason: note
       }
-    ).catch(() => {
-      setSaveStatus('error')
-    })
+    )
+      .then(() => {
+        notifyLessonCanceled(
+          target.studentId,
+          {
+            lessonId: target.id,
+            start: target.scheduledStart,
+            end: target.scheduledEnd,
+            alsoAfter: affected.length - 1,
+            reason: note,
+            calendarSequence: target.calendarSequence ?? 0
+          },
+          {
+            teacherName,
+            studentName: students[target.studentId]?.name ?? '',
+            canceledByTeacher: true
+          },
+          // Titled with the teacher, which is what the lesson is called in the student's own
+          // calendar.
+          { subject: teacherName, makeupOffered: offerMakeup, withinWindow }
+        )
+      })
+      .catch(() => {
+        setSaveStatus('error')
+      })
   }
 
   // The calendar opens on today when the semester is running, and on its start date otherwise,
@@ -992,7 +1024,7 @@ export default function SemesterPage() {
                         </Stack>
                         <Typography variant="caption" color="text.secondary">
                           {t.deadline}:{' '}
-                          {formatDeadline(round.deadline, localeManager.locale as SupportedLocale)}
+                          {formatDateTime(round.deadline, localeManager.locale as SupportedLocale)}
                           {round.status === 'collecting' &&
                             ` · ${t.submittedOf(done, enrollments.length)}`}
                         </Typography>

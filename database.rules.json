@@ -8,6 +8,13 @@
         ".validate": "newData.child('role').val() === 'student'"
       }
     },
+    "userLocales": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "$uid === auth.uid",
+        ".validate": "newData.isString() && newData.val().length <= 10"
+      }
+    },
     "teachers": {
       "$tid": {
         ".write": "$tid === auth.uid",

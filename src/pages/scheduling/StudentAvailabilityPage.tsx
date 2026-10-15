@@ -35,6 +35,7 @@ import {
   useTeacherAvailability
 } from '../../util/schedulingHooks'
 import { saveSubmission } from '../../util/schedulingWrites'
+import { notifySubmissionReceived } from '../../util/notifications'
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
 interface StudentAvailabilityPageTexts {
@@ -343,13 +344,13 @@ export default function StudentAvailabilityPage() {
                 onClick={() => {
                   if (!teacherId || !semesterId || !roundId || !user.uid) return
                   setSaveError(false)
-                  // TODO (Step Q): notify the teacher that an answer has arrived.
                   void saveSubmission(teacherId, semesterId, roundId, user.uid, {
                     recurringPreferences: preferences,
                     weekOverrides: overrides
                   })
                     .then(() => {
                       setSubmitted(true)
+                      notifySubmissionReceived(teacherId, user.name ?? '', semester?.name ?? '')
                     })
                     .catch(() => {
                       setSaveError(true)

@@ -30,6 +30,7 @@ import {
   Semester
 } from '../../util/scheduling'
 import { cancelLessons } from '../../util/schedulingWrites'
+import { notifyLessonCanceled } from '../../util/notifications'
 import { formatCountdown } from '../../util/schedulingDates'
 import { useNow } from '../../util/useNow'
 import {
@@ -226,8 +227,12 @@ export default function StudentSchedulePage() {
       (lesson, index) => lesson.status === 'canceled' && lessons[index]?.status !== 'canceled'
     )
     const enrolment = enrolled.find(({ semester }) => semester.id === target.semesterId)
-    // TODO (Step Q): notify the teacher, with an iCalendar cancellation.
-    //
+    const withinWindow = isWithinCancellationWindow(
+      target.scheduledStart,
+      cancellationWindowFor(enrolment?.semester, enrolment?.enrollment)
+    )
+    const note = reason.trim() || undefined
+    const studentName = user.name ?? ''
     // withinWindow is written by the student and the teacher could not trust it on its own —
     // but canceledAt is the server's clock, which is the fact they actually read.
     void cancelLessons(
@@ -238,16 +243,35 @@ export default function StudentSchedulePage() {
         canceledBy: user.uid,
         otherParty: target.teacherId,
         // The same number the dialog just quoted them, from the same helper.
-        withinWindow: isWithinCancellationWindow(
-          target.scheduledStart,
-          cancellationWindowFor(enrolment?.semester, enrolment?.enrollment)
-        ),
+        withinWindow,
         makeupOffered: false,
-        reason: reason.trim() || undefined
+        reason: note
       }
-    ).catch(() => {
-      setCancelError(true)
-    })
+    )
+      .then(() => {
+        notifyLessonCanceled(
+          target.teacherId,
+          {
+            lessonId: target.id,
+            start: target.scheduledStart,
+            end: target.scheduledEnd,
+            alsoAfter: affected.length - 1,
+            reason: note,
+            calendarSequence: target.calendarSequence ?? 0
+          },
+          {
+            teacherName: teachers[target.teacherId]?.name ?? '',
+            studentName,
+            canceledByTeacher: false
+          },
+          // Titled with the student, which is what the lesson is called in the teacher's own
+          // calendar.
+          { subject: studentName, makeupOffered: false, withinWindow }
+        )
+      })
+      .catch(() => {
+        setCancelError(true)
+      })
   }
 
   // The calendar opens on today while a semester is running, so a student lands on the weeks

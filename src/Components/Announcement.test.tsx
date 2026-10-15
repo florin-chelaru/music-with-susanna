@@ -8,6 +8,8 @@ import Announcement from './Announcement'
 jest.mock('../store/UserProvider', () => ({ useUser: jest.fn() }))
 // Firebase.ts initializes app/db at module level — mock the whole module to prevent that
 jest.mock('../store/Firebase', () => ({ database: {}, auth: {}, storage: {}, analytics: {} }))
+// LocaleProvider watches auth to remember which language to write to this reader in.
+jest.mock('firebase/auth')
 
 beforeEach(() => {
   localStorage.setItem('locale', SupportedLocale.EN_US)

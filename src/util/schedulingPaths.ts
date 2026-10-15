@@ -95,6 +95,15 @@ export const userPath = (uid: string): string => `users/${uid}`
 export const studentTeachersPath = (uid: string): string => `students/${uid}/teachers`
 
 /**
+ * The language to write to someone in.
+ *
+ * Its own node rather than a field on the user record: `users/$uid` validates that the record it
+ * is given has `role === 'student'`, and a teacher saving their own language must not have to
+ * satisfy a rule about students.
+ */
+export const userLocalePath = (uid: string): string => `userLocales/${uid}`
+
+/**
  * Where a deleted semester and everything it owned is archived.
  *
  * Deletes in this repo are always soft — the homework, resources, videos and posts paths all do

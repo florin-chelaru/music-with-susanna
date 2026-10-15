@@ -1,9 +1,12 @@
-import React, { createContext, useMemo, useState } from 'react'
+import React, { createContext, useEffect, useMemo, useState } from 'react'
 import { createTheme, ThemeProvider, useTheme } from '@mui/material'
 import * as muiLocales from '@mui/material/locale'
+import { onAuthStateChanged } from 'firebase/auth'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { EN_US, RO_RO } from './LocaleSettings'
 import { useSearchParams } from 'react-router-dom'
+import { auth } from './Firebase'
+import { saveMyLocale, seedMyLocale } from '../util/userLocale'
 
 export interface LocalizedData {
   [key: string]: string | React.ReactNode | any
@@ -157,6 +160,9 @@ class LocaleManagerWrapper implements LocaleHandler {
   changeLocale(locale: SupportedLocale) {
     this.localeManager.changeLocale(locale)
     this.setLocaleState(locale)
+    // Mirrored to the database as well as localStorage, so notification emails can be written in
+    // the reader's language rather than the sender's. Fire-and-forget by design — see userLocale.
+    saveMyLocale(locale)
     // this.setSearchParams({ hl: locale })
   }
 
@@ -217,6 +223,16 @@ const LocaleProvider = ({ defaultLocale, children }: LocaleProviderProps) => {
   const localeWrapper = useMemo(
     () => new LocaleManagerWrapper(localeManager, setLocale, setSearchParams),
     [locale]
+  )
+
+  // Fill in a language for anyone who has never changed one, so the first email they are sent
+  // is in the language they have been reading the site in rather than the fallback.
+  useEffect(
+    () =>
+      onAuthStateChanged(auth, (user) => {
+        if (user?.uid) seedMyLocale(user.uid, localeManager.locale)
+      }),
+    [localeManager]
   )
 
   return (

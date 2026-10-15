@@ -1481,7 +1481,7 @@ Two corrections to the list below, both found by writing it against the deployed
 
 ---
 
-#### Step M2 — Firebase security rules
+#### ~~Step M2 — Firebase security rules~~ ✅ DONE
 
 **Must land before Step N.** Every step from N onward writes real data; until these rules exist,
 those paths are governed by whatever the Firebase console currently has, which may well be a
@@ -1651,7 +1651,7 @@ Two constraints already fixed by earlier steps:
 
 ---
 
-#### Step P — Wire student pages to RTDB (largely done)
+#### ~~Step P — Wire student pages to RTDB~~ ✅ DONE
 
 *(2026-10-14: two gaps closed. A closed-but-unconfirmed round showed the student **nothing** —
 the request vanished the moment the teacher closed it and no lessons existed yet, so their
@@ -1731,7 +1731,7 @@ the teacher, since presence of a record is the signal the round page depends on.
 
 ---
 
-#### Step Q — Cancellation flow
+#### ~~Step Q — Cancellation flow~~ ✅ DONE
 
 - Student cancel: write `Cancellation` record + update `LessonInstance` status; send notification to teacher
 - Teacher cancel: same, reversed; optionally create makeup `LessonInstance`
@@ -1787,6 +1787,32 @@ mentions the other.
 panel's guess at whose cancellation it was (`lesson?.studentId ?? otherParty`, which named the
 *teacher* whenever the student cancelled and the lesson had not loaded). `otherParty` stays
 because the deployed read rule on the teacher's own copy is written against it.
+
+**Notifications (built 2026-10-15).** All five send through the `sendEmail` cloud function, which
+holds the Gmail credentials and decides who may write to whom — it reads `teachers/{uid}/students`
+or `students/{uid}/teachers` and refuses anything outside that set, so there is no recipient check
+in the client. Every send is best-effort and logged rather than surfaced: a lesson that was
+cancelled is cancelled whether or not the mail went out, and telling a student their cancellation
+failed when it did not would be worse than a missing email.
+
+Reading `sendEmail`'s source rather than its description corrected four things — `calendarEvent`
+needs `title`/`start`/`end` as well as `uid`, the body needs at least one of `text`/`html`, errors
+come back as plain text, and the recipient check runs before field validation so a missing `to` is
+a 403. CLAUDE.md now says so.
+
+**The reader's language, not the sender's (decided 2026-10-15).** The locale lived only in
+localStorage, so an email could only be written in whatever the *sender* happened to be using —
+Susanna working in English would write to a Romanian parent in English. It is now mirrored to
+`/userLocales/{uid}`, readable by any signed-in user and writable only by its owner, with English
+as the fallback. Its own node rather than a field on the user record: `users/$uid` validates that
+the record it is given has `role === 'student'`, and a teacher saving their own language must not
+have to satisfy a rule about students. Seeded on sign-in for anyone who has never touched the
+language switch, so the first email they get is in the language they have been reading the site in.
+
+**One email per bundle, not per lesson.** A student who cancels the rest of their term should not
+bury their teacher in twenty messages. The count travels in the text. The iCalendar part rides
+along only for a single lesson — one message can carry one event — so a swept-up bundle leaves the
+later lessons in the recipient's calendar until Step R's export can clear them.
 
 ---
 

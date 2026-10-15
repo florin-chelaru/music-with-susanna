@@ -65,6 +65,7 @@ import {
   confirmSchedule,
   reviveRound
 } from '../../util/schedulingWrites'
+import { notifyScheduleConfirmed } from '../../util/notifications'
 import {
   formatCountdown,
   formatMinutes,
@@ -442,10 +443,21 @@ export default function SchedulingRoundPage() {
       scheduledEnd: slotDateTime(slot.date, slot.endTime).valueOf(),
       timezone: semester.timezone
     }))
-    // TODO (Step Q): notify every student that their schedule is confirmed.
+    // One line per student rather than per lesson: twenty emails about twenty lessons is not a
+    // notification, it is a mailbox.
+    const perStudent: Record<string, { count: number; firstStart: number }> = {}
+    lessons.forEach((lesson) => {
+      const seen = perStudent[lesson.studentId]
+      perStudent[lesson.studentId] = {
+        count: (seen?.count ?? 0) + 1,
+        firstStart: Math.min(seen?.firstStart ?? Infinity, lesson.scheduledStart)
+      }
+    })
+    const semesterName = semester.name
     void confirmSchedule(user.uid, semesterId, roundId, lessons)
       .then(() => {
         setJustConfirmed(true)
+        notifyScheduleConfirmed(perStudent, semesterName)
       })
       .catch((error) => {
         setWriteError(String(error))

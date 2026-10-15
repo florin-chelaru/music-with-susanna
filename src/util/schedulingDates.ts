@@ -1,4 +1,5 @@
 import dayjs, { Dayjs } from 'dayjs'
+import { SupportedLocale } from './SupportedLocale'
 
 // Shared date/time helpers for the scheduling feature.
 //
@@ -120,6 +121,32 @@ export function formatMinutes(minutes: number): string {
 // Round up to the next point on the snap grid. snapUpMinutes(67, 15) → 75
 export function snapUpMinutes(minutes: number, snap: number): number {
   return Math.ceil(minutes / snap) * snap
+}
+
+/**
+ * A date and time in the reader's language.
+ *
+ * Through `Intl` rather than dayjs, which needs its locales imported before it will translate a
+ * month name — and a month silently left in English is the kind of thing nobody notices until a
+ * parent reads it.
+ *
+ * `weekday` is for prose: a deadline in a table is read alongside the other rows and needs only
+ * the date, while a sentence about a cancelled lesson is read on its own, where "Tuesday" saves
+ * the reader working it out.
+ */
+export function formatDateTime(
+  ms: number,
+  locale: SupportedLocale,
+  options: { weekday?: boolean } = {}
+): string {
+  return new Intl.DateTimeFormat(locale === SupportedLocale.RO_RO ? 'ro-RO' : 'en-US', {
+    weekday: options.weekday ? 'long' : undefined,
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(new Date(ms))
 }
 
 // Coarse "time left" label: "2d 5h", "5h 20m", "18m". Deliberately never finer than
