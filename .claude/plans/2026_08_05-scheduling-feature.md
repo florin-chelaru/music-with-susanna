@@ -1869,6 +1869,106 @@ measured with `TextEncoder`, which every browser has and jsdom does not.
 
 ---
 
+#### Step T — Partial rounds: scheduling a student who joins late
+
+**The gap.** A student who enrolls in week 6 can only be scheduled by opening a new round, which
+asks the whole studio to resubmit and re-solves a timetable everyone has already arranged their
+lives around. The teacher wants to ask one person when they are free and fit them into what is
+left.
+
+**The insight that shapes the design.** "Restrict a round to some students" and "block the times
+other students already have" are not two features. They are one question — *what capacity is
+left?* — asked in two places: the picker the new student fills in, and the solve that places them.
+Compute it once.
+
+---
+
+##### The round learns who it is for
+
+`SchedulingRound` gains `studentIds?: Record<string, true>`. Absent means everyone enrolled, which
+is every round that exists today, so nothing needs migrating. Present means only these.
+
+Three consequences:
+
+- `StudentSchedulePage` filters the rounds it offers by membership. Today it shows every
+  `collecting` round in an enrolled semester.
+- The rules must enforce it too. A student may currently write a submission to any round in a
+  semester they are enrolled in; with partial rounds that would let someone outside the round
+  pollute the solve. The `studentSubmissions` write rule gains a membership check.
+- The rounds list shows the scope, so a teacher can tell "Round 3 · everyone" from
+  "Round 3 · Diana" at a glance.
+
+##### Remaining capacity
+
+The teacher's free time for this round is their availability minus the lessons already standing,
+each widened by `MIN_BREAK_MINUTES` on both sides — otherwise the solver will happily propose a
+lesson that begins the second another ends, which `ConflictsPanel` would immediately flag. The
+solver should not suggest something the app would then warn about. Hand-placing such a slot in
+*Adjust the schedule* stays possible, with the warning: the solver is stricter than the teacher,
+which is the right way round.
+
+Cancelled lessons do not block. Lessons belonging to the round's own students do not block either,
+so re-running a round for the same person does not fight its own previous answer.
+
+**Where it is computed, twice over.**
+
+- *For the solve* — live from `lessonInstances`, at the moment the round is closed. This is the
+  one that has to be right.
+- *For the student's picker* — snapshotted when the round opens, into its own node
+  (`roundCapacity/teachers/{tid}/semesters/{sid}/rounds/{rid}`), **not** onto the round record.
+  `useMyEnrolledSemesters` subscribes to every round of every enrolled semester, and a term's
+  worth of busy intervals on each one would be paid for on every student page load. The capacity
+  is read only when a student actually opens that round.
+
+The two can drift if the teacher cancels or adds a lesson mid-round. That is tolerable in both
+directions: a cancellation gives the solver more room than the student saw, and a new lesson gives
+it less, which is the same over-subscription any round can have. The teacher can hand-place.
+
+##### Solving against it
+
+`SchedulingInput` gains `blockedIntervals?: Record<string, TimeSpan[]>`, keyed by date.
+
+The subtraction belongs where the *teacher's* blocks are resolved, not inside
+`getEffectiveBlocksForDate` — that helper serves both sides, and a student's own availability must
+not be cut down by the teacher's other lessons. A `teacherBlocksForDate(availability, blocked,
+date)` wrapper keeps the two apart.
+
+A mid-term round should also not schedule into the past: pass `max(semesterStart, today)` as the
+start. Worth checking whether anything else relies on `semesterStart` being the semester's own.
+
+##### Confirming without disturbing anyone
+
+`confirmSchedule` currently writes `confirmedSchedules/.../semesters/{sid}` as one record per
+semester and sets `lessonCount` — so confirming a second round overwrites the first's account of
+itself. Re-keying it per round (`.../semesters/{sid}/rounds/{rid}`) fixes that, and incidentally
+fixes the long-standing note that confirming the same semester twice duplicates lessons.
+
+Lessons themselves already only come from the slots passed in, so existing ones are untouched.
+
+##### Enrolling the late joiner
+
+`EnrollmentDialog` defaults `totalLessons` to one a week across the whole term and tells the
+teacher "{n} weeks in this semester". For someone joining in week 6 both numbers are wrong. When
+the semester is already running, the count should be the weeks *remaining*.
+
+The natural prompt: enrolling a student into an active semester offers to open a round for just
+them, which is the whole flow in one step.
+
+---
+
+##### Open questions
+
+1. **May a partial round move existing lessons?** Default no — not disturbing people is the point.
+   But a teacher with a tight timetable might prefer "find the best fit even if Barbara moves by
+   fifteen minutes". If that is ever wanted it is a different feature, closer to Step Q3.
+2. **Does the student see taken times removed, or marked as taken?** Removing is simpler and reads
+   honestly as "the teacher is not free then". Marking them shows the shape of the teacher's week
+   to someone who is not in it.
+3. **Pro-rated lessons: automatic or the teacher's call?** Weeks remaining is computable; whether
+   a late joiner gets exactly that many is a studio decision.
+
+---
+
 #### Step S — Firebase security rules
 
 **Moved — see Step M2**, which now sits before the wiring steps. Rules must exist before the first
