@@ -2,6 +2,7 @@ import { get, onValue, ref, Unsubscribe } from 'firebase/database'
 import { useEffect, useMemo, useState } from 'react'
 import { database } from '../store/Firebase'
 import {
+  allSubmissionsPath,
   cancellationsPath,
   confirmedSchedulePath,
   enrollmentsPath,
@@ -203,6 +204,27 @@ export function useStudentSubmissions(teacherId: Id, semesterId: Id, roundId: Id
  * Not keyed by strategy: the three fixed strategies are gone, and the weight sweep yields
  * however many distinct schedules genuinely exist — which is a different number per round.
  */
+/**
+ * Who has answered, across every round of a semester.
+ *
+ * One subscription rather than one per round: the rounds list renders them in a loop, and a hook
+ * cannot be called from inside one. The teacher may read the whole subtree, so the shape RTDB
+ * returns is already what the caller wants.
+ */
+export function useAllRoundSubmissions(teacherId: Id, semesterId: Id) {
+  const { value, loading } = useNode<
+    Record<string, { students?: Record<string, StudentSubmission> }>
+  >(teacherId && semesterId ? allSubmissionsPath(teacherId, semesterId) : null)
+  const byRound = useMemo(() => {
+    const out: Record<string, Record<string, StudentSubmission>> = {}
+    Object.entries(value ?? {}).forEach(([roundId, node]) => {
+      out[roundId] = node?.students ?? {}
+    })
+    return out
+  }, [value])
+  return { submissionsByRound: byRound, loading }
+}
+
 export function useScheduleSuggestions(teacherId: Id, semesterId: Id, roundId: Id) {
   const { value, loading } = useNode<Record<string, ScheduleSuggestion>>(
     teacherId && semesterId && roundId ? suggestionsPath(teacherId, semesterId, roundId) : null

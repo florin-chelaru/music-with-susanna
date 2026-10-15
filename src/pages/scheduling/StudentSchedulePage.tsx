@@ -108,7 +108,7 @@ const TEXTS = new Map<SupportedLocale, LocalizedData>([
   [SupportedLocale.RO_RO, RO_RO]
 ])
 
-// ─── Mock lookups ─────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 /** A lesson as the student's own index stores it: the teacher and semester travel with it. */
 type MyLesson = LessonInstance & { teacherId: string; semesterId: string }

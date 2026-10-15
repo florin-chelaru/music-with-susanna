@@ -74,14 +74,6 @@ import {
   toDayOfWeek
 } from '../../util/schedulingDates'
 import { useNow } from '../../util/useNow'
-import {
-  enrollmentsForSemester,
-  MOCK_SEMESTERS,
-  MOCK_STUDENTS,
-  MOCK_SUBMISSIONS_BY_ROUND,
-  MOCK_TEACHER_AVAILABILITY,
-  roundsForSemester
-} from '../../data/schedulingMocks'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
@@ -289,50 +281,24 @@ export default function SchedulingRoundPage() {
     }
   }, [user.loading, user.uid, user.role])
 
-  // Real rounds come from RTDB; the mock semesters are resolved alongside them so the earlier
-  // steps' surfaces stay reachable. All of this goes with schedulingMocks.ts after Step P.
-  const mockSemester = MOCK_SEMESTERS.find((s) => s.id === semesterId)
-  const onMockData = Boolean(mockSemester)
+  const { semester: remoteSemester } = useSemester(user.uid, semesterId)
+  const { rounds: remoteRounds } = useSchedulingRounds(user.uid, semesterId)
+  const { enrollments: remoteEnrollments } = useStudentEnrollments(user.uid, semesterId)
+  const { submissions: remoteSubmissions } = useStudentSubmissions(user.uid, semesterId, roundId)
+  const { availability: remoteAvailability } = useTeacherAvailability(user.uid, semesterId)
+  const { students: teacherStudents } = useTeacherStudents(user.uid)
 
-  const { semester: remoteSemester } = useSemester(
-    onMockData ? null : user.uid,
-    onMockData ? null : semesterId
-  )
-  const { rounds: remoteRounds } = useSchedulingRounds(
-    onMockData ? null : user.uid,
-    onMockData ? null : semesterId
-  )
-  const { enrollments: remoteEnrollments } = useStudentEnrollments(
-    onMockData ? null : user.uid,
-    onMockData ? null : semesterId
-  )
-  const { submissions: remoteSubmissions } = useStudentSubmissions(
-    onMockData ? null : user.uid,
-    onMockData ? null : semesterId,
-    onMockData ? null : roundId
-  )
-  const { availability: remoteAvailability } = useTeacherAvailability(
-    onMockData ? null : user.uid,
-    onMockData ? null : semesterId
-  )
-  const { students: teacherStudents } = useTeacherStudents(onMockData ? null : user.uid)
-
-  const semester = remoteSemester ?? mockSemester
-  const round = onMockData
-    ? roundsForSemester(semesterId).find((r) => r.id === roundId)
-    : remoteRounds.find((r) => r.id === roundId)
-  const enrollments = onMockData ? enrollmentsForSemester(semesterId) : remoteEnrollments
-  const students = onMockData ? MOCK_STUDENTS : teacherStudents
-  const availability = onMockData
-    ? MOCK_TEACHER_AVAILABILITY
-    : remoteAvailability ?? EMPTY_AVAILABILITY
-  const mockSubmissions = round ? MOCK_SUBMISSIONS_BY_ROUND[round.id] ?? {} : {}
-  const submissions = onMockData ? mockSubmissions : remoteSubmissions
+  const semester = remoteSemester
+  const round = remoteRounds.find((r) => r.id === roundId)
+  const enrollments = remoteEnrollments
+  const students = teacherStudents
+  const availability = remoteAvailability ?? EMPTY_AVAILABILITY
+  const submissions = remoteSubmissions
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
 
-  // Computed fresh. Used to preview a mock round, and to produce what gets written down when
-  // the teacher closes a real one — never to display a round that has already been closed.
+  // Computed fresh, to produce what gets written down when the teacher closes a round — never
+  // to display one that has already been closed, which reads its stored suggestions instead.
   const computed: WeightedSuggestion[] = useMemo(() => {
     if (!semester || !round) return []
     const schedulingInput: SchedulingInput = {
@@ -345,21 +311,16 @@ export default function SchedulingRoundPage() {
     return pickSpread(generateAllSuggestions(schedulingInput))
   }, [semester, round, availability, enrollments, submissions])
 
-  const { suggestions: storedSuggestions } = useScheduleSuggestions(
-    onMockData ? null : user.uid,
-    onMockData ? null : semesterId,
-    onMockData ? null : roundId
-  )
+  const { suggestions: storedSuggestions } = useScheduleSuggestions(user.uid, semesterId, roundId)
 
   // What the teacher is choosing between. Read back rather than recomputed, because the solver's
   // inputs keep moving: a late submission or an edit to the teacher's own availability would
   // otherwise change the cards under them, including the one they were halfway through picking.
   const suggestions: WeightedSuggestion[] = useMemo(() => {
-    if (onMockData) return computed
     return Object.values(storedSuggestions)
       .map((suggestion) => suggestion as unknown as WeightedSuggestion)
       .sort((a, b) => b.weightFrom - a.weightFrom)
-  }, [onMockData, computed, storedSuggestions])
+  }, [storedSuggestions])
   // Edits are kept per schedule and outlive stepping back to the cards. Losing an afternoon of
   // hand-placing because the teacher went back to compare against another option is not a
   // trade-off worth making. Keyed by weight band rather than position: the band is what the card
@@ -373,7 +334,7 @@ export default function SchedulingRoundPage() {
   const [writeError, setWriteError] = useState<string | null>(null)
 
   function handleCloseRound() {
-    if (onMockData || !user.uid || !semesterId || !roundId) return
+    if (!user.uid || !semesterId || !roundId) return
     setBusy(true)
     setWriteError(null)
     // What gets written down is what was just computed. Recomputing inside the write would be
@@ -388,7 +349,7 @@ export default function SchedulingRoundPage() {
   }
 
   function handleAbandonRound() {
-    if (onMockData || !user.uid || !semesterId || !roundId || !round) return
+    if (!user.uid || !semesterId || !roundId || !round) return
     setBusy(true)
     setWriteError(null)
     void abandonRound(user.uid, semesterId, roundId, round.status)
@@ -412,7 +373,7 @@ export default function SchedulingRoundPage() {
   const canRevive = !anotherCollecting && !alreadyConfirmed
 
   function handleReviveRound() {
-    if (onMockData || !user.uid || !semesterId || !roundId || !canRevive) return
+    if (!user.uid || !semesterId || !roundId || !canRevive) return
     setBusy(true)
     setWriteError(null)
     void reviveRound(user.uid, semesterId, roundId, reviveTo)
@@ -426,10 +387,6 @@ export default function SchedulingRoundPage() {
 
   function handleConfirmSchedule() {
     if (!editedSlots || !semester) return
-    if (onMockData) {
-      setJustConfirmed(true)
-      return
-    }
     if (!user.uid || !semesterId || !roundId) return
     setBusy(true)
     setWriteError(null)
@@ -825,7 +782,7 @@ export default function SchedulingRoundPage() {
               <Alert severity="info">{t.pickOne}</Alert>
               {/* None of these are any good: stop here rather than confirming a schedule the
                   teacher does not want, and open a new round instead. */}
-              {!onMockData && (
+              {
                 <Button
                   color="inherit"
                   size="small"
@@ -834,7 +791,7 @@ export default function SchedulingRoundPage() {
                   onClick={handleAbandonRound}>
                   {t.abandonRound}
                 </Button>
-              )}
+              }
             </>
           )}
         </Box>
@@ -922,11 +879,11 @@ export default function SchedulingRoundPage() {
             <Button variant="contained" disabled={!canClose || busy} onClick={handleCloseRound}>
               {t.closeRound}
             </Button>
-            {!onMockData && (
+            {
               <Button color="inherit" disabled={busy} onClick={handleAbandonRound}>
                 {t.abandonRound}
               </Button>
-            )}
+            }
           </Stack>
         </>
       )}

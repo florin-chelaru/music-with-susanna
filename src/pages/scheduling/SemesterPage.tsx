@@ -65,6 +65,7 @@ import {
   useLocations,
   useSchedulingRounds,
   useStudentEnrollments,
+  useAllRoundSubmissions,
   useTeacherStudents,
   useTeacherAvailability,
   useSemester
@@ -86,22 +87,6 @@ import {
   formatDateTime,
   parseDate
 } from '../../util/schedulingDates'
-import {
-  MOCK_ENROLLMENTS_FALL,
-  MOCK_ENROLLMENTS_SPRING,
-  MOCK_ENROLLMENTS_SPRING2027,
-  MOCK_LESSON_INSTANCES_FALL,
-  MOCK_LESSON_INSTANCES_SPRING,
-  MOCK_ROUNDS_FALL,
-  MOCK_ROUNDS_SPRING,
-  MOCK_ROUNDS_SPRING2027,
-  MOCK_SUBMISSIONS_BY_ROUND,
-  MOCK_LOCATIONS,
-  MOCK_SEMESTER_IDS,
-  MOCK_SEMESTERS,
-  MOCK_STUDENTS,
-  MOCK_TEACHER_AVAILABILITY
-} from '../../data/schedulingMocks'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
@@ -334,15 +319,7 @@ export default function SemesterPage() {
 
   // ── Semester ─────────────────────────────────────────────────────────────────
   //
-  // Real semesters come from RTDB; the mock ones are still resolved alongside them so the
-  // rounds, suggestions and lesson calendar built in earlier steps stay reachable while the
-  // rest of the wiring lands. `onMockData` is the switch, and everything it guards disappears
-  // with schedulingMocks.ts once Step P is done.
-
-  const { semester: remoteSemester } = useSemester(user.uid, semesterId)
-  const mockSemester = MOCK_SEMESTERS.find((s) => s.id === semesterId)
-  const onMockData = Boolean(mockSemester)
-  const semester = remoteSemester ?? mockSemester
+  const { semester } = useSemester(user.uid, semesterId)
   // How many weeks a new enrollment has to fill. The enrollment dialog defaults to one lesson
   // a week from this, and draws its spread preview against it.
   const semesterWeeks = semester
@@ -352,13 +329,9 @@ export default function SemesterPage() {
   // How much of the day every grid on this page draws. A teacher who only works afternoons
   // should not be looking at eight empty morning rows.
   const { startHour: dayStartHour, endHour: dayEndHour } = dayWindow(semester ?? null)
-  // The teacher's own students, for every place this page names one. Falls back to the mock
-  // directory only while a mock semester is open, since those students do not exist in RTDB.
-  const { students: teacherStudents } = useTeacherStudents(user.uid)
-  const students = onMockData ? MOCK_STUDENTS : teacherStudents
-  const location = semester
-    ? [...locations, ...MOCK_LOCATIONS].find((l) => l.id === semester.locationId) ?? null
-    : null
+  // The teacher's own students, for every place this page names one.
+  const { students } = useTeacherStudents(user.uid)
+  const location = semester ? locations.find((l) => l.id === semester.locationId) ?? null : null
 
   // ── Tabs ─────────────────────────────────────────────────────────────────────
   //
@@ -384,22 +357,17 @@ export default function SemesterPage() {
   // Edited locally and pushed on a debounce, rather than driven straight from the subscription:
   // the calendar is a continuous drag-and-draw surface, and a remote echo arriving mid-gesture
   // would fight the teacher's hand.
-  const { availability: remoteAvailability } = useTeacherAvailability(
-    onMockData ? null : user.uid,
-    onMockData ? null : semesterId
-  )
-  const [availability, setAvailability] = useState<WeeklyAvailability>(
-    onMockData ? MOCK_TEACHER_AVAILABILITY : EMPTY_AVAILABILITY
-  )
+  const { availability: remoteAvailability } = useTeacherAvailability(user.uid, semesterId)
+  const [availability, setAvailability] = useState<WeeklyAvailability>(EMPTY_AVAILABILITY)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   // True from the first edit until its write lands. Without it the echo of our own save, or a
   // slow first read, would overwrite what the teacher has just drawn.
   const dirty = useRef(false)
 
   useEffect(() => {
-    if (onMockData || dirty.current || !remoteAvailability) return
+    if (dirty.current || !remoteAvailability) return
     setAvailability(remoteAvailability)
-  }, [remoteAvailability, onMockData])
+  }, [remoteAvailability])
   // The week a conflict row pointed at, and the weekly template it points at instead when the
   // problem recurs. Both exist so the panel can send the teacher to the thing that fixes it.
   const [focusWeek, setFocusWeek] = useState<string | null>(null)
@@ -412,7 +380,7 @@ export default function SemesterPage() {
     setSaveStatus('saving')
     saveTimer.current = setTimeout(() => {
       saveTimer.current = null
-      if (onMockData || !user.uid || !semesterId) {
+      if (!user.uid || !semesterId) {
         setSaveStatus('saved')
         dirty.current = false
         return
@@ -454,41 +422,21 @@ export default function SemesterPage() {
 
   // ── Enrollment state ─────────────────────────────────────────────────────────
 
-  const { enrollments: remoteEnrollments } = useStudentEnrollments(
-    onMockData ? null : user.uid,
-    onMockData ? null : semesterId
-  )
-  const [mockEnrollments, setMockEnrollments] = useState<StudentEnrollment[]>(() => {
-    if (semesterId === MOCK_SEMESTER_IDS.spring2026) return [...MOCK_ENROLLMENTS_SPRING]
-    if (semesterId === MOCK_SEMESTER_IDS.fall2026) return [...MOCK_ENROLLMENTS_FALL]
-    if (semesterId === MOCK_SEMESTER_IDS.spring2027) return [...MOCK_ENROLLMENTS_SPRING2027]
-    return []
-  })
-  const enrollments: StudentEnrollment[] = onMockData ? mockEnrollments : remoteEnrollments
+  const { enrollments: remoteEnrollments } = useStudentEnrollments(user.uid, semesterId)
+  const enrollments: StudentEnrollment[] = remoteEnrollments
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false)
 
   // ── Lesson state ─────────────────────────────────────────────────────────────
 
-  const { lessons: remoteLessons } = useLessonInstances(
-    onMockData ? null : user.uid,
-    onMockData ? null : semesterId
-  )
-  const mockLessons = useMemo<LessonInstance[]>(() => {
-    if (semesterId === MOCK_SEMESTER_IDS.spring2026) return [...MOCK_LESSON_INSTANCES_SPRING]
-    if (semesterId === MOCK_SEMESTER_IDS.fall2026) return [...MOCK_LESSON_INSTANCES_FALL]
-    return []
-  }, [semesterId])
+  const { lessons: remoteLessons } = useLessonInstances(user.uid, semesterId)
 
   // Mirrored into local state so cancelling still updates the view before Step Q writes it.
   const [lessons, setLessons] = useState<LessonInstance[]>([])
   useEffect(() => {
-    setLessons(onMockData ? mockLessons : remoteLessons)
-  }, [onMockData, mockLessons, remoteLessons])
+    setLessons(remoteLessons)
+  }, [remoteLessons])
   const [cancelTarget, setCancelTarget] = useState<LessonInstance | null>(null)
-  const { cancellations } = useCancellations(
-    onMockData ? null : user.uid,
-    onMockData ? null : semesterId
-  )
+  const { cancellations } = useCancellations(user.uid, semesterId)
 
   function handleAcknowledge(cancellation: Cancellation, charged: boolean) {
     if (!user.uid || !semesterId) return
@@ -499,17 +447,9 @@ export default function SemesterPage() {
 
   // ── Scheduling round state ───────────────────────────────────────────────────
 
-  const { rounds: remoteRounds } = useSchedulingRounds(
-    onMockData ? null : user.uid,
-    onMockData ? null : semesterId
-  )
-  const mockRounds = useMemo<SchedulingRound[]>(() => {
-    if (semesterId === MOCK_SEMESTER_IDS.spring2026) return [...MOCK_ROUNDS_SPRING]
-    if (semesterId === MOCK_SEMESTER_IDS.fall2026) return [...MOCK_ROUNDS_FALL]
-    if (semesterId === MOCK_SEMESTER_IDS.spring2027) return [...MOCK_ROUNDS_SPRING2027]
-    return []
-  }, [semesterId])
-  const rounds: SchedulingRound[] = onMockData ? mockRounds : remoteRounds
+  const { rounds: remoteRounds } = useSchedulingRounds(user.uid, semesterId)
+  const rounds: SchedulingRound[] = remoteRounds
+  const { submissionsByRound } = useAllRoundSubmissions(user.uid, semesterId)
   const [newRoundOpen, setNewRoundOpen] = useState(false)
   const [deleteRoundTarget, setDeleteRoundTarget] = useState<SchedulingRound | null>(null)
   // Read when the dialog opens: the teacher should be told how many answers they are discarding
@@ -536,7 +476,7 @@ export default function SemesterPage() {
     !rounds.some((round) => round.status === 'finalized')
 
   function handleReviveRound(round: SchedulingRound) {
-    if (onMockData || !user.uid || !semesterId) return
+    if (!user.uid || !semesterId) return
     void reviveRound(user.uid, semesterId, round.id, round.abandonedFrom ?? 'suggested').catch(
       () => {
         setSaveStatus('error')
@@ -559,7 +499,7 @@ export default function SemesterPage() {
 
   function handleCreateRound(deadline: number) {
     setNewRoundOpen(false)
-    if (onMockData || !user.uid || !semesterId) return
+    if (!user.uid || !semesterId) return
     // Numbered from what is on screen rather than from a fresh read: the teacher is looking at
     // the list, and counting at write time would need a read that could race another tab.
     const roundNumber = rounds.reduce((max, round) => Math.max(max, round.roundNumber), 0) + 1
@@ -590,7 +530,7 @@ export default function SemesterPage() {
     if (!target) return
     // Shown immediately; the subscription confirms it a moment later.
     setLessons((prev) => applyCancellation(prev, target, cancelAllForward))
-    if (onMockData || !user.uid || !semesterId) return
+    if (!user.uid || !semesterId) return
 
     // The same set the view just marked, so what is written matches what the teacher saw.
     const affected = applyCancellation(lessons, target, cancelAllForward).filter(
@@ -668,10 +608,6 @@ export default function SemesterPage() {
 
   function handleAddStudent(enrollment: StudentEnrollment) {
     setEnrollDialogOpen(false)
-    if (onMockData) {
-      setMockEnrollments((prev) => [...prev, enrollment])
-      return
-    }
     if (!user.uid || !semesterId) return
     void saveEnrollment(user.uid, semesterId, enrollment).catch(() => {
       setSaveStatus('error')
@@ -679,10 +615,6 @@ export default function SemesterPage() {
   }
 
   function handleRemoveStudent(studentId: string) {
-    if (onMockData) {
-      setMockEnrollments((prev) => prev.filter((e) => e.studentId !== studentId))
-      return
-    }
     if (!user.uid || !semesterId) return
     void removeEnrollment(user.uid, semesterId, studentId).catch(() => {
       setSaveStatus('error')
@@ -983,7 +915,7 @@ export default function SemesterPage() {
               {[...rounds]
                 .sort((a, b) => b.roundNumber - a.roundNumber)
                 .map((round) => {
-                  const submissions = MOCK_SUBMISSIONS_BY_ROUND[round.id] ?? {}
+                  const submissions = submissionsByRound[round.id] ?? {}
                   const done = enrollments.filter(
                     (e) => submissions[e.studentId]?.status === 'submitted'
                   ).length
@@ -1027,7 +959,7 @@ export default function SemesterPage() {
                             ` · ${t.submittedOf(done, enrollments.length)}`}
                         </Typography>
                       </Box>
-                      {round.status === 'abandoned' && canReviveAny && !onMockData && (
+                      {round.status === 'abandoned' && canReviveAny && (
                         <Button
                           size="small"
                           onClick={() => {
@@ -1038,7 +970,7 @@ export default function SemesterPage() {
                       )}
                       {/* A finalized round produced the lessons being taught; deleting it would
                           leave them with no account of where they came from. */}
-                      {round.status !== 'finalized' && !onMockData && (
+                      {round.status !== 'finalized' && (
                         <IconButton
                           size="small"
                           aria-label={`${t.deleteRound} ${round.roundNumber}`}

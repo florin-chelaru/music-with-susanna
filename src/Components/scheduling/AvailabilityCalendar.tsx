@@ -32,7 +32,7 @@ import { Calendar } from 'react-big-calendar'
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
-import { LocaleContext, LocaleHandler } from '../../store/LocaleProvider'
+import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale, toDayjsLocale } from '../../util/SupportedLocale'
 import {
   AvailabilityBlock,
@@ -98,27 +98,79 @@ interface CalEvent {
   isOverlay: boolean
 }
 
-// ─── Locale-aware label titles ────────────────────────────────────────────────
+// ─── Texts ────────────────────────────────────────────────────────────────────
 
-const LABEL_TITLE_EN: Record<AvailabilityLabel, string> = {
-  [AvailabilityLabel.PREFERRED]: 'Preferred',
-  [AvailabilityLabel.AVAILABLE]: 'Available',
-  [AvailabilityLabel.LAST_RESORT]: 'Last Resort',
-  [AvailabilityLabel.UNAVAILABLE]: 'Unavailable'
+interface AvailabilityCalendarTexts {
+  labelTitles: Record<AvailabilityLabel, string>
+  /**
+   * The overlay layer is always the other party's availability — the teacher's, shown behind a
+   * student's own. Fading alone was not enough to say so: students read the faded blocks as
+   * their own, pre-filled. The label has to name whose they are.
+   */
+  overlayOwner: string
+  dayNames: string[]
+  addTitle: string
+  editTitle: string
+  noAvailability: string
+  start: string
+  end: string
+  cancel: string
+  remove: string
+  add: string
+  save: string
+  setTimes: string
+  /** Not a string, but it varies with the language all the same: Romanian reads a 24-hour clock. */
+  ampm: boolean
 }
 
-const LABEL_TITLE_RO: Record<AvailabilityLabel, string> = {
-  [AvailabilityLabel.PREFERRED]: 'Preferat',
-  [AvailabilityLabel.AVAILABLE]: 'Disponibil',
-  [AvailabilityLabel.LAST_RESORT]: 'Doar la nevoie',
-  [AvailabilityLabel.UNAVAILABLE]: 'Indisponibil'
+const EN_US: AvailabilityCalendarTexts = {
+  labelTitles: {
+    [AvailabilityLabel.PREFERRED]: 'Preferred',
+    [AvailabilityLabel.AVAILABLE]: 'Available',
+    [AvailabilityLabel.LAST_RESORT]: 'Last Resort',
+    [AvailabilityLabel.UNAVAILABLE]: 'Unavailable'
+  },
+  overlayOwner: 'Teacher',
+  dayNames: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+  addTitle: 'Add availability',
+  editTitle: 'Edit block',
+  noAvailability: 'No availability set',
+  start: 'Start',
+  end: 'End',
+  cancel: 'Cancel',
+  remove: 'Delete',
+  add: 'Add',
+  save: 'Save',
+  setTimes: 'Set times',
+  ampm: true
 }
 
-// The overlay layer is always the other party's availability — the teacher's, shown behind a
-// student's own. Fading alone was not enough to say so: students read the faded blocks as
-// their own, pre-filled. The label has to name whose they are.
-const OVERLAY_OWNER_EN = 'Teacher'
-const OVERLAY_OWNER_RO = 'Profesor'
+const RO_RO: AvailabilityCalendarTexts = {
+  labelTitles: {
+    [AvailabilityLabel.PREFERRED]: 'Preferat',
+    [AvailabilityLabel.AVAILABLE]: 'Disponibil',
+    [AvailabilityLabel.LAST_RESORT]: 'Doar la nevoie',
+    [AvailabilityLabel.UNAVAILABLE]: 'Indisponibil'
+  },
+  overlayOwner: 'Profesor',
+  dayNames: ['Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă', 'Duminică'],
+  addTitle: 'Adaugă disponibilitate',
+  editTitle: 'Editează intervalul',
+  noAvailability: 'Nicio disponibilitate',
+  start: 'Început',
+  end: 'Sfârșit',
+  cancel: 'Anulează',
+  remove: 'Șterge',
+  add: 'Adaugă',
+  save: 'Salvează',
+  setTimes: 'Setează orele',
+  ampm: false
+}
+
+const TEXTS = new Map<SupportedLocale, LocalizedData>([
+  [SupportedLocale.EN_US, EN_US],
+  [SupportedLocale.RO_RO, RO_RO]
+])
 
 function overlayTitle(labelTitle: string, owner: string): string {
   return `${labelTitle} (${owner})`
@@ -131,7 +183,7 @@ function blockToEvent(
   id: string,
   labelTitles: Record<AvailabilityLabel, string>,
   isOverlay = false,
-  overlayOwner = OVERLAY_OWNER_EN
+  overlayOwner = EN_US.overlayOwner
 ): CalEvent {
   const day = new Date(REFERENCE_DATE)
   day.setDate(day.getDate() + block.dayOfWeek)
@@ -167,9 +219,6 @@ function dateToBlockFields(
 
 // ─── Mobile view ──────────────────────────────────────────────────────────────
 
-const DAY_NAMES_EN = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-const DAY_NAMES_RO = ['Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă', 'Duminică']
-
 interface MobileDialogState {
   mode: 'add' | 'edit'
   startTime: Dayjs
@@ -182,8 +231,7 @@ interface MobileCalendarProps {
   blocks: AvailabilityBlock[]
   onChange?: (blocks: AvailabilityBlock[]) => void
   overlayBlocks: AvailabilityBlock[]
-  labelTitles: Record<AvailabilityLabel, string>
-  isRo: boolean
+  t: AvailabilityCalendarTexts
   editable: boolean
   dayjsLocale: string
   weekStart?: string // YYYY-MM-DD; when set, shows calendar dates in the navigator
@@ -193,8 +241,7 @@ function MobileAvailabilityCalendar({
   blocks,
   onChange,
   overlayBlocks,
-  labelTitles,
-  isRo,
+  t,
   editable,
   dayjsLocale,
   weekStart
@@ -211,7 +258,7 @@ function MobileAvailabilityCalendar({
   const touchStart = useRef<{ x: number; y: number } | null>(null)
   const [dialog, setDialog] = useState<MobileDialogState | null>(null)
 
-  const dayNames = isRo ? DAY_NAMES_RO : DAY_NAMES_EN
+  const dayNames = t.dayNames
   const dayDate = weekStart
     ? dayjs(`${weekStart}T12:00:00`).add(dayIndex, 'day').locale(dayjsLocale)
     : null
@@ -282,9 +329,9 @@ function MobileAvailabilityCalendar({
   }
 
   const labelOptions = [
-    { label: AvailabilityLabel.PREFERRED, text: labelTitles[AvailabilityLabel.PREFERRED] },
-    { label: AvailabilityLabel.AVAILABLE, text: labelTitles[AvailabilityLabel.AVAILABLE] },
-    { label: AvailabilityLabel.LAST_RESORT, text: labelTitles[AvailabilityLabel.LAST_RESORT] }
+    { label: AvailabilityLabel.PREFERRED, text: t.labelTitles[AvailabilityLabel.PREFERRED] },
+    { label: AvailabilityLabel.AVAILABLE, text: t.labelTitles[AvailabilityLabel.AVAILABLE] },
+    { label: AvailabilityLabel.LAST_RESORT, text: t.labelTitles[AvailabilityLabel.LAST_RESORT] }
   ]
 
   const d = theme.palette.divider
@@ -333,7 +380,7 @@ function MobileAvailabilityCalendar({
       <Box sx={{ p: 1.5, backgroundColor: paper }}>
         {dayBlocks.length === 0 && dayOverlayBlocks.length === 0 && (
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 1.5 }}>
-            {isRo ? 'Nicio disponibilitate' : 'No availability set'}
+            {t.noAvailability}
           </Typography>
         )}
         {dayBlocks.map(({ block, idx }) => (
@@ -359,7 +406,7 @@ function MobileAvailabilityCalendar({
                 {block.startTime} – {block.endTime}
               </Typography>
               <Typography variant="caption" sx={{ color: labelColors[block.label] }}>
-                {labelTitles[block.label]}
+                {t.labelTitles[block.label]}
               </Typography>
             </Box>
             {editable && <ChevronRightIcon sx={{ color: 'text.disabled', fontSize: '1.125rem' }} />}
@@ -384,7 +431,7 @@ function MobileAvailabilityCalendar({
                 {block.startTime} – {block.endTime}
               </Typography>
               <Typography variant="caption" sx={{ color: alpha(labelColors[block.label], 0.55) }}>
-                {overlayTitle(labelTitles[block.label], isRo ? OVERLAY_OWNER_RO : OVERLAY_OWNER_EN)}
+                {overlayTitle(t.labelTitles[block.label], t.overlayOwner)}
               </Typography>
             </Box>
           </Box>
@@ -401,36 +448,28 @@ function MobileAvailabilityCalendar({
       {/* Add / Edit dialog */}
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={dayjsLocale}>
         <Dialog open={Boolean(dialog)} onClose={() => setDialog(null)} fullWidth maxWidth="xs">
-          <DialogTitle>
-            {dialog?.mode === 'add'
-              ? isRo
-                ? 'Adaugă disponibilitate'
-                : 'Add availability'
-              : isRo
-              ? 'Editează intervalul'
-              : 'Edit block'}
-          </DialogTitle>
+          <DialogTitle>{dialog?.mode === 'add' ? t.addTitle : t.editTitle}</DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ pt: 0.5 }}>
               <Stack direction="row" spacing={1.5}>
                 <TimePicker
-                  label={isRo ? 'Început' : 'Start'}
+                  label={t.start}
                   value={dialog?.startTime ?? null}
                   onChange={(v) => {
                     if (v) setDialog((prev) => (prev ? { ...prev, startTime: v } : prev))
                   }}
                   minutesStep={SCHEDULING_CONFIG.SLOT_SNAP_MINUTES}
-                  ampm={!isRo}
+                  ampm={t.ampm}
                   slotProps={{ textField: { size: 'small', fullWidth: true } }}
                 />
                 <TimePicker
-                  label={isRo ? 'Sfârșit' : 'End'}
+                  label={t.end}
                   value={dialog?.endTime ?? null}
                   onChange={(v) => {
                     if (v) setDialog((prev) => (prev ? { ...prev, endTime: v } : prev))
                   }}
                   minutesStep={SCHEDULING_CONFIG.SLOT_SNAP_MINUTES}
-                  ampm={!isRo}
+                  ampm={t.ampm}
                   minTime={
                     dialog?.startTime?.add(SCHEDULING_CONFIG.SLOT_SNAP_MINUTES, 'minute') ??
                     undefined
@@ -466,14 +505,14 @@ function MobileAvailabilityCalendar({
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDialog(null)}>{isRo ? 'Anulează' : 'Cancel'}</Button>
+            <Button onClick={() => setDialog(null)}>{t.cancel}</Button>
             {dialog?.mode === 'edit' && (
               <Button color="error" onClick={handleDelete}>
-                {isRo ? 'Șterge' : 'Delete'}
+                {t.remove}
               </Button>
             )}
             <Button variant="contained" disabled={!canSave} onClick={handleSave}>
-              {dialog?.mode === 'add' ? (isRo ? 'Adaugă' : 'Add') : isRo ? 'Salvează' : 'Save'}
+              {dialog?.mode === 'add' ? t.add : t.save}
             </Button>
           </DialogActions>
         </Dialog>
@@ -504,9 +543,9 @@ export default function AvailabilityCalendar({
   weekStart
 }: AvailabilityCalendarProps) {
   const localeManager = useContext<LocaleHandler>(LocaleContext)
-  const isRo = localeManager.locale === SupportedLocale.RO_RO
+  useMemo(() => localeManager.registerComponentStrings(AvailabilityCalendar.name, TEXTS), [])
+  const t = localeManager.componentStrings(AvailabilityCalendar.name) as AvailabilityCalendarTexts
   const dayjsLocale = toDayjsLocale(localeManager.locale)
-  const labelTitles = isRo ? LABEL_TITLE_RO : LABEL_TITLE_EN
 
   // Keep dayjs global locale in sync so DayColumnHeader renders in the right language
   dayjs.locale(dayjsLocale)
@@ -534,18 +573,12 @@ export default function AvailabilityCalendar({
 
   const events = useMemo(
     () => [
-      ...blocks.map((b, i) => blockToEvent(b, `main-${i}`, labelTitles)),
+      ...blocks.map((b, i) => blockToEvent(b, `main-${i}`, t.labelTitles)),
       ...overlayBlocks.map((b, i) =>
-        blockToEvent(
-          b,
-          `overlay-${i}`,
-          labelTitles,
-          true,
-          isRo ? OVERLAY_OWNER_RO : OVERLAY_OWNER_EN
-        )
+        blockToEvent(b, `overlay-${i}`, t.labelTitles, true, t.overlayOwner)
       )
     ],
-    [blocks, overlayBlocks, dayjsLocale, labelTitles]
+    [blocks, overlayBlocks, dayjsLocale, t]
   )
 
   // ── Popover state ────────────────────────────────────────────────────────────
@@ -768,9 +801,9 @@ export default function AvailabilityCalendar({
   // ── Label picker options ─────────────────────────────────────────────────────
 
   const labelOptions: Array<{ label: AvailabilityLabel; text: string }> = [
-    { label: AvailabilityLabel.PREFERRED, text: labelTitles[AvailabilityLabel.PREFERRED] },
-    { label: AvailabilityLabel.AVAILABLE, text: labelTitles[AvailabilityLabel.AVAILABLE] },
-    { label: AvailabilityLabel.LAST_RESORT, text: labelTitles[AvailabilityLabel.LAST_RESORT] }
+    { label: AvailabilityLabel.PREFERRED, text: t.labelTitles[AvailabilityLabel.PREFERRED] },
+    { label: AvailabilityLabel.AVAILABLE, text: t.labelTitles[AvailabilityLabel.AVAILABLE] },
+    { label: AvailabilityLabel.LAST_RESORT, text: t.labelTitles[AvailabilityLabel.LAST_RESORT] }
   ]
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -781,8 +814,7 @@ export default function AvailabilityCalendar({
         blocks={blocks}
         onChange={onChange}
         overlayBlocks={overlayBlocks}
-        labelTitles={labelTitles}
-        isRo={isRo}
+        t={t}
         editable={editable}
         dayjsLocale={dayjsLocale}
         weekStart={weekStart}
@@ -878,13 +910,11 @@ export default function AvailabilityCalendar({
                     <Divider sx={{ my: 0.5 }} />
                     <MenuItem dense onClick={openTimesDialog}>
                       <ScheduleIcon sx={{ mr: 1.5, fontSize: '1.125rem' }} />
-                      <Typography variant="body2">
-                        {isRo ? 'Setează orele' : 'Set times'}
-                      </Typography>
+                      <Typography variant="body2">{t.setTimes}</Typography>
                     </MenuItem>
                     <MenuItem dense onClick={handleDelete} sx={{ color: 'error.main' }}>
                       <DeleteOutlineIcon sx={{ mr: 1.5, fontSize: '1.125rem' }} />
-                      <Typography variant="body2">{isRo ? 'Șterge' : 'Delete'}</Typography>
+                      <Typography variant="body2">{t.remove}</Typography>
                     </MenuItem>
                   </>
                 )}

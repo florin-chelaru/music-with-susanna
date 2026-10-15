@@ -33,6 +33,10 @@ export const submissionsPath = (tid: string, sid: string, rid: string): string =
 export const submissionPath = (tid: string, sid: string, rid: string, uid: string): string =>
   `${submissionsPath(tid, sid, rid)}/${uid}`
 
+/** Every round's submissions at once, which is how the teacher sees who has answered what. */
+export const allSubmissionsPath = (tid: string, sid: string): string =>
+  `studentSubmissions/${T}/${tid}/semesters/${sid}/rounds`
+
 export const suggestionsPath = (tid: string, sid: string, rid: string): string =>
   `scheduleSuggestions/${T}/${tid}/semesters/${sid}/rounds/${rid}`
 
