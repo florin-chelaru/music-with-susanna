@@ -138,7 +138,7 @@ const RO_RO: NotificationTexts = {
   canceledByStudent: (student, when, alsoAfter, reason, withinWindow) => ({
     subject: `${student} a anulat o lecție`,
     text: lines(
-      `${student} a anulat lecția din ${when}.`,
+      `${student} a anulat lecția de ${when}.`,
       alsoAfter > 0 &&
         `${
           alsoAfter === 1
@@ -154,10 +154,10 @@ const RO_RO: NotificationTexts = {
   }),
 
   canceledByTeacher: (student, teacher, when, alsoAfter, reason, makeupOffered) => ({
-    subject: `Lecția din ${when} a fost anulată`,
+    subject: `Lecția de ${when} a fost anulată`,
     text: lines(
       `Bună, ${student},`,
-      `${teacher} a anulat lecția din ${when}.`,
+      `${teacher} a anulat lecția de ${when}.`,
       alsoAfter > 0 &&
         `${
           alsoAfter === 1

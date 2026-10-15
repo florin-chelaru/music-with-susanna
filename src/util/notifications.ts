@@ -4,6 +4,7 @@ import { SupportedLocale } from './SupportedLocale'
 import { Email, notificationTexts } from './notificationTexts'
 import { formatDateTime } from './schedulingDates'
 import { userPath } from './schedulingPaths'
+import { firstName } from './User'
 import { localeOf } from './userLocale'
 
 // Sending the scheduling notifications.
@@ -92,6 +93,15 @@ interface Recipient {
 }
 
 /**
+ * How people are addressed in mail: by first name.
+ *
+ * Applied here rather than at the four call sites, which pass whatever full name they happen to
+ * hold. "Bună, Florin Chelaru," reads like a letter from a bank; a teacher and a student who see
+ * each other weekly are on first-name terms, and the greeting should sound like it.
+ */
+const called = (name: string | undefined): string => firstName(name) ?? name ?? ''
+
+/**
  * Who to write to and in which language.
  *
  * Returns null when there is no address to write to, which is the one failure worth being quiet
@@ -102,7 +112,7 @@ async function recipientOf(uid: string): Promise<Recipient | null> {
   const [snapshot, locale] = await Promise.all([get(ref(database, userPath(uid))), localeOf(uid)])
   const user = snapshot.val() as { name?: string; email?: string } | null
   if (!user?.email) return null
-  return { uid, name: user.name ?? user.email, email: user.email, locale }
+  return { uid, name: called(user.name) || user.email, email: user.email, locale }
 }
 
 /** Looks the recipient up, writes in their language, sends. */
@@ -133,7 +143,7 @@ export function notifyRoundOpened(
   studentIds.forEach((studentId) => {
     notifyQuietly(
       writeTo(studentId, (texts, to) =>
-        texts.roundOpened(to.name, teacherName, semesterName, when(deadline, to.locale))
+        texts.roundOpened(to.name, called(teacherName), semesterName, when(deadline, to.locale))
       )
     )
   })
@@ -145,7 +155,9 @@ export function notifySubmissionReceived(
   studentName: string,
   semesterName: string
 ): void {
-  notifyQuietly(writeTo(teacherId, (texts) => texts.submissionReceived(studentName, semesterName)))
+  notifyQuietly(
+    writeTo(teacherId, (texts) => texts.submissionReceived(called(studentName), semesterName))
+  )
 }
 
 /** The timetable is settled: tell each student what they got. */
@@ -199,7 +211,7 @@ export function notifyLessonCanceled(
     notice.alsoAfter === 0
       ? {
           uid: notice.lessonId,
-          title: options.subject,
+          title: called(options.subject),
           start: new Date(notice.start).toISOString(),
           end: new Date(notice.end).toISOString(),
           method: 'cancel',
@@ -216,14 +228,14 @@ export function notifyLessonCanceled(
         by.canceledByTeacher
           ? texts.canceledByTeacher(
               to.name,
-              by.teacherName,
+              called(by.teacherName),
               when(notice.start, to.locale),
               notice.alsoAfter,
               notice.reason,
               options.makeupOffered
             )
           : texts.canceledByStudent(
-              by.studentName,
+              called(by.studentName),
               when(notice.start, to.locale),
               notice.alsoAfter,
               notice.reason,
