@@ -1907,8 +1907,9 @@ solver should not suggest something the app would then warn about. Hand-placing 
 *Adjust the schedule* stays possible, with the warning: the solver is stricter than the teacher,
 which is the right way round.
 
-Cancelled lessons do not block. Lessons belonging to the round's own students do not block either,
-so re-running a round for the same person does not fight its own previous answer.
+Cancelled lessons do not block. Neither do lessons belonging to the round's own students — see
+the decision below, which turns that from a convenience into the whole mechanism for moving
+someone.
 
 **Where it is computed, twice over.**
 
@@ -1933,8 +1934,9 @@ The subtraction belongs where the *teacher's* blocks are resolved, not inside
 not be cut down by the teacher's other lessons. A `teacherBlocksForDate(availability, blocked,
 date)` wrapper keeps the two apart.
 
-A mid-term round should also not schedule into the past: pass `max(semesterStart, today)` as the
-start. Worth checking whether anything else relies on `semesterStart` being the semester's own.
+A mid-term round should not schedule into the past, or into the week the student enrolled in:
+pass the start of next week when that is later than the semester's own start. Worth checking
+whether anything else relies on `semesterStart` being the semester's own.
 
 ##### Confirming without disturbing anyone
 
@@ -1943,7 +1945,9 @@ semester and sets `lessonCount` — so confirming a second round overwrites the 
 itself. Re-keying it per round (`.../semesters/{sid}/rounds/{rid}`) fixes that, and incidentally
 fixes the long-standing note that confirming the same semester twice duplicates lessons.
 
-Lessons themselves already only come from the slots passed in, so existing ones are untouched.
+Lessons themselves come only from the slots passed in, so students outside the round are
+untouched. Students *inside* it need their future lessons replaced rather than added to — see the
+decisions below.
 
 ##### Enrolling the late joiner
 
@@ -1956,16 +1960,39 @@ them, which is the whole flow in one step.
 
 ---
 
-##### Open questions
+##### Decisions (settled 2026-10-15)
 
-1. **May a partial round move existing lessons?** Default no — not disturbing people is the point.
-   But a teacher with a tight timetable might prefer "find the best fit even if Barbara moves by
-   fifteen minutes". If that is ever wanted it is a different feature, closer to Step Q3.
-2. **Does the student see taken times removed, or marked as taken?** Removing is simpler and reads
-   honestly as "the teacher is not free then". Marking them shows the shape of the teacher's week
-   to someone who is not in it.
-3. **Pro-rated lessons: automatic or the teacher's call?** Weeks remaining is computable; whether
-   a late joiner gets exactly that many is a studio decision.
+**Moving an existing student means putting them in the round.** This was going to be a separate
+feature — "find the best fit even if Barbara shifts by fifteen minutes" — and it is not one. If
+Barbara's lesson may move, Barbara is in the round: she is asked, she answers, and she sees the
+result before it is confirmed. If she is not in the round, her lesson is fixed and blocks the time.
+One mechanism, and the membership list is the only control.
+
+That makes the blocking rule exactly: **a lesson blocks the round if its student is not in the
+round.** Which is what the capacity calculation already said, now with a reason.
+
+It also changes what confirming does. A partial round does not only append: for the students it
+*does* include, their existing future lessons are superseded and must be replaced, or they end up
+holding two timetables. Past lessons are never touched — those happened. So confirming a partial
+round means: replace the round's students' future lessons, leave everyone else's alone.
+
+Carry-forward (Step P2) matters more here than it did: a student pulled into a round only so their
+lesson can move should not have to re-enter everything they said last time. They amend.
+
+**Taken times are removed from the student's overlay, not marked.** The student sees what is left
+exactly as if the teacher had never offered those hours. This is also the simpler build: the
+student's availability page needs no new concept at all, it just reads the round's capacity in
+place of the teacher's raw availability.
+
+**A late joiner's lessons start next week, and the default count follows from that.** Not today —
+nobody is scheduled into the week they enrolled in. So the round's scheduling window opens at the
+start of next week, and `EnrollmentDialog` defaults `totalLessons` to the weeks from there to the
+end of term. The teacher can change it; the point is that the default is right rather than a whole
+term's worth.
+
+Both numbers come from the same boundary, deliberately. A default lesson count of "remaining
+weeks" against a solver that could still place from today would be two different ideas of when the
+student starts.
 
 ---
 
