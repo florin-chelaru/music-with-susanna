@@ -239,12 +239,37 @@ All functions require `Authorization: Bearer <idToken>` (Firebase ID token). The
 
 | Function | Caller | Description |
 |---|---|---|
-| `sendEmail` | Teacher or student | Sends a Gmail email to a verified related user. Body: `{ to, subject, html?, text?, calendarEvent? }`. When `calendarEvent` is provided, attaches an iCalendar invite or cancellation. Used for all scheduling notifications. |
+| `sendEmail` | Teacher or student | Sends a Gmail email to a verified related user. Used for all scheduling notifications — see below. |
 | `fetchYoutubeVideo` | Teacher only | Takes `?videoId=` query param, returns YouTube snippet metadata via the Data API v3. |
 | `fetchFacebookPosts` | Teacher only | Fetches and prettifies the Facebook page feed. |
 | `saveFacebookPostPhotos` | Teacher only | Downloads FB post images, uploads to Firebase Storage, saves records to RTDB. |
 
-**`sendEmail` — `calendarEvent` field:**
+**`sendEmail` body:** `{ to, subject, text?, html?, calendarEvent? }`. `to` and `subject` are
+required, and **at least one of `text` / `html`** — each is optional alone, not together.
+
+Returns `200 {success: true}`. Errors come back as a **plain-text body** with the status, not JSON:
+401 (no or invalid token), 403 (wrong role, or `to` not an allowed recipient), 400 (missing
+fields), 500 otherwise.
+
+**Who you may email.** The function reads `teachers/{uid}/students` for a teacher or
+`students/{uid}/teachers` for a student, collects those users' `users/{uid}/email` values, and
+adds the caller's own address — so anyone may always email themselves. A `to` outside that set is
+a 403. Note the check runs *before* the required-field validation, so a missing `to` surfaces as
+403 rather than 400.
+
+**The From header is built from the caller:** `Vioară cu Susanna [<caller's name>] <GMAIL_USER>`.
+A student-initiated email arrives showing the student's name, not the teacher's.
+
+**`calendarEvent`** — `uid`, `title`, `start` and `end` are **all required** when it is present;
+omitting any is a 400.
 - `uid`: stable lesson ID — lets calendar apps recognize updates/cancellations across emails
-- `method`: `"request"` for invites/reminders, `"cancel"` for cancellations
+- `title`: the event summary
+- `start` / `end`: ISO date strings
+- `location`, `description`: optional
+- `method`: `"request"` for invites/reminders, `"cancel"` for cancellations (default `"request"`)
 - `sequence`: increment each time a calendar message is sent for the same lesson (tracked as `calendarSequence` on the lesson record in RTDB)
+
+**Get the token at call time, not from `user.accessToken`.** `UserProvider` captures that once at
+`onAuthStateChanged`, and a Firebase ID token expires after an hour — a tab left open sends a
+stale one and gets a 401. Use `auth.currentUser?.getIdToken()`, which returns the cached token and
+refreshes it when near expiry.
