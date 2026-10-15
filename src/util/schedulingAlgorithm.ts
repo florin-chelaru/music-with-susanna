@@ -1,4 +1,6 @@
 import {
+  BusyByDate,
+  removeOverlaps,
   AvailabilityBlock,
   computeCombinedScore,
   findConflict,
@@ -29,6 +31,12 @@ export interface SchedulingInput {
   enrollments: StudentEnrollment[]
   /** Keyed by studentId. A student with no submission simply has no candidates. */
   submissions: Record<string, StudentSubmission>
+  /**
+   * Times the teacher is already committed to, keyed by date — the lessons of students this
+   * round does not include. Absent when a round asks the whole studio, since then nothing is
+   * fixed. See `schedulingCapacity`.
+   */
+  blockedIntervals?: BusyByDate
 }
 
 /**
@@ -107,6 +115,32 @@ export function getEffectiveBlocksForDate(
   const override = weekOverrides?.[weekStartDate(date)]
   const source = override ? override.blocks : weeklyBlocks ?? []
   return source.filter((block) => block.dayOfWeek === dayOfWeek)
+}
+
+/** One date's availability with that date's commitments taken out. */
+export function freeBlocksForDate(
+  availability: WeeklyAvailability,
+  busy: BusyByDate,
+  date: string
+): AvailabilityBlock[] {
+  const blocks = getEffectiveBlocksForDate(
+    availability.weeklyTemplate.blocks,
+    availability.weekOverrides,
+    date
+  )
+  const dayOfWeek = toDayOfWeek(date)
+  return (busy[date] ?? []).reduce(
+    (remaining, interval) =>
+      removeOverlaps(remaining, {
+        dayOfWeek,
+        startTime: interval.startTime,
+        endTime: interval.endTime,
+        // Only the span matters to removeOverlaps; the label is never read.
+        label: blocks[0]?.label ?? ('available' as AvailabilityBlock['label']),
+        score: 0
+      }),
+    blocks
+  )
 }
 
 /**
@@ -215,9 +249,11 @@ export function generateAllCandidates(input: SchedulingInput): Candidate[] {
   const dates = eachDateInRange(input.semesterStart, input.semesterEnd)
 
   for (const date of dates) {
-    const teacherBlocks = getEffectiveBlocksForDate(
-      input.teacherAvailability.weeklyTemplate.blocks,
-      input.teacherAvailability.weekOverrides,
+    // The teacher's side only. A student's own availability is theirs; it is not cut down by
+    // the lessons their teacher happens to be teaching someone else.
+    const teacherBlocks = freeBlocksForDate(
+      input.teacherAvailability,
+      input.blockedIntervals ?? {},
       date
     )
     if (teacherBlocks.length === 0) continue

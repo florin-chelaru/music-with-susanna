@@ -22,6 +22,7 @@ interface EnrollmentDialogTexts {
   duration: string
   totalLessons: string
   totalLessonsHelper: (weeks: number) => string
+  weeksRemainingHelper: (weeks: number) => string
   distribution: string
   spreadEven: string
   spreadStart: string
@@ -42,6 +43,7 @@ const EN_US: EnrollmentDialogTexts = {
   duration: 'Lesson Duration (min)',
   totalLessons: 'Total Lessons',
   totalLessonsHelper: (weeks) => `${weeks} weeks in this semester`,
+  weeksRemainingHelper: (weeks) => `${weeks} weeks left, starting next week`,
   distribution: 'Spread',
   spreadEven: 'Even spread',
   spreadStart: 'More at the start',
@@ -63,6 +65,7 @@ const RO_RO: EnrollmentDialogTexts = {
   duration: 'Durată lecție (min)',
   totalLessons: 'Total lecții',
   totalLessonsHelper: (weeks) => `${weeks} săptămâni în acest semestru`,
+  weeksRemainingHelper: (weeks) => `${weeks} săptămâni rămase, începând de săptămâna viitoare`,
   distribution: 'Repartizare',
   spreadEven: 'Uniformă',
   spreadStart: 'Mai multe la început',
@@ -87,8 +90,14 @@ export interface EnrollmentDialogProps {
   open: boolean
   students: Record<string, { name: string; email: string }>
   alreadyEnrolledIds: string[]
-  /** Weeks in the semester. Sets the default of one lesson a week, and draws the preview. */
+  /** Weeks in the semester. Draws the spread preview. */
   weeks: number
+  /**
+   * Weeks still to come, when the semester is already running. Sets the default lesson count for
+   * someone joining late — a whole term's worth would be wrong for them, and the number they are
+   * shown has to be the one their round will actually schedule against.
+   */
+  weeksRemaining?: number
   /** Shown in the cancellation field, and what a value equal to it means: inherit, not pin. */
   defaultCancellationWindowHours: number
   onClose: () => void
@@ -100,6 +109,7 @@ export default function EnrollmentDialog({
   students,
   alreadyEnrolledIds,
   weeks,
+  weeksRemaining,
   defaultCancellationWindowHours,
   onClose,
   onSave
@@ -121,7 +131,7 @@ export default function EnrollmentDialog({
   const [duration, setDuration] = useState('45')
   // One a week, which is what almost every enrollment is. The week count is shown next to the
   // field so a teacher wanting a different cadence can work the number out rather than guess.
-  const [totalLessons, setTotalLessons] = useState(String(Math.max(1, weeks)))
+  const [totalLessons, setTotalLessons] = useState(String(Math.max(1, weeksRemaining ?? weeks)))
   const [distribution, setDistribution] = useState<LessonDistribution>('even')
   // Shown rather than left blank, because an empty box with "leave empty for the default" makes
   // the teacher go and look the default up. Storing it is a different question — see handleSave.
@@ -212,7 +222,11 @@ export default function EnrollmentDialog({
               required
               fullWidth
               margin="normal"
-              helperText={t.totalLessonsHelper(weeks)}
+              helperText={
+                weeksRemaining === undefined
+                  ? t.totalLessonsHelper(weeks)
+                  : t.weeksRemainingHelper(weeksRemaining)
+              }
               inputProps={{ min: 1 }}
             />
 

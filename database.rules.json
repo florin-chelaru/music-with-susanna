@@ -202,7 +202,7 @@
                   "students": {
                     "$uid": {
                       ".read": "$uid === auth.uid",
-                      ".write": "$uid === auth.uid && root.child('schedulingRounds').child('teachers').child($tid).child('semesters').child($sid).child('rounds').child($rid).child('status').val() === 'collecting' && now <= root.child('schedulingRounds').child('teachers').child($tid).child('semesters').child($sid).child('rounds').child($rid).child('deadline').val()"
+                      ".write": "$uid === auth.uid && root.child('schedulingRounds').child('teachers').child($tid).child('semesters').child($sid).child('rounds').child($rid).child('status').val() === 'collecting' && now <= root.child('schedulingRounds').child('teachers').child($tid).child('semesters').child($sid).child('rounds').child($rid).child('deadline').val() && (!root.child('schedulingRounds').child('teachers').child($tid).child('semesters').child($sid).child('rounds').child($rid).child('studentIds').exists() || root.child('schedulingRounds').child('teachers').child($tid).child('semesters').child($sid).child('rounds').child($rid).child('studentIds').child($uid).val() === true)"
                     }
                   }
                 }
@@ -333,6 +333,19 @@
           ".read": "data.child('teacherId').val() === auth.uid",
           ".write": "newData.child('teacherId').val() === auth.uid || (!newData.exists() && data.child('teacherId').val() === auth.uid) || ($uid === auth.uid && !data.exists() && newData.child('canceledBy').val() === auth.uid && newData.child('studentId').val() === auth.uid && root.child('teachers').child(newData.child('teacherId').val()).child('students').child($uid).exists())",
           ".validate": "newData.child('teacherId').val() === auth.uid || newData.child('canceledAt').val() === now"
+        }
+      }
+    },
+    "roundCapacity": {
+      "teachers": {
+        "$tid": {
+          ".read": "$tid === auth.uid",
+          ".write": "$tid === auth.uid",
+          "semesters": {
+            "$sid": {
+              ".read": "root.child('studentEnrollments').child('teachers').child($tid).child('semesters').child($sid).child('students').child(auth.uid).exists()"
+            }
+          }
         }
       }
     }

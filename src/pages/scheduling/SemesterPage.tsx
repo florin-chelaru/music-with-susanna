@@ -53,11 +53,14 @@ import {
   LessonInstance,
   RoundStatus,
   SchedulingRound,
+  roundStudentIds,
   SemesterStatus,
+  studentName,
   StudentEnrollment,
   WeeklyAvailability
 } from '../../util/scheduling'
 import { findScheduleConflicts, ScheduleConflict } from '../../util/schedulingConflicts'
+import { busyByDate, partialRoundStart, remainingAvailability } from '../../util/schedulingCapacity'
 import { notifyLessonCanceled, notifyRoundOpened } from '../../util/notifications'
 import {
   useCancellations,
@@ -127,6 +130,7 @@ interface SemesterPageTexts {
   keepRound: string
   deadline: string
   submittedOf: (done: number, total: number) => string
+  asksOnly: (names: string) => string
   roundAlreadyOpen: string
   roundStatusCollecting: string
   roundStatusReady: string
@@ -176,6 +180,7 @@ const EN_US: SemesterPageTexts = {
   keepRound: 'Keep round',
   deadline: 'Deadline',
   submittedOf: (done, total) => `${done} of ${total} submitted`,
+  asksOnly: (names) => `Asks only ${names}`,
   roundAlreadyOpen: 'A round is already collecting availability. Close it before opening another.',
   roundStatusCollecting: 'Collecting',
   roundStatusReady: 'Ready',
@@ -228,6 +233,7 @@ const RO_RO: SemesterPageTexts = {
   keepRound: 'Păstrează runda',
   deadline: 'Termen limită',
   submittedOf: (done, total) => `${done} din ${total} au trimis`,
+  asksOnly: (names) => `Întreabă doar ${names}`,
   roundAlreadyOpen:
     'O rundă colectează deja disponibilitate. Închide-o înainte de a deschide alta.',
   roundStatusCollecting: 'În colectare',
@@ -325,6 +331,14 @@ export default function SemesterPage() {
   const semesterWeeks = semester
     ? eachWeekStartInRange(semester.startDate, semester.endDate).length
     : 0
+  // Only for a semester already running: someone enrolling now starts next week, and defaulting
+  // them to a whole term's lessons would promise weeks that have already gone.
+  const weeksRemaining = useMemo(() => {
+    if (!semester || semester.status !== 'active') return undefined
+    const from = partialRoundStart()
+    if (from > semester.endDate) return 0
+    return eachWeekStartInRange(from, semester.endDate).length
+  }, [semester])
   const { locations } = useLocations(user.uid)
   // How much of the day every grid on this page draws. A teacher who only works afternoons
   // should not be looking at eight empty morning rows.
@@ -497,9 +511,9 @@ export default function SemesterPage() {
   // requests for the same semester and no way to tell which one counts.
   const hasOpenRound = rounds.some((r) => r.status === 'collecting')
 
-  function handleCreateRound(deadline: number) {
+  function handleCreateRound(deadline: number, studentIds: string[] | null) {
     setNewRoundOpen(false)
-    if (!user.uid || !semesterId) return
+    if (!user.uid || !semesterId || !semester) return
     // Numbered from what is on screen rather than from a fresh read: the teacher is looking at
     // the list, and counting at write time would need a read that could race another tab.
     const roundNumber = rounds.reduce((max, round) => Math.max(max, round.roundNumber), 0) + 1
@@ -507,17 +521,26 @@ export default function SemesterPage() {
     // redraw a term. Its own status does not matter — abandoned or closed, the answers stand.
     const previous = [...rounds].sort((a, b) => b.roundNumber - a.roundNumber)[0]
     const teacherName = user.name ?? ''
-    const semesterName = semester?.name ?? ''
-    void createRound(user.uid, semesterId, roundNumber, deadline, previous?.id)
+    const semesterName = semester.name
+    // Nobody is scheduled into the week they were asked in, so a partial round starts at the
+    // next week's Monday — and the lessons already standing before then are history, not
+    // obstacles.
+    const from = partialRoundStart()
+    const asked = studentIds ?? enrollments.map((enrollment) => enrollment.studentId)
+    const scope = studentIds
+      ? {
+          studentIds,
+          capacity: remainingAvailability(availability, busyByDate(lessons, studentIds, { from }), {
+            from,
+            to: semester.endDate
+          })
+        }
+      : {}
+    void createRound(user.uid, semesterId, roundNumber, deadline, previous?.id, scope)
       .then(() => {
         // Only once the round exists. A student told to submit against a round that failed to
         // open would find nothing to submit to.
-        notifyRoundOpened(
-          enrollments.map((enrollment) => enrollment.studentId),
-          teacherName,
-          semesterName,
-          deadline
-        )
+        notifyRoundOpened(asked, teacherName, semesterName, deadline)
       })
       .catch(() => {
         setSaveStatus('error')
@@ -872,6 +895,7 @@ export default function SemesterPage() {
             students={students}
             alreadyEnrolledIds={enrollments.map((e) => e.studentId)}
             weeks={semesterWeeks}
+            weeksRemaining={weeksRemaining}
             defaultCancellationWindowHours={semester.defaultCancellationWindowHours}
             onClose={() => {
               setEnrollDialogOpen(false)
@@ -916,7 +940,13 @@ export default function SemesterPage() {
                 .sort((a, b) => b.roundNumber - a.roundNumber)
                 .map((round) => {
                   const submissions = submissionsByRound[round.id] ?? {}
-                  const done = enrollments.filter(
+                  // A partial round is counted against the students it asked, not the whole
+                  // studio — "2 of 7" for a round that only wants one answer is nonsense.
+                  const asked = roundStudentIds(round)
+                  const asking = asked
+                    ? enrollments.filter((e) => asked.includes(e.studentId))
+                    : enrollments
+                  const done = asking.filter(
                     (e) => submissions[e.studentId]?.status === 'submitted'
                   ).length
                   return (
@@ -956,7 +986,13 @@ export default function SemesterPage() {
                           {t.deadline}:{' '}
                           {formatDateTime(round.deadline, localeManager.locale as SupportedLocale)}
                           {round.status === 'collecting' &&
-                            ` · ${t.submittedOf(done, enrollments.length)}`}
+                            ` · ${t.submittedOf(done, asking.length)}`}
+                          {asked && (
+                            <>
+                              {' · '}
+                              {t.asksOnly(asked.map((id) => studentName(students, id)).join(', '))}
+                            </>
+                          )}
                         </Typography>
                       </Box>
                       {round.status === 'abandoned' && canReviveAny && (
@@ -1019,6 +1055,10 @@ export default function SemesterPage() {
           <NewRoundDialog
             key={newRoundOpen ? 'open' : 'closed'}
             open={newRoundOpen}
+            students={enrollments.map((enrollment) => ({
+              id: enrollment.studentId,
+              name: studentName(students, enrollment.studentId)
+            }))}
             onClose={() => {
               setNewRoundOpen(false)
             }}

@@ -245,6 +245,20 @@ export interface SchedulingRound {
   abandonedAt?: number
   /** The status to return to if the round is revived. See `abandonRound`. */
   abandonedFrom?: RoundStatus
+  /**
+   * Who the round asks. Absent means everyone enrolled, which is every round written before
+   * partial rounds existed.
+   *
+   * Membership is also the only control over what may move: a student in the round is asked
+   * again and may be placed somewhere new, a student outside it keeps the lessons they have and
+   * those lessons block the time.
+   */
+  studentIds?: Record<string, true>
+}
+
+/** The round's members, or null when it asks the whole studio. */
+export function roundStudentIds(round: Pick<SchedulingRound, 'studentIds'>): string[] | null {
+  return round.studentIds ? Object.keys(round.studentIds) : null
 }
 
 export interface StudentSubmission {
@@ -560,6 +574,20 @@ export function isWithinCancellationWindow(
 }
 
 // A time span on one specific date. Both SuggestedSlot and LessonSlot satisfy this.
+/** A span of one day, in the same "HH:mm" terms as an availability block. */
+export interface BusyInterval {
+  startTime: string
+  endTime: string
+}
+
+/**
+ * Times a teacher is already committed to, keyed by "YYYY-MM-DD".
+ *
+ * What a partial round has to schedule around: the lessons of students it does not include.
+ * Built by `schedulingCapacity`, read by the solver and by the student's picker.
+ */
+export type BusyByDate = Record<string, BusyInterval[]>
+
 export interface TimeSpan {
   date: string // "YYYY-MM-DD"
   startTime: string // "HH:mm"

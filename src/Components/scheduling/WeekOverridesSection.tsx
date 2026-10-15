@@ -50,8 +50,13 @@ export interface WeekOverridesSectionProps {
   overrides: Record<string, { blocks: AvailabilityBlock[] }>
   semesterStart: string
   semesterEnd: string
-  /** Drawn behind the editable blocks — the teacher's availability, in the student's view. */
-  overlayBlocks?: AvailabilityBlock[]
+  /**
+   * Drawn behind the editable blocks — the teacher's availability, in the student's view.
+   *
+   * Asked per week rather than given once: what the teacher has left can differ week by week when
+   * a round is fitting someone around lessons that already stand.
+   */
+  overlayBlocksFor?: (weekStart: string) => AvailabilityBlock[]
   /** The semester's teaching hours, so every week's grid draws the same window. */
   displayStartHour?: number
   displayEndHour?: number
@@ -76,7 +81,7 @@ export default function WeekOverridesSection({
   overrides,
   semesterStart,
   semesterEnd,
-  overlayBlocks,
+  overlayBlocksFor,
   displayStartHour,
   displayEndHour,
   focusWeek,
@@ -219,7 +224,7 @@ export default function WeekOverridesSection({
           <AvailabilityCalendar
             blocks={blocks}
             weekStart={weekStart}
-            overlayBlocks={overlayBlocks}
+            overlayBlocks={overlayBlocksFor?.(weekStart)}
             displayStartHour={displayStartHour}
             displayEndHour={displayEndHour}
             onChange={(newBlocks) => {

@@ -37,11 +37,31 @@ export const submissionPath = (tid: string, sid: string, rid: string, uid: strin
 export const allSubmissionsPath = (tid: string, sid: string): string =>
   `studentSubmissions/${T}/${tid}/semesters/${sid}/rounds`
 
+/**
+ * What the teacher has left for one round, as the students in it should see it.
+ *
+ * Its own node rather than a field on the round: the student schedule page subscribes to every
+ * round of every semester they are enrolled in, and a term's worth of free/busy on each would be
+ * paid for on every page load. This is read only when a student opens the round itself.
+ */
+export const roundCapacityPath = (tid: string, sid: string, rid: string): string =>
+  `roundCapacity/${T}/${tid}/semesters/${sid}/rounds/${rid}`
+
 export const suggestionsPath = (tid: string, sid: string, rid: string): string =>
   `scheduleSuggestions/${T}/${tid}/semesters/${sid}/rounds/${rid}`
 
 export const confirmedSchedulePath = (tid: string, sid: string): string =>
   `confirmedSchedules/${T}/${tid}/semesters/${sid}`
+
+/**
+ * One round's confirmation, not one semester's.
+ *
+ * Keyed per round because a semester can be scheduled more than once — a partial round for a
+ * student who joined late settles only them, and must not overwrite the account of the round
+ * that settled everyone else.
+ */
+export const confirmedRoundPath = (tid: string, sid: string, rid: string): string =>
+  `${confirmedSchedulePath(tid, sid)}/rounds/${rid}`
 
 export const lessonsPath = (tid: string, sid: string): string =>
   `lessonInstances/${T}/${tid}/semesters/${sid}/lessons`

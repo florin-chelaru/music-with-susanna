@@ -9,6 +9,7 @@ import {
   lessonsPath,
   locationsPath,
   notificationsPath,
+  roundCapacityPath,
   roundsPath,
   semesterPath,
   semestersPath,
@@ -239,6 +240,20 @@ export function useScheduleSuggestions(teacherId: Id, semesterId: Id, roundId: I
     return restored
   }, [value])
   return { suggestions, loading }
+}
+
+/**
+ * What the teacher has left for one round, for the students it asks to pick against.
+ *
+ * Null for a round that asks everyone: nothing is fixed, so the teacher's own availability is
+ * the answer and there is nothing to snapshot.
+ */
+export function useRoundCapacity(teacherId: Id, semesterId: Id, roundId: Id) {
+  const { value, loading } = useNode<unknown>(
+    teacherId && semesterId && roundId ? roundCapacityPath(teacherId, semesterId, roundId) : null
+  )
+  const capacity = useMemo(() => (value ? fromStoredAvailability(value) : null), [value])
+  return { capacity, loading }
 }
 
 export function useConfirmedSchedule(teacherId: Id, semesterId: Id) {

@@ -9,7 +9,7 @@ import {
   Typography
 } from '@mui/material'
 import dayjs from 'dayjs'
-import { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AvailabilityCalendar from '../../Components/scheduling/AvailabilityCalendar'
 import SchedulingNav from '../../Components/scheduling/SchedulingNav'
@@ -32,6 +32,7 @@ import {
   useMySubmission,
   useSchedulingRounds,
   useSemester,
+  useRoundCapacity,
   useTeacherAvailability
 } from '../../util/schedulingHooks'
 import { saveSubmission } from '../../util/schedulingWrites'
@@ -182,6 +183,10 @@ export default function StudentAvailabilityPage() {
   const round = rounds.find((r) => r.id === roundId)
   const { submission: existing } = useMySubmission(teacherId, semesterId, roundId, user.uid)
   const { availability: teacherAvailability } = useTeacherAvailability(teacherId, semesterId)
+  // A partial round publishes what the teacher has left once everyone else's lessons are taken
+  // out. The student sees it exactly as if those hours had never been offered.
+  const { capacity } = useRoundCapacity(teacherId, semesterId, roundId)
+  const offered = capacity ?? teacherAvailability
 
   const [preferences, setPreferences] = useState<AvailabilityBlock[]>([])
   const [overrides, setOverrides] = useState<Record<string, { blocks: AvailabilityBlock[] }>>({})
@@ -199,7 +204,14 @@ export default function StudentAvailabilityPage() {
     setSubmitted(existing.status === 'submitted')
   }, [existing])
 
-  const teacherBlocks = teacherAvailability?.weeklyTemplate.blocks ?? []
+  const teacherBlocks = offered?.weeklyTemplate.blocks ?? []
+  // Per week, because what is left varies: a slot taken on three Tuesdays out of ten is free on
+  // the other seven, and the week's own view should say so.
+  const teacherBlocksForWeek = useCallback(
+    (weekStart: string): AvailabilityBlock[] =>
+      offered?.weekOverrides?.[weekStart]?.blocks ?? offered?.weeklyTemplate.blocks ?? [],
+    [offered]
+  )
   // The teacher's own teaching hours. The student is answering a question about this semester,
   // so they should be looking at the same slice of the day the teacher set for it.
   const { startHour: dayStartHour, endHour: dayEndHour } = dayWindow(semester)
@@ -297,7 +309,7 @@ export default function StudentAvailabilityPage() {
             overrides={overrides}
             semesterStart={semester.startDate}
             semesterEnd={semester.endDate}
-            overlayBlocks={teacherBlocks}
+            overlayBlocksFor={teacherBlocksForWeek}
             displayStartHour={dayStartHour}
             displayEndHour={dayEndHour}
             onAdd={handleAddOverride}

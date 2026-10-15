@@ -1,9 +1,11 @@
+import dayjs from 'dayjs'
 import { get, push, ref, remove, serverTimestamp, set, update } from 'firebase/database'
 import { database } from '../store/Firebase'
 import {
   cancellationBundlesPath,
   cancellationRequestsPath,
   cancellationsPath,
+  confirmedRoundPath,
   confirmedSchedulePath,
   deletedSemesterPath,
   enrollmentPath,
@@ -12,6 +14,7 @@ import {
   locationPath,
   locationsPath,
   lessonPath,
+  roundCapacityPath,
   roundPath,
   roundsPath,
   semesterPath,
@@ -28,6 +31,7 @@ import {
 import {
   AvailabilityBlock,
   Cancellation,
+  LessonInstance,
   Location,
   RoundStatus,
   Semester,
@@ -37,6 +41,7 @@ import {
   WeeklyAvailability,
   weightBandKey
 } from './scheduling'
+import { formatDate } from './schedulingDates'
 
 // Writes for the scheduling paths.
 //
@@ -201,22 +206,42 @@ export async function saveSubmission(
  * rounds on screen, and counting them at write time would need a read that could race with
  * another tab doing the same.
  */
+export interface NewRoundScope {
+  /** Absent or null asks everyone enrolled. A list asks only those students. */
+  studentIds?: string[] | null
+  /**
+   * What the teacher has left, written beside the round for the students in it to pick against.
+   * Only meaningful for a partial round; a round that asks everyone has the whole week free.
+   */
+  capacity?: WeeklyAvailability
+}
+
 export async function createRound(
   teacherId: string,
   semesterId: string,
   roundNumber: number,
   deadline: number,
-  carryFromRoundId?: string
+  carryFromRoundId?: string,
+  scope: NewRoundScope = {}
 ): Promise<string> {
   const id = newKey(roundsPath(teacherId, semesterId))
   const updates: Record<string, unknown> = {
-    [roundPath(teacherId, semesterId, id)]: {
+    [roundPath(teacherId, semesterId, id)]: stripUndefined({
       id,
       roundNumber,
       status: 'collecting',
       deadline,
-      createdAt: Date.now()
-    }
+      createdAt: Date.now(),
+      // A map rather than a list: RTDB has no good answer for arrays, and membership is a
+      // question asked one student at a time — by the page, and by the rules.
+      studentIds: scope.studentIds
+        ? Object.fromEntries(scope.studentIds.map((uid) => [uid, true]))
+        : undefined
+    })
+  }
+
+  if (scope.capacity) {
+    updates[roundCapacityPath(teacherId, semesterId, id)] = toStoredAvailability(scope.capacity)
   }
 
   // Students amend rather than re-enter: the new round starts from what each of them said last
@@ -227,6 +252,9 @@ export async function createRound(
     )
     const answers = (previous.val() ?? {}) as Record<string, StudentSubmission>
     Object.entries(answers).forEach(([studentId, answer]) => {
+      // Someone pulled into a round only so their lesson can move should not start from a blank
+      // week — but neither should a round for one student seed six other people's answers.
+      if (scope.studentIds && !scope.studentIds.includes(studentId)) return
       updates[submissionPath(teacherId, semesterId, id, studentId)] = stripUndefined({
         studentId,
         status: 'pending' as const,
@@ -402,16 +430,32 @@ export async function confirmSchedule(
   teacherId: string,
   semesterId: string,
   roundId: string,
-  lessons: PlannedLesson[]
+  lessons: PlannedLesson[],
+  scope: { studentIds?: string[] | null; from?: string } = {}
 ): Promise<void> {
   const updates: Record<string, unknown> = {
-    [confirmedSchedulePath(teacherId, semesterId)]: {
+    [confirmedRoundPath(teacherId, semesterId, roundId)]: {
       roundId,
       confirmedAt: Date.now(),
       lessonCount: lessons.length
     },
     [`${roundPath(teacherId, semesterId, roundId)}/status`]: 'finalized',
     [`${semesterPath(teacherId, semesterId)}/status`]: 'active'
+  }
+
+  // A partial round re-places the students it asked, so whatever they were holding has to go or
+  // they end up with two timetables. Only from the round's start date: lessons already taught are
+  // a record of what happened, not a plan to be revised.
+  if (scope.studentIds) {
+    const inRound = new Set(scope.studentIds)
+    const existing = await get(ref(database, lessonsPath(teacherId, semesterId)))
+    const held = (existing.val() ?? {}) as Record<string, LessonInstance>
+    Object.entries(held).forEach(([lessonId, lesson]) => {
+      if (!inRound.has(lesson.studentId)) return
+      if (scope.from && formatDate(dayjs(lesson.scheduledStart)) < scope.from) return
+      updates[lessonPath(teacherId, semesterId, lessonId)] = null
+      updates[studentLessonPath(lesson.studentId, lessonId)] = null
+    })
   }
 
   lessons.forEach((lesson) => {

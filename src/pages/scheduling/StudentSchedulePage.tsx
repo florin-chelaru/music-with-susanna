@@ -178,6 +178,9 @@ export default function StudentSchedulePage() {
           // decided this round leads nowhere, and leaving it on screen would go on promising a
           // timetable while a fresh request sits underneath it.
           .filter((round) => round.status === 'collecting' || round.status === 'suggested')
+          // A round may ask only some of the studio — to fit a student who joined late around
+          // everyone else. Those it does not ask have nothing to answer.
+          .filter((round) => !round.studentIds || Boolean(studentId && round.studentIds[studentId]))
           .map((round) => ({
             teacherId,
             teacherName: teachers[teacherId]?.name ?? teacherId,

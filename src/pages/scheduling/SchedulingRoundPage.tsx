@@ -28,6 +28,7 @@ import {
   dayWindow,
   EMPTY_AVAILABILITY,
   RoundStatus,
+  roundStudentIds,
   scoreForDayTime,
   SlotScores,
   SlotTime,
@@ -48,8 +49,10 @@ import EditableScheduleCalendar, {
   UnscheduledLesson
 } from '../../Components/scheduling/EditableScheduleCalendar'
 import SuggestedScheduleCard from '../../Components/scheduling/SuggestedScheduleCard'
+import { busyByDate, partialRoundStart } from '../../util/schedulingCapacity'
 import { findScheduleConflicts } from '../../util/schedulingConflicts'
 import {
+  useLessonInstances,
   useSchedulingRounds,
   useSemester,
   useStudentEnrollments,
@@ -287,10 +290,39 @@ export default function SchedulingRoundPage() {
   const { submissions: remoteSubmissions } = useStudentSubmissions(user.uid, semesterId, roundId)
   const { availability: remoteAvailability } = useTeacherAvailability(user.uid, semesterId)
   const { students: teacherStudents } = useTeacherStudents(user.uid)
+  // What already stands in this semester — the lessons a partial round has to fit around.
+  const { lessons: existingLessons } = useLessonInstances(user.uid, semesterId)
 
   const semester = remoteSemester
   const round = remoteRounds.find((r) => r.id === roundId)
-  const enrollments = remoteEnrollments
+  // A partial round places only the students it asked. Everyone else keeps what they have, and
+  // what they have is what the solver has to work around.
+  const asked = round ? roundStudentIds(round) : null
+  const enrollments = useMemo(
+    () =>
+      asked === null
+        ? remoteEnrollments
+        : remoteEnrollments.filter((enrollment) => asked.includes(enrollment.studentId)),
+    [remoteEnrollments, asked?.join(',')]
+  )
+  // Everyone this round did not ask, shown faded behind the schedule so a partial round is
+  // adjusted against the week as it really is. The same test the solver uses to decide what
+  // blocks — a lesson is context exactly when it is an obstacle.
+  const contextLessons = useMemo(
+    () =>
+      asked === null
+        ? []
+        : existingLessons.filter(
+            (lesson) => lesson.status !== 'canceled' && !asked.includes(lesson.studentId)
+          ),
+    [existingLessons, asked?.join(',')]
+  )
+
+  // Nobody is placed into the week they were asked in; lessons before that are history.
+  const from = useMemo(
+    () => (asked === null ? semester?.startDate : partialRoundStart()),
+    [asked === null, semester?.startDate]
+  )
   const students = teacherStudents
   const availability = remoteAvailability ?? EMPTY_AVAILABILITY
   const submissions = remoteSubmissions
@@ -302,11 +334,14 @@ export default function SchedulingRoundPage() {
   const computed: WeightedSuggestion[] = useMemo(() => {
     if (!semester || !round) return []
     const schedulingInput: SchedulingInput = {
-      semesterStart: semester.startDate,
+      semesterStart: from ?? semester.startDate,
       semesterEnd: semester.endDate,
       teacherAvailability: availability,
       enrollments,
-      submissions
+      submissions,
+      // Computed live rather than read from the round's snapshot: the snapshot is what the
+      // students were shown, this is what is actually true at the moment of solving.
+      blockedIntervals: busyByDate(existingLessons, asked, { from: from ?? semester.startDate })
     }
     return pickSpread(generateAllSuggestions(schedulingInput))
   }, [semester, round, availability, enrollments, submissions])
@@ -408,7 +443,7 @@ export default function SchedulingRoundPage() {
       }
     })
     const semesterName = semester.name
-    void confirmSchedule(user.uid, semesterId, roundId, lessons)
+    void confirmSchedule(user.uid, semesterId, roundId, lessons, { studentIds: asked, from })
       .then(() => {
         setJustConfirmed(true)
         notifyScheduleConfirmed(perStudent, semesterName)
@@ -707,6 +742,7 @@ export default function SchedulingRoundPage() {
               <EditableScheduleCalendar
                 slots={editedSlots}
                 students={students}
+                contextLessons={contextLessons}
                 onChange={handleSlotsChange}
                 defaultDate={firstSlotDate(editedSlots)}
                 unscheduled={unscheduled}

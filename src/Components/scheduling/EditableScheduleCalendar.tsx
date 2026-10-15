@@ -32,6 +32,7 @@ import {
   DEFAULT_DAY_END_HOUR,
   DEFAULT_DAY_START_HOUR,
   EditableSlot,
+  LessonInstance,
   LABEL_SCORES,
   OriginalPlacement,
   reverted,
@@ -88,6 +89,7 @@ interface EditableScheduleCalendarTexts {
   satisfactionStudents: string
   legend: string
   legendChannels: string
+  legendOthers: string
   legendPreferred: string
   legendAvailable: string
   legendLastResort: string
@@ -120,6 +122,8 @@ const EN_US: EditableScheduleCalendarTexts = {
   legend: 'Colour scale:',
   legendChannels:
     "A lesson is filled with the student's rating. Its left edge, and the shading behind the week, are yours.",
+  legendOthers:
+    'Greyed lessons belong to students this round did not ask. They stay where they are.',
   legendPreferred: 'Preferred',
   legendAvailable: 'Available',
   legendLastResort: 'Last Resort'
@@ -152,6 +156,8 @@ const RO_RO: EditableScheduleCalendarTexts = {
   legend: 'Scara de culori:',
   legendChannels:
     'Lecția este colorată după preferința elevului. Marginea din stânga și fundalul săptămânii arată preferința ta.',
+  legendOthers:
+    'Lecțiile estompate sunt ale elevilor pe care runda nu i-a întrebat. Ele rămân pe loc.',
   legendPreferred: 'Preferat',
   legendAvailable: 'Disponibil',
   legendLastResort: 'Doar la nevoie'
@@ -166,11 +172,37 @@ const TEXTS = new Map<SupportedLocale, LocalizedData>([
 
 /** One lesson as react-big-calendar sees it, with the slot it came from carried along. */
 interface SlotEvent {
+  /** -1 for a context lesson, which belongs to no editable slot. */
   index: number
   title: string
   start: Date
   end: Date
   slot: EditableSlot
+  /**
+   * A lesson this round does not own: someone the teacher did not ask, shown so a partial round
+   * is adjusted against a week that looks like the week, rather than one empty but for the
+   * student being placed. Never draggable, never selectable.
+   */
+  context?: boolean
+}
+
+/**
+ * A standing lesson in the shape of an editable slot, so one renderer draws both.
+ *
+ * The scores are zero rather than computed: this round never asked anyone about this time, and a
+ * score would claim a judgement nobody made. Nothing reads them — `eventPropGetter` returns early
+ * for a context event.
+ */
+function contextSlot(lesson: LessonInstance): EditableSlot {
+  return {
+    studentId: lesson.studentId,
+    date: formatDate(dayjs(lesson.scheduledStart)),
+    startTime: dayjs(lesson.scheduledStart).format('HH:mm'),
+    endTime: dayjs(lesson.scheduledEnd).format('HH:mm'),
+    teacherScore: 0,
+    studentScore: 0,
+    combinedScore: 0
+  }
 }
 
 /** A lesson the student is owed that has no time yet. */
@@ -187,6 +219,14 @@ export interface EditableScheduleCalendarProps {
   defaultDate?: Date
   /** Lessons the solver could not place and the teacher has not placed yet. */
   unscheduled?: UnscheduledLesson[]
+  /**
+   * Lessons belonging to students this round did not ask, drawn faded and untouchable.
+   *
+   * A partial round places one person around everyone else, and the times it must avoid are
+   * invisible without this — the teacher would be moving a lesson around a week that looks free
+   * and is not.
+   */
+  contextLessons?: LessonInstance[]
   /**
    * Rates a time for a student. The calendar holds no availability of its own, so placing or
    * moving a lesson asks the caller what the new time is worth — without this a hand-placed
@@ -250,6 +290,7 @@ function SlotEventBlock({ event, title }: { event: any; title: string }) {
 export default function EditableScheduleCalendar({
   slots,
   students,
+  contextLessons,
   onChange,
   defaultDate,
   unscheduled = [],
@@ -301,17 +342,26 @@ export default function EditableScheduleCalendar({
     [t]
   )
 
-  const events: SlotEvent[] = useMemo(
-    () =>
-      slots.map((slot, index) => ({
-        index,
-        title: students[slot.studentId]?.name ?? slot.studentId,
-        start: slotDateTime(slot.date, slot.startTime).toDate(),
-        end: slotDateTime(slot.date, slot.endTime).toDate(),
-        slot
-      })),
-    [slots, students]
-  )
+  const events: SlotEvent[] = useMemo(() => {
+    const own = slots.map((slot, index) => ({
+      index,
+      title: studentName(students, slot.studentId),
+      start: slotDateTime(slot.date, slot.startTime).toDate(),
+      end: slotDateTime(slot.date, slot.endTime).toDate(),
+      slot
+    }))
+    // Given the same shape as an editable slot so one renderer serves both; `index: -1` and the
+    // `context` flag are what keep them out of every handler.
+    const others = (contextLessons ?? []).map((lesson) => ({
+      index: -1,
+      title: studentName(students, lesson.studentId),
+      start: new Date(lesson.scheduledStart),
+      end: new Date(lesson.scheduledEnd),
+      context: true,
+      slot: contextSlot(lesson)
+    }))
+    return [...own, ...others]
+  }, [slots, students, contextLessons])
 
   // The agenda has no navigation, so it has to cover every lesson or the rest would be
   // unreachable from it.
@@ -331,6 +381,23 @@ export default function EditableScheduleCalendar({
     // Two preferences, two channels. A single blended colour could not tell "the student is
     // delighted and I am not" from "I am delighted and the student is not" — both average out
     // to the same middling colour, and that difference is the whole point of the schedule.
+    // A context lesson wears no score: it is not this round's to judge, and colouring it would
+    // claim the teacher had rated a time they were never asked about.
+    if (event.context === true) {
+      return {
+        style: {
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: `linear-gradient(${alpha(theme.palette.text.disabled, 0.12)}, ${alpha(
+            theme.palette.text.disabled,
+            0.12
+          )})`,
+          borderLeft: `3px solid ${theme.palette.divider}`,
+          color: theme.palette.text.secondary,
+          opacity: 0.55,
+          cursor: 'default'
+        }
+      }
+    }
     const fill = scoreColor(theme, event.slot.studentScore)
     const accent = scoreColor(theme, event.slot.teacherScore)
     // The colours are accurate — a move rescores the lesson against its new time. The fade is
@@ -498,6 +565,9 @@ export default function EditableScheduleCalendar({
       start: Date | string
       end: Date | string
     }
+    // Belt and braces: `draggableAccessor` already refuses these, but a context lesson reaching
+    // `applyMove` would move whatever slot happens to sit at index -1.
+    if (event.context === true) return
     // A month cell has no time axis, so a drop there means "this day", nothing about the hour.
     // Taking the dropped Date's time would move the lesson to wherever the cell happens to map
     // to; keeping the slot's own times moves the day and leaves the hour alone.
@@ -631,6 +701,12 @@ export default function EditableScheduleCalendar({
       <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
         {t.legendChannels}
       </Typography>
+      {/* Only where there is something greyed to explain. */}
+      {(contextLessons?.length ?? 0) > 0 && (
+        <Typography variant="caption" color="text.secondary" display="block">
+          {t.legendOthers}
+        </Typography>
+      )}
 
       <Box ref={gridRef} sx={{ ...calendarSx, mt: 1, scrollMarginTop: 16 }}>
         <DnDCalendar
@@ -670,8 +746,14 @@ export default function EditableScheduleCalendar({
           // a cast — the same approach the drag handlers above use.
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onSelectEvent={(raw: any, e: SyntheticEvent<HTMLElement>) => {
-            setSelected({ index: (raw as SlotEvent).index, anchor: e.currentTarget })
+            const event = raw as SlotEvent
+            if (event.context === true) return
+            setSelected({ index: event.index, anchor: e.currentTarget })
           }}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          draggableAccessor={(raw: any) => (raw as SlotEvent).context !== true}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          resizableAccessor={(raw: any) => (raw as SlotEvent).context !== true}
           eventPropGetter={eventPropGetter}
         />
       </Box>
