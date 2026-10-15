@@ -42,7 +42,8 @@ const EN_US: CancelLessonDialogTexts = {
   reasonPlaceholder: 'Shared with the other person',
   insideWindow:
     'It is less than {n} hours before the lesson. Payment is still due, and no makeup lesson will be scheduled.',
-  outsideWindow: 'There are more than {n} hours until the lesson, so no payment is due for it.',
+  outsideWindow:
+    'There are more than {n} hours until the lesson. Your teacher will be in touch to arrange a makeup lesson.',
   teacherNote: 'The student is notified and asked to acknowledge.',
   keep: 'Keep lesson',
   confirm: 'Cancel lesson'
@@ -59,7 +60,8 @@ const RO_RO: CancelLessonDialogTexts = {
   reasonPlaceholder: 'Vizibil celeilalte persoane',
   insideWindow:
     'Sunt mai puțin de {n} ore până la lecție. Prin urmare, plata este obligatorie, și nu va fi programată o lecție de recuperare.',
-  outsideWindow: 'Sunt mai mult de {n} ore până la lecție, așa că nu se datorează plata pentru ea.',
+  outsideWindow:
+    'Sunt mai mult de {n} ore până la lecție. Profesorul te va contacta pentru a programa o lecție de recuperare.',
   teacherNote: 'Elevul este notificat și trebuie să confirme.',
   keep: 'Păstrează lecția',
   confirm: 'Anulează lecția'
