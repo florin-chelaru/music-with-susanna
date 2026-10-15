@@ -18,6 +18,24 @@ import { localeOf } from './userLocale'
 // went out, and an error here must never roll back or obscure what the database already accepted
 // — the caller decides whether a failure is worth showing. See `notifyQuietly`.
 
+const SITE = 'https://vioara-cu-susanna.ro'
+
+/**
+ * The exact page a notification is about.
+ *
+ * Not the front door. Someone reading "submit your availability" on a phone should arrive at the
+ * form, not at a site to navigate — and a signed-out visitor is carried through the login page to
+ * the same place, which is what `authRedirect` is for.
+ */
+export const notificationLinks = {
+  studentRound: (teacherId: string, semesterId: string, roundId: string): string =>
+    `${SITE}/schedule/rounds/${teacherId}/${semesterId}/${roundId}`,
+  teacherRound: (semesterId: string, roundId: string): string =>
+    `${SITE}/scheduling/semesters/${semesterId}/rounds/${roundId}`,
+  teacherSemester: (semesterId: string): string => `${SITE}/scheduling/semesters/${semesterId}`,
+  studentSchedule: (): string => `${SITE}/schedule`
+}
+
 const SEND_EMAIL_ENDPOINT = 'https://europe-west1-music-with-susanna.cloudfunctions.net/sendEmail'
 
 /** The iCalendar part, when a message is about one specific lesson. */
@@ -118,13 +136,14 @@ async function recipientOf(uid: string): Promise<Recipient | null> {
 /** Looks the recipient up, writes in their language, sends. */
 async function writeTo(
   uid: string,
+  link: string,
   compose: (texts: ReturnType<typeof notificationTexts>, recipient: Recipient) => Email,
   calendarEvent?: CalendarEvent
 ): Promise<void> {
   const recipient = await recipientOf(uid)
   if (!recipient) return
   const { subject, text } = compose(notificationTexts(recipient.locale), recipient)
-  await sendEmail({ to: recipient.email, subject, text, calendarEvent })
+  await sendEmail({ to: recipient.email, subject, text: `${text}\n\n${link}`, calendarEvent })
 }
 
 // ─── The notifications ────────────────────────────────────────────────────────
@@ -138,12 +157,16 @@ export function notifyRoundOpened(
   studentIds: string[],
   teacherName: string,
   semesterName: string,
-  deadline: number
+  deadline: number,
+  where: { teacherId: string; semesterId: string; roundId: string }
 ): void {
   studentIds.forEach((studentId) => {
     notifyQuietly(
-      writeTo(studentId, (texts, to) =>
-        texts.roundOpened(to.name, called(teacherName), semesterName, when(deadline, to.locale))
+      writeTo(
+        studentId,
+        notificationLinks.studentRound(where.teacherId, where.semesterId, where.roundId),
+        (texts, to) =>
+          texts.roundOpened(to.name, called(teacherName), semesterName, when(deadline, to.locale))
       )
     )
   })
@@ -153,10 +176,13 @@ export function notifyRoundOpened(
 export function notifySubmissionReceived(
   teacherId: string,
   studentName: string,
-  semesterName: string
+  semesterName: string,
+  where: { semesterId: string; roundId: string }
 ): void {
   notifyQuietly(
-    writeTo(teacherId, (texts) => texts.submissionReceived(called(studentName), semesterName))
+    writeTo(teacherId, notificationLinks.teacherRound(where.semesterId, where.roundId), (texts) =>
+      texts.submissionReceived(called(studentName), semesterName)
+    )
   )
 }
 
@@ -167,7 +193,7 @@ export function notifyScheduleConfirmed(
 ): void {
   Object.entries(lessonsByStudent).forEach(([studentId, summary]) => {
     notifyQuietly(
-      writeTo(studentId, (texts, to) =>
+      writeTo(studentId, notificationLinks.studentSchedule(), (texts, to) =>
         texts.scheduleConfirmed(
           to.name,
           semesterName,
@@ -205,7 +231,13 @@ export function notifyLessonCanceled(
   recipientId: string,
   notice: CanceledLessonNotice,
   by: { teacherName: string; studentName: string; canceledByTeacher: boolean },
-  options: { subject: string; makeupOffered: boolean; withinWindow: boolean }
+  options: {
+    subject: string
+    makeupOffered: boolean
+    withinWindow: boolean
+    /** The teacher's copy of this semester, where they settle whether it is billable. */
+    semesterId: string
+  }
 ): void {
   const calendarEvent: CalendarEvent | undefined =
     notice.alsoAfter === 0
@@ -224,6 +256,11 @@ export function notifyLessonCanceled(
   notifyQuietly(
     writeTo(
       recipientId,
+      // Each side to their own view of it: the student to their lessons, the teacher to the
+      // semester whose calendar carries the cancellation waiting to be acknowledged.
+      by.canceledByTeacher
+        ? notificationLinks.studentSchedule()
+        : notificationLinks.teacherSemester(options.semesterId),
       (texts, to) =>
         by.canceledByTeacher
           ? texts.canceledByTeacher(

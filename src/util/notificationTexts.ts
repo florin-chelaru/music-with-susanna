@@ -9,8 +9,9 @@ import { SupportedLocale } from './SupportedLocale'
 //
 // Plain text rather than HTML. It renders everywhere, it cannot break, and nothing here needs
 // more than paragraphs.
-
-const SITE = 'https://vioara-cu-susanna.ro'
+//
+// None of them carry a link: `notifications` appends the exact page each one is about, as the
+// last paragraph. A message that needs to introduce it ends with the line that does.
 
 export interface Email {
   subject: string
@@ -59,14 +60,13 @@ const EN_US: NotificationTexts = {
     text: lines(
       `Hello ${student},`,
       `${teacher} is putting together the timetable for ${semester} and needs to know when you are free.`,
-      `Please send your availability by ${deadline}. The more times you mark, the more likely you are to get one that suits you.`,
-      SITE
+      `Please send your availability by ${deadline}. The more times you mark, the more likely you are to get one that suits you.`
     )
   }),
 
   submissionReceived: (student, semester) => ({
     subject: `${student} sent their availability`,
-    text: lines(`${student} has sent their availability for ${semester}.`, SITE)
+    text: lines(`${student} has sent their availability for ${semester}.`)
   }),
 
   scheduleConfirmed: (student, semester, lessons, firstLesson) => ({
@@ -74,8 +74,7 @@ const EN_US: NotificationTexts = {
     text: lines(
       `Hello ${student},`,
       `Your timetable for ${semester} is settled: ${lessons} lessons, starting ${firstLesson}.`,
-      'You can see them all here:',
-      SITE
+      'You can see them all here:'
     )
   }),
 
@@ -88,8 +87,7 @@ const EN_US: NotificationTexts = {
       reason ? `Reason given: ${reason}` : 'No reason was given.',
       withinWindow
         ? 'This was inside the cancellation window. You can decide whether to bill for it when you acknowledge it.'
-        : 'This was outside the cancellation window.',
-      SITE
+        : 'This was outside the cancellation window.'
     )
   }),
 
@@ -103,8 +101,7 @@ const EN_US: NotificationTexts = {
           alsoAfter === 1 ? 'lesson has' : 'lessons have'
         } been cancelled as well.`,
       reason ? `Reason given: ${reason}` : undefined,
-      makeupOffered ? `${teacher} will be in touch to arrange a makeup lesson.` : undefined,
-      SITE
+      makeupOffered ? `${teacher} will be in touch to arrange a makeup lesson.` : undefined
     )
   })
 }
@@ -115,14 +112,13 @@ const RO_RO: NotificationTexts = {
     text: lines(
       `Bună, ${student},`,
       `${teacher} pregătește orarul pentru ${semester} și are nevoie să știe când ai timp.`,
-      `Trimite-ți disponibilitatea până la ${deadline}. Cu cât marchezi mai multe intervale, cu atât sunt mai mari șansele să primești unul care ți se potrivește.`,
-      SITE
+      `Trimite-ți disponibilitatea până la ${deadline}. Cu cât marchezi mai multe intervale, cu atât sunt mai mari șansele să primești unul care ți se potrivește.`
     )
   }),
 
   submissionReceived: (student, semester) => ({
     subject: `${student} și-a trimis disponibilitatea`,
-    text: lines(`${student} și-a trimis disponibilitatea pentru ${semester}.`, SITE)
+    text: lines(`${student} și-a trimis disponibilitatea pentru ${semester}.`)
   }),
 
   scheduleConfirmed: (student, semester, lessons, firstLesson) => ({
@@ -130,8 +126,7 @@ const RO_RO: NotificationTexts = {
     text: lines(
       `Bună, ${student},`,
       `Orarul tău pentru ${semester} este gata: ${lessons} lecții, începând cu ${firstLesson}.`,
-      'Le poți vedea pe toate aici:',
-      SITE
+      'Le poți vedea pe toate aici:'
     )
   }),
 
@@ -148,8 +143,7 @@ const RO_RO: NotificationTexts = {
       reason ? `Motiv: ${reason}` : 'Nu a fost dat niciun motiv.',
       withinWindow
         ? 'Anularea a fost în interiorul ferestrei de anulare. Poți decide dacă lecția se plătește atunci când confirmi anularea.'
-        : 'Anularea a fost în afara ferestrei de anulare.',
-      SITE
+        : 'Anularea a fost în afara ferestrei de anulare.'
     )
   }),
 
@@ -167,8 +161,7 @@ const RO_RO: NotificationTexts = {
       reason ? `Motiv: ${reason}` : undefined,
       makeupOffered
         ? `${teacher} te va contacta pentru a programa o lecție de recuperare.`
-        : undefined,
-      SITE
+        : undefined
     )
   })
 }

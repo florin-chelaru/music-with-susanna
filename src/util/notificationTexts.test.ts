@@ -4,6 +4,9 @@ import { SupportedLocale } from './SupportedLocale'
 // These are read in a mail client, by someone who may not have the site open, so the shape of the
 // message matters as much as the words: a paragraph that is absent has to leave no gap, and an
 // optional one that is present has to be separated like the rest.
+//
+// None of them ends with a link. `notifications` appends the page each one is about, so the text
+// here is what comes before it.
 
 const RO = notificationTexts(SupportedLocale.RO_RO)
 const EN = notificationTexts(SupportedLocale.EN_US)
@@ -24,8 +27,7 @@ describe('cancellation by the teacher', () => {
         'Bună, Florin,',
         'Susanna a anulat lecția de luni, 19 oct. 2026, 16:30.',
         'Motiv: I have a doctor’s appointment.',
-        'Susanna te va contacta pentru a programa o lecție de recuperare.',
-        'https://vioara-cu-susanna.ro'
+        'Susanna te va contacta pentru a programa o lecție de recuperare.'
       ].join('\n\n')
     )
   })
@@ -42,11 +44,7 @@ describe('cancellation by the teacher', () => {
       false
     )
     expect(text).toBe(
-      [
-        'Hello Ana,',
-        'Susanna has cancelled the lesson on Mon 19 Oct, 16:30.',
-        'https://vioara-cu-susanna.ro'
-      ].join('\n\n')
+      ['Hello Ana,', 'Susanna has cancelled the lesson on Mon 19 Oct, 16:30.'].join('\n\n')
     )
   })
 

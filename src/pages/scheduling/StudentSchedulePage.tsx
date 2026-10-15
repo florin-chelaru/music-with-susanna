@@ -268,7 +268,12 @@ export default function StudentSchedulePage() {
           },
           // Titled with the student, which is what the lesson is called in the teacher's own
           // calendar.
-          { subject: studentName, makeupOffered: false, withinWindow }
+          {
+            subject: studentName,
+            makeupOffered: false,
+            withinWindow,
+            semesterId: target.semesterId
+          }
         )
       })
       .catch(() => {

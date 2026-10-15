@@ -378,7 +378,10 @@ export default function StudentAvailabilityPage() {
                   })
                     .then(() => {
                       setSubmitted(true)
-                      notifySubmissionReceived(teacherId, user.name ?? '', semester?.name ?? '')
+                      notifySubmissionReceived(teacherId, user.name ?? '', semester?.name ?? '', {
+                        semesterId,
+                        roundId
+                      })
                     })
                     .catch(() => {
                       setSaveError(true)

@@ -538,10 +538,14 @@ export default function SemesterPage() {
         }
       : {}
     void createRound(user.uid, semesterId, roundNumber, deadline, previous?.id, scope)
-      .then(() => {
+      .then((roundId) => {
         // Only once the round exists. A student told to submit against a round that failed to
         // open would find nothing to submit to.
-        notifyRoundOpened(asked, teacherName, semesterName, deadline)
+        notifyRoundOpened(asked, teacherName, semesterName, deadline, {
+          teacherId: user.uid as string,
+          semesterId,
+          roundId
+        })
       })
       .catch(() => {
         setSaveStatus('error')
@@ -601,7 +605,7 @@ export default function SemesterPage() {
           },
           // Titled with the teacher, which is what the lesson is called in the student's own
           // calendar.
-          { subject: teacherName, makeupOffered: offerMakeup, withinWindow }
+          { subject: teacherName, makeupOffered: offerMakeup, withinWindow, semesterId }
         )
       })
       .catch(() => {
