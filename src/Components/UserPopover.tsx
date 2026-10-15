@@ -16,6 +16,7 @@ import { useUser } from '../store/UserProvider'
 import { auth } from '../store/Firebase'
 import { signOut } from 'firebase/auth'
 import { UserRole } from '../util/User'
+import { loginPath } from '../util/authRedirect'
 
 interface UserPopoverProps {}
 
@@ -77,7 +78,7 @@ export default function UserPopover({}: UserPopoverProps) {
             <MenuItem
               onClick={() => {
                 handleClose()
-                navigate('/login')
+                navigate(loginPath())
                 scrollToTop()
               }}>
               <ListItemIcon>

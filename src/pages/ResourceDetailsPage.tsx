@@ -42,6 +42,7 @@ import {
   useTeacherResources
 } from '../util/resources'
 import { toYouTubeEmbedUrl } from '../util/youtube'
+import { loginPath } from '../util/authRedirect'
 
 interface ResourceDetailsPageTexts {
   usedIn: string
@@ -202,7 +203,7 @@ export default function ResourceDetailsPage() {
 
   useEffect(() => {
     if (user.loading) return
-    if (!user.uid) navigate('/login')
+    if (!user.uid) navigate(loginPath())
   }, [user, navigate])
 
   const isTeacher = user?.role === UserRole.TEACHER

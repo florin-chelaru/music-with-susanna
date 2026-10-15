@@ -77,6 +77,7 @@ import {
   toDayOfWeek
 } from '../../util/schedulingDates'
 import { useNow } from '../../util/useNow'
+import { loginPath } from '../../util/authRedirect'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
@@ -276,7 +277,7 @@ export default function SchedulingRoundPage() {
   useEffect(() => {
     if (user.loading) return
     if (!user.uid) {
-      navigate('/login')
+      navigate(loginPath())
       return
     }
     if (user.role !== UserRole.TEACHER) {

@@ -31,6 +31,7 @@ import {
 } from '../util/resources'
 import { get, ref } from 'firebase/database'
 import { SortOption, useResourcePageState } from './useResourcePageState'
+import { loginPath } from '../util/authRedirect'
 
 interface StudentResourcesPageTexts {
   homeworkResourcesFor: string
@@ -101,7 +102,7 @@ export default function StudentResourcesPage() {
   useEffect(() => {
     if (user.loading) return
     if (!user.uid) {
-      navigate('/login')
+      navigate(loginPath())
       return
     }
     if (user.role !== UserRole.TEACHER) {

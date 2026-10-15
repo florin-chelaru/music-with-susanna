@@ -31,6 +31,7 @@ import {
   deleteSemester,
   NewSemester
 } from '../../util/schedulingWrites'
+import { loginPath } from '../../util/authRedirect'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
@@ -130,7 +131,7 @@ export default function SchedulingPage() {
   useEffect(() => {
     if (user.loading) return
     if (!user.uid) {
-      navigate('/login')
+      navigate(loginPath())
       return
     }
     if (user.role !== UserRole.TEACHER) {

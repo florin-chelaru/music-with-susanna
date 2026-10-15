@@ -40,6 +40,7 @@ import { isValidPhoneNumber } from '../util/string'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { User, UserRole } from '../util/User'
 import { scrollToTop } from '../util/window'
+import { loginPath } from '../util/authRedirect'
 
 interface StudentsPageTexts {
   add: string
@@ -377,7 +378,7 @@ export default function StudentsPage({}: StudentsPageProps) {
       return
     }
     if (!user.uid) {
-      navigate('/login')
+      navigate(loginPath())
       return
     }
 

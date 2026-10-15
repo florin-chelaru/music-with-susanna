@@ -23,6 +23,7 @@ import { convertHtmlStringToPlain } from '../util/string'
 import { useTeacherResources } from '../util/resources'
 import { toYouTubeEmbedUrl } from '../util/youtube'
 import { scrollToTop } from '../util/window'
+import { loginPath } from '../util/authRedirect'
 
 interface HomeworkTexts {
   homeworkTemplateTitle: string
@@ -236,7 +237,7 @@ export default function Homework({}: HomeworkProps) {
     }
 
     if (!user.uid) {
-      navigate('/login')
+      navigate(loginPath())
       return
     }
 

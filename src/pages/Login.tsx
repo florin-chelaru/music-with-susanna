@@ -28,6 +28,7 @@ import { isValidEmail } from '../util/string'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { UserRole } from '../util/User'
 import { scrollToTop } from '../util/window'
+import { nextPath } from '../util/authRedirect'
 
 interface LoginTexts {
   signInTitle: string
@@ -182,13 +183,18 @@ export default function Login({}: LoginProps) {
       return
     }
     if (user.uid) {
-      if (user.role === UserRole.TEACHER) {
+      // Where they were headed when they were stopped, if anywhere — a link from an email lands
+      // here before the page it was for. The role's own landing page is the fallback, which is
+      // what someone signing in from the front door gets.
+      const resume = nextPath(window.location.search)
+      if (resume) {
+        navigate(resume, { replace: true })
+      } else if (user.role === UserRole.TEACHER) {
         navigate('/students')
-        scrollToTop()
       } else {
-        navigate(`/subjects`)
-        scrollToTop()
+        navigate('/subjects')
       }
+      scrollToTop()
     }
   }, [user])
 

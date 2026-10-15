@@ -46,6 +46,7 @@ import {
   useTeacherResources
 } from '../util/resources'
 import { SortOption, useResourcePageState } from './useResourcePageState'
+import { loginPath } from '../util/authRedirect'
 
 function resourceTypeIcon(type: ResourceType) {
   switch (type) {
@@ -187,7 +188,7 @@ export default function TeacherResourcesPage({}: TeacherResourcesPageProps) {
   useEffect(() => {
     if (user.loading) return
     if (!user.uid) {
-      navigate('/login')
+      navigate(loginPath())
       return
     }
     if (user.role !== UserRole.TEACHER) {

@@ -10,6 +10,7 @@ import { SupportedLocale } from '../util/SupportedLocale'
 import { useHomeworkResources } from '../util/resources'
 import { get, ref } from 'firebase/database'
 import { SortOption, useResourcePageState } from './useResourcePageState'
+import { loginPath } from '../util/authRedirect'
 
 interface StudentViewResourcesPageTexts {
   resourcesFrom: string
@@ -57,7 +58,7 @@ export default function StudentViewResourcesPage() {
   useEffect(() => {
     if (user.loading) return
     if (!user.uid) {
-      navigate('/login')
+      navigate(loginPath())
     }
   }, [user, navigate])
 

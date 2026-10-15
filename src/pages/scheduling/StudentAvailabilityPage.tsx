@@ -37,6 +37,7 @@ import {
 } from '../../util/schedulingHooks'
 import { saveSubmission } from '../../util/schedulingWrites'
 import { notifySubmissionReceived } from '../../util/notifications'
+import { loginPath } from '../../util/authRedirect'
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
 interface StudentAvailabilityPageTexts {
@@ -170,7 +171,7 @@ export default function StudentAvailabilityPage() {
   useEffect(() => {
     if (user.loading) return
     if (!user.uid) {
-      navigate('/login')
+      navigate(loginPath())
       return
     }
     if (user.role !== UserRole.STUDENT) {

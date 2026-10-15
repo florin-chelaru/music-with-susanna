@@ -21,6 +21,7 @@ import { useUser } from '../store/UserProvider'
 import { SupportedLocale } from '../util/SupportedLocale'
 import { User, UserRole } from '../util/User'
 import { scrollToTop } from '../util/window'
+import { loginPath } from '../util/authRedirect'
 
 interface TeachersPageTexts {
   homework: string
@@ -84,7 +85,7 @@ export default function SubjectsPage({}: TeachersPageProps) {
       return
     }
     if (!user.uid) {
-      navigate('/login')
+      navigate(loginPath())
       return
     }
 
