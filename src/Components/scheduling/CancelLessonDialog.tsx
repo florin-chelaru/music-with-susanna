@@ -14,6 +14,7 @@ import MultiActionDialog from '../MultiActionDialog'
 import { LocaleContext, LocaleHandler, LocalizedData } from '../../store/LocaleProvider'
 import { SupportedLocale } from '../../util/SupportedLocale'
 import { LessonInstance, isWithinCancellationWindow } from '../../util/scheduling'
+import { firstName } from '../../util/User'
 
 // ─── Texts ────────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,7 @@ interface CancelLessonDialogTexts {
   reasonPlaceholder: string
   insideWindow: string
   outsideWindow: string
+  yourTeacher: string
   teacherNote: string
   keep: string
   confirm: string
@@ -43,7 +45,8 @@ const EN_US: CancelLessonDialogTexts = {
   insideWindow:
     'It is less than {n} hours before the lesson. Payment is still due, and no makeup lesson will be scheduled.',
   outsideWindow:
-    'There are more than {n} hours until the lesson. Your teacher will be in touch to arrange a makeup lesson.',
+    'There are more than {n} hours until the lesson. {teacher} will be in touch to arrange a makeup lesson.',
+  yourTeacher: 'Your teacher',
   teacherNote: 'The student is notified and asked to acknowledge.',
   keep: 'Keep lesson',
   confirm: 'Cancel lesson'
@@ -61,7 +64,8 @@ const RO_RO: CancelLessonDialogTexts = {
   insideWindow:
     'Sunt mai puțin de {n} ore până la lecție. Prin urmare, plata este obligatorie, și nu va fi programată o lecție de recuperare.',
   outsideWindow:
-    'Sunt mai mult de {n} ore până la lecție. Profesorul te va contacta pentru a programa o lecție de recuperare.',
+    'Sunt mai mult de {n} ore până la lecție. {teacher} te va contacta pentru a programa o lecție de recuperare.',
+  yourTeacher: 'Profesorul',
   teacherNote: 'Elevul este notificat și trebuie să confirme.',
   keep: 'Păstrează lecția',
   confirm: 'Anulează lecția'
@@ -84,6 +88,8 @@ export interface CancelLessonDialogProps {
   open: boolean
   lesson: LessonInstance | null
   studentName?: string
+  /** The teacher's full name; only their first is used, and only in the student's view. */
+  teacherName?: string
   cancellationWindowHours: number
   /** Teacher can offer a makeup; the student is told the terms, in hours, instead. */
   mode?: 'teacher' | 'student'
@@ -95,6 +101,7 @@ export default function CancelLessonDialog({
   open,
   lesson,
   studentName,
+  teacherName,
   cancellationWindowHours,
   mode = 'teacher',
   onClose,
@@ -152,10 +159,11 @@ export default function CancelLessonDialog({
               against the clock. */}
           <Alert severity={withinWindow ? 'warning' : 'info'}>
             {mode === 'student'
-              ? (withinWindow ? t.insideWindow : t.outsideWindow).replace(
-                  '{n}',
-                  String(cancellationWindowHours)
-                )
+              ? (withinWindow ? t.insideWindow : t.outsideWindow)
+                  .replace('{n}', String(cancellationWindowHours))
+                  // Their teacher by name, which is how a student refers to them. The generic
+                  // word stands in until the directory loads, so the sentence is never half-built.
+                  .replace('{teacher}', firstName(teacherName) ?? t.yourTeacher)
               : t.teacherNote}
           </Alert>
 

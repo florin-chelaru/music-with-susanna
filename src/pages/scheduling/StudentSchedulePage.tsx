@@ -408,6 +408,11 @@ export default function StudentSchedulePage() {
               enrollmentOfCancelTarget?.semester,
               enrollmentOfCancelTarget?.enrollment
             )}
+            // The teacher whose lesson this is, not whichever came first: a student with two of
+            // them would otherwise be told the wrong person is going to call.
+            teacherName={
+              enrollmentOfCancelTarget && teachers[enrollmentOfCancelTarget.teacherId]?.name
+            }
             mode="student"
             onClose={() => {
               setCancelTarget(null)

@@ -22,6 +22,17 @@ export function subjectLabel(subject: string, locale: string): string {
   return SUBJECT_LABELS[subject.trim().toLowerCase()]?.[locale] ?? subject
 }
 
+/**
+ * The first word of a full name — what you call someone.
+ *
+ * A free function as well as a `User` getter because most places holding a name hold only the
+ * name: the scheduling pages read a teacher's directory entry, not a `User`, and constructing one
+ * just to take the first word of it would be a strange way to ask.
+ */
+export function firstName(name: string | undefined): string | undefined {
+  return name ? name.split(' ')[0] : undefined
+}
+
 export class User {
   uid?: string
   email?: string
@@ -35,10 +46,7 @@ export class User {
   accessToken?: string
 
   get firstName(): string | undefined {
-    if (!this.name) {
-      return undefined
-    }
-    return this.name.split(' ')[0]
+    return firstName(this.name)
   }
 
   get lastName(): string | undefined {
