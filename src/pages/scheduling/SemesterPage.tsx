@@ -46,6 +46,7 @@ import {
   applyCancellation,
   AvailabilityBlock,
   Cancellation,
+  cancellationWindowFor,
   dayWindow,
   isWithinCancellationWindow,
   EMPTY_AVAILABILITY,
@@ -600,9 +601,14 @@ export default function SemesterPage() {
       {
         canceledBy: user.uid,
         otherParty: target.studentId,
+        // Through the same helper the dialog used, so a student on their own window is judged
+        // against that window rather than the semester's.
         withinWindow: isWithinCancellationWindow(
           target.scheduledStart,
-          semester?.defaultCancellationWindowHours ?? 24
+          cancellationWindowFor(
+            semester,
+            enrollments.find((e) => e.studentId === target.studentId)
+          )
         ),
         makeupOffered: offerMakeup,
         reason: reason.trim() || undefined
@@ -624,11 +630,14 @@ export default function SemesterPage() {
     return today.toDate()
   }, [semester])
 
-  const cancelWindowHours = useMemo(() => {
-    if (!cancelTarget || !semester) return semester?.defaultCancellationWindowHours ?? 24
-    const enrollment = enrollments.find((e) => e.studentId === cancelTarget.studentId)
-    return enrollment?.cancellationWindowHours ?? semester.defaultCancellationWindowHours
-  }, [cancelTarget, enrollments, semester])
+  const cancelWindowHours = useMemo(
+    () =>
+      cancellationWindowFor(
+        semester,
+        cancelTarget ? enrollments.find((e) => e.studentId === cancelTarget.studentId) : undefined
+      ),
+    [cancelTarget, enrollments, semester]
+  )
 
   function handleAddStudent(enrollment: StudentEnrollment) {
     setEnrollDialogOpen(false)

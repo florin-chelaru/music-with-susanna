@@ -23,6 +23,7 @@ import { useUser } from '../../store/UserProvider'
 import { UserRole } from '../../util/User'
 import {
   applyCancellation,
+  cancellationWindowFor,
   isWithinCancellationWindow,
   LessonInstance,
   SchedulingRound,
@@ -196,12 +197,12 @@ export default function StudentSchedulePage() {
 
   const now = useNow()
 
-  // The cancellation window comes from the semester the lesson belongs to, so a student with
-  // two teachers gets each one's policy rather than whichever was found first.
-  const semesterOfCancelTarget = useMemo(() => {
+  // The lesson's own semester, so a student with two teachers gets each one's policy rather than
+  // whichever was found first.
+  const enrollmentOfCancelTarget = useMemo(() => {
     if (!cancelTarget) return undefined
     const match = myLessons.find((lesson) => lesson.id === cancelTarget.id)
-    return enrolled.find(({ semester }) => semester.id === match?.semesterId)?.semester
+    return enrolled.find(({ semester }) => semester.id === match?.semesterId)
   }, [cancelTarget, myLessons, enrolled])
 
   // Looked up per lesson from the teacher it belongs to. The student's index carries the
@@ -224,7 +225,7 @@ export default function StudentSchedulePage() {
     const affected = applyCancellation(lessons, target, cancelAllForward).filter(
       (lesson, index) => lesson.status === 'canceled' && lessons[index]?.status !== 'canceled'
     )
-    const semester = enrolled.find(({ semester: s }) => s.id === target.semesterId)?.semester
+    const enrolment = enrolled.find(({ semester }) => semester.id === target.semesterId)
     // TODO (Step Q): notify the teacher, with an iCalendar cancellation.
     //
     // withinWindow is written by the student and the teacher could not trust it on its own —
@@ -236,9 +237,10 @@ export default function StudentSchedulePage() {
       {
         canceledBy: user.uid,
         otherParty: target.teacherId,
+        // The same number the dialog just quoted them, from the same helper.
         withinWindow: isWithinCancellationWindow(
           target.scheduledStart,
-          semester?.defaultCancellationWindowHours ?? 24
+          cancellationWindowFor(enrolment?.semester, enrolment?.enrollment)
         ),
         makeupOffered: false,
         reason: reason.trim() || undefined
@@ -374,8 +376,8 @@ export default function StudentSchedulePage() {
         </Alert>
       )}
 
-      {/* Above the calendar, where a cancelled lesson is a struck-through event and says nothing
-          about what it cost. Whether a lesson is charged is the part a student actually needs. */}
+      {/* Above the calendar, where a cancelled lesson is one struck-through event among the weeks
+          and no use as a record. This is the list of what was called off, and why. */}
       <CancellationsPanel
         cancellations={cancellations}
         lessons={lessons}
@@ -402,7 +404,10 @@ export default function StudentSchedulePage() {
             key={cancelTarget?.id ?? 'none'}
             open={Boolean(cancelTarget)}
             lesson={cancelTarget}
-            cancellationWindowHours={semesterOfCancelTarget?.defaultCancellationWindowHours ?? 24}
+            cancellationWindowHours={cancellationWindowFor(
+              enrollmentOfCancelTarget?.semester,
+              enrollmentOfCancelTarget?.enrollment
+            )}
             mode="student"
             onClose={() => {
               setCancelTarget(null)

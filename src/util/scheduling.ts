@@ -515,6 +515,27 @@ export function removeOverlaps(
   return result
 }
 
+export const DEFAULT_CANCELLATION_WINDOW_HOURS = 24
+
+/**
+ * The window that applies to one student: their own if they have one, the semester's otherwise.
+ *
+ * Both sides of a cancellation have to agree on this number. It decides what the student is told
+ * before they commit — now stated in hours rather than as "inside the window" — and the
+ * `withinWindow` written to the record, which is what the teacher's decision rests on. Computed
+ * twice from the same inputs, those two could disagree; computed here, they cannot.
+ */
+export function cancellationWindowFor(
+  semester: Pick<Semester, 'defaultCancellationWindowHours'> | null | undefined,
+  enrollment?: Pick<StudentEnrollment, 'cancellationWindowHours'> | null
+): number {
+  return (
+    enrollment?.cancellationWindowHours ??
+    semester?.defaultCancellationWindowHours ??
+    DEFAULT_CANCELLATION_WINDOW_HOURS
+  )
+}
+
 // True when a cancellation lands inside the policy window — i.e. close enough to the lesson
 // that the late-cancellation terms apply. A lesson already in the past is always inside the
 // window, which is what makes a no-show behave like a late cancellation.

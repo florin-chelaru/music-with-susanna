@@ -356,6 +356,8 @@ export interface EnrolledSemester {
   teacherId: string
   semester: Semester
   rounds: SchedulingRound[]
+  /** This student's own enrollment — read anyway to decide they are enrolled at all. */
+  enrollment: StudentEnrollment
 }
 
 /**
@@ -415,7 +417,13 @@ export function useMyEnrolledSemesters(studentId: Id): {
           return {
             teacherId,
             semester,
-            rounds: Object.entries(rounds).map(([id, round]) => ({ ...round, id }))
+            rounds: Object.entries(rounds).map(([id, round]) => ({ ...round, id })),
+            // Handed back rather than only counted: it carries this student's cancellation
+            // window, and without it their own page would quote the semester default while the
+            // teacher's quoted the override.
+            enrollment: extra[
+              `${enrollmentsPath(teacherId, semester.id)}/${studentId ?? ''}`
+            ] as StudentEnrollment
           }
         }),
     [pairs, extra, studentId]

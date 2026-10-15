@@ -41,9 +41,8 @@ const EN_US: CancelLessonDialogTexts = {
   reason: 'Reason (optional)',
   reasonPlaceholder: 'Shared with the other person',
   insideWindow:
-    'This is inside the cancellation window, so you will still be charged for this lesson and no makeup is offered. Your teacher can waive the charge when they see your reason.',
-  outsideWindow:
-    'This is outside the cancellation window, so there is no charge and you can ask for a makeup lesson.',
+    'It is less than {n} hours before the lesson. Payment is still due, and no makeup lesson will be scheduled.',
+  outsideWindow: 'There are more than {n} hours until the lesson, so no payment is due for it.',
   teacherNote: 'The student is notified and asked to acknowledge.',
   keep: 'Keep lesson',
   confirm: 'Cancel lesson'
@@ -59,9 +58,8 @@ const RO_RO: CancelLessonDialogTexts = {
   reason: 'Motiv (opțional)',
   reasonPlaceholder: 'Vizibil celeilalte persoane',
   insideWindow:
-    'Anularea este în interiorul ferestrei, așa că lecția se taxează și nu se oferă recuperare. Profesorul poate renunța la taxă după ce vede motivul tău.',
-  outsideWindow:
-    'Anularea este în afara ferestrei, așa că nu se taxează și poți cere o lecție de recuperare.',
+    'Sunt mai puțin de {n} ore până la lecție. Prin urmare, plata este obligatorie, și nu va fi programată o lecție de recuperare.',
+  outsideWindow: 'Sunt mai mult de {n} ore până la lecție, așa că nu se datorează plata pentru ea.',
   teacherNote: 'Elevul este notificat și trebuie să confirme.',
   keep: 'Păstrează lecția',
   confirm: 'Anulează lecția'
@@ -85,7 +83,7 @@ export interface CancelLessonDialogProps {
   lesson: LessonInstance | null
   studentName?: string
   cancellationWindowHours: number
-  /** Teacher can offer a makeup; the student sees the charge policy instead. */
+  /** Teacher can offer a makeup; the student is told the terms, in hours, instead. */
   mode?: 'teacher' | 'student'
   onClose: () => void
   onConfirm: (options: CancelLessonOptions) => void
@@ -147,8 +145,16 @@ export default function CancelLessonDialog({
             </Typography>
           </Box>
 
+          {/* The hour count rather than "the cancellation window": the student has never been
+              shown what that window is, and a policy stated as a number is one they can check
+              against the clock. */}
           <Alert severity={withinWindow ? 'warning' : 'info'}>
-            {mode === 'student' ? (withinWindow ? t.insideWindow : t.outsideWindow) : t.teacherNote}
+            {mode === 'student'
+              ? (withinWindow ? t.insideWindow : t.outsideWindow).replace(
+                  '{n}',
+                  String(cancellationWindowHours)
+                )
+              : t.teacherNote}
           </Alert>
 
           <TextField

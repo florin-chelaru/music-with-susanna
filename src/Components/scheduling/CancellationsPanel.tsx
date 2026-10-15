@@ -21,8 +21,9 @@ interface CancellationsPanelTexts {
   pendingTitle: string
   showHistory: string
   hideHistory: string
-  insideWindow: string
-  outsideWindow: string
+  billableLate: string
+  billable: string
+  notBillable: string
   byYou: string
   byStudent: string
   byTeacher: string
@@ -30,9 +31,7 @@ interface CancellationsPanelTexts {
   waive: string
   acknowledge: string
   awaitingReply: string
-  charged: string
-  notCharged: string
-  waived: string
+  seen: string
 }
 
 const EN_US: CancellationsPanelTexts = {
@@ -40,18 +39,17 @@ const EN_US: CancellationsPanelTexts = {
   pendingTitle: 'Cancelled, awaiting your teacher',
   showHistory: 'Past cancellations ({n})',
   hideHistory: 'Hide past cancellations',
-  insideWindow: 'Inside the cancellation window — charged',
-  outsideWindow: 'Outside the window — not charged',
+  billableLate: 'Billable (not cancelled in time)',
+  billable: 'Billable',
+  notBillable: 'Not billable',
   byYou: 'Cancelled by you',
   byStudent: 'Cancelled by the student',
   byTeacher: 'Cancelled by your teacher',
   noReason: 'No reason given.',
-  waive: 'Do not charge for this one',
+  waive: 'Do not bill for this one',
   acknowledge: 'Acknowledge',
   awaitingReply: 'Your teacher has not replied yet.',
-  charged: 'Charged',
-  notCharged: 'Not charged',
-  waived: 'Not charged — your teacher waived it'
+  seen: 'Your teacher has seen this.'
 }
 
 const RO_RO: CancellationsPanelTexts = {
@@ -59,18 +57,17 @@ const RO_RO: CancellationsPanelTexts = {
   pendingTitle: 'Anulate, în așteptarea profesorului',
   showHistory: 'Anulări anterioare ({n})',
   hideHistory: 'Ascunde anulările anterioare',
-  insideWindow: 'În interiorul ferestrei — se taxează',
-  outsideWindow: 'În afara ferestrei — nu se taxează',
+  billableLate: 'De plată (nu a fost anulată la timp)',
+  billable: 'De plată',
+  notBillable: 'Fără plată',
   byYou: 'Anulată de tine',
   byStudent: 'Anulată de elev',
   byTeacher: 'Anulată de profesor',
   noReason: 'Fără motiv.',
-  waive: 'Nu taxa această lecție',
+  waive: 'Nu încasa plata pentru această lecție',
   acknowledge: 'Confirmă',
   awaitingReply: 'Profesorul nu a răspuns încă.',
-  charged: 'Se taxează',
-  notCharged: 'Nu se taxează',
-  waived: 'Nu se taxează — profesorul a renunțat la taxă'
+  seen: 'Profesorul a văzut anularea.'
 }
 
 const TEXTS = new Map<SupportedLocale, LocalizedData>([
@@ -97,14 +94,18 @@ export interface CancellationsPanelProps {
 /**
  * Cancellations, for whichever side is reading.
  *
- * One component rather than two because both sides need the same facts in the same order — when,
- * who, why, and whether it is charged — and a student told one thing while their teacher sees
- * another is the failure this feature exists to avoid.
+ * One component rather than two because both sides want the same record of what was cancelled and
+ * when, and a student told one thing while their teacher sees another is the failure this feature
+ * exists to avoid.
  *
- * The charge is decided here, not when the lesson was cancelled. The window rule gives the
+ * Only the teacher is shown whether a lesson is billable. Nothing here moves money — it is taken
+ * at the lesson, or at either end of the month, by whatever each family agreed — so a student
+ * reading a running "charged / not charged" ledger would be reading a balance that does not
+ * exist. The obligation is stated to them once, before they commit to cancelling.
+ *
+ * Billable is decided here rather than when the lesson was cancelled. The window gives the
  * default, but it cannot read "my daughter has a temperature" — so the teacher sees the reason
- * and the timing together, and the record keeps what they actually decided. Nothing here moves
- * money: `charged` is a note both sides can read.
+ * and the timing together, and the record keeps what they actually decided.
  */
 export default function CancellationsPanel({
   cancellations,
@@ -142,6 +143,7 @@ export default function CancellationsPanel({
     const waive = waived.includes(cancellation.id)
     const acknowledged = cancellation.acknowledgmentStatus === 'acknowledged'
     const byOther = mode === 'teacher' ? t.byStudent : t.byTeacher
+    const isTeacher = mode === 'teacher'
 
     return (
       <Box key={cancellation.id}>
@@ -154,23 +156,29 @@ export default function CancellationsPanel({
             </>
           )}
         </Typography>
+        {/* Teacher only — see above. */}
         <Typography variant="caption" color="text.secondary" display="block">
-          {cancellation.canceledBy === viewerId ? t.byYou : byOther} ·{' '}
-          {cancellation.withinWindow ? t.insideWindow : t.outsideWindow}
+          {cancellation.canceledBy === viewerId ? t.byYou : byOther}
+          {isTeacher && ` · ${cancellation.withinWindow ? t.billableLate : t.notBillable}`}
         </Typography>
         <Typography variant="caption" display="block" sx={{ fontStyle: 'italic' }}>
           {cancellation.reason ?? t.noReason}
         </Typography>
 
         {acknowledged ? (
-          <Typography variant="caption" fontWeight={600} display="block" sx={{ mt: 0.5 }}>
-            {/* A waived charge is named as such rather than shown as a plain "not charged": it is
-                a decision someone made, and worth seeing as one. */}
-            {cancellation.charged ? t.charged : cancellation.withinWindow ? t.waived : t.notCharged}
+          <Typography
+            variant="caption"
+            color={isTeacher ? undefined : 'text.secondary'}
+            fontWeight={isTeacher ? 600 : undefined}
+            display="block"
+            sx={{ mt: 0.5 }}>
+            {/* What the teacher settled on. The student is told only that it was read — the
+                outcome is money, and money is arranged off the app. */}
+            {isTeacher ? (cancellation.charged ? t.billable : t.notBillable) : t.seen}
           </Typography>
         ) : onAcknowledge ? (
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
-            {/* Only offered where there is a charge to waive. */}
+            {/* Only offered where there is something to waive. */}
             {cancellation.withinWindow && (
               <FormControlLabel
                 control={

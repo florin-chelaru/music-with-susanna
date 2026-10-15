@@ -2,6 +2,8 @@ import {
   applyCancellation,
   AvailabilityBlock,
   AvailabilityLabel,
+  cancellationWindowFor,
+  DEFAULT_CANCELLATION_WINDOW_HOURS,
   findConflict,
   LABEL_SCORES,
   LessonInstance,
@@ -149,6 +151,33 @@ describe('removeOverlaps', () => {
       block(MON, '12:00', '13:00'),
       block(MON, '14:00', '15:00')
     ])
+  })
+})
+
+// ─── cancellationWindowFor ────────────────────────────────────────────────────
+
+// The precedence is the whole point: the teacher's page honoured the override while the student's
+// quoted the semester default, so a student on a 48-hour window was told 24 and judged on 24.
+describe('cancellationWindowFor', () => {
+  const semester = { defaultCancellationWindowHours: 24 }
+
+  test('a student’s own window wins over the semester default', () => {
+    expect(cancellationWindowFor(semester, { cancellationWindowHours: 48 })).toBe(48)
+  })
+
+  test('falls back to the semester when the student has no override', () => {
+    expect(cancellationWindowFor(semester, { cancellationWindowHours: undefined })).toBe(24)
+    expect(cancellationWindowFor(semester, undefined)).toBe(24)
+  })
+
+  // Both are absent while a page is still loading, and a cancel dialog must still name a number.
+  test('falls back to the default when there is no semester either', () => {
+    expect(cancellationWindowFor(undefined, undefined)).toBe(DEFAULT_CANCELLATION_WINDOW_HOURS)
+  })
+
+  // Zero means "no window at all", which is a policy, not a missing value.
+  test('keeps a window of zero rather than treating it as unset', () => {
+    expect(cancellationWindowFor(semester, { cancellationWindowHours: 0 })).toBe(0)
   })
 })
 
