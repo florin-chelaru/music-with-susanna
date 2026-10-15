@@ -127,6 +127,15 @@ export function timeGridSx(theme: Theme) {
   }
 }
 
+/**
+ * How tall a month-cell event actually is.
+ *
+ * Two lines — a name and a time — at the font sizes `calendarShellSx` sets: roughly 15px for the
+ * title, 14px for the time, and 2px of padding. Pinned rather than left to the content because
+ * react-big-calendar has to be able to predict it; see `monthAgendaSx`.
+ */
+const MONTH_EVENT_HEIGHT = 32
+
 /** The month grid and the agenda table. Used by any calendar offering more than a week view. */
 export function monthAgendaSx(theme: Theme) {
   const d = theme.palette.divider
@@ -141,6 +150,18 @@ export function monthAgendaSx(theme: Theme) {
     '& .rbc-day-bg + .rbc-day-bg': { borderLeft: `1px solid ${d}` },
     '& .rbc-off-range-bg': { backgroundColor: theme.palette.action.hover },
     '& .rbc-show-more': { color: theme.palette.primary.main, fontSize: '0.6875rem' },
+
+    // Why the height is pinned, and why "+N more" appeared too late without it.
+    //
+    // react-big-calendar decides how many events fit a day cell by rendering one throwaway event
+    // and dividing the cell height by what it measures. That throwaway is hardcoded in the
+    // library — a single blank line — and never uses the component we pass for the month view.
+    // Ours is two lines, so the library measured half the real height, concluded nearly twice as
+    // many would fit, and only offered "+N more" once the cell had already overflowed.
+    //
+    // Giving both the same fixed height makes the measurement exact by construction, rather than
+    // a guess that happens to be right at one font size.
+    '& .rbc-month-view .rbc-event': { height: MONTH_EVENT_HEIGHT, boxSizing: 'border-box' },
     // The agenda table's borders are hardcoded to #ddd by the library, on selectors carrying a
     // class as well as the element (`table.rbc-agenda-table`). A rule written against `table`
     // alone loses on specificity and the light grey survives into dark mode, where it glares.
